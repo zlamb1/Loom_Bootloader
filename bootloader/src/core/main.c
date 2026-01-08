@@ -1,7 +1,10 @@
 #include "loom/compiler.h"
+#include "loom/arch.h"
+#include "loom/console.h"
 
 void NORETURN loom_main(void) {
-    unsigned char *vmem = (unsigned char *) 0xB8000;
-    vmem[0] = 'T';
+    loom_arch_init();
+    loom_con_write(6, "Hello!");
+
     for (;;);
 }

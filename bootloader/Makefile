@@ -6,10 +6,13 @@ TAG := loomos-bootloader
 
 TARGET := i686
 TARGET_DIR := src/arch/$(TARGET)
-TARGET_SRCS := stage1.asm stage2.asm disk.asm a20.asm tables.asm
+TARGET_SRCS := stage1.asm stage2.asm disk.asm a20.asm tables.asm arch.c vga.c
 TARGET_SRCS := $(foreach src,$(TARGET_SRCS),$(TARGET_DIR)/$(src))
 
-SRCS := $(TARGET_SRCS) src/core/main.c
+CORE_SRCS := main.c console.c
+CORE_SRCS := $(foreach src,$(CORE_SRCS),src/core/$(src))
+
+SRCS := $(TARGET_SRCS) $(CORE_SRCS)
 OBJS := $(foreach src,$(SRCS),$(OUTDIR)/$(basename $(src)).o)
 DEPS := $(OBJS:.o=.d)
 
@@ -41,7 +44,6 @@ CROSS_OBJCOPY ?= $(TARGET)-elf-objcopy
 all: podman-build
 
 podman-build: $(MARKER)
-	@mkdir -p $(OUTDIR)
 	podman run -it --rm -v ./:/src $(TAG) make build
 
 build: $(BIN)
@@ -49,18 +51,21 @@ build: $(BIN)
 $(BIN): $(ELF)
 	$(CROSS_OBJCOPY) -S -g -O binary $< $@
 
-$(ELF): $(DEPS) $(LNK_SCRIPT)
+$(ELF): $(OBJS) $(LNK_SCRIPT)
 	$(CROSS_LD) $(LDFLAGS) -T $(LNK_SCRIPT) $(OBJS) -o $@
 
-$(OUTDIR)/%.d: %.asm
-	@mkdir -p $(dir $@)
-	$(NASM) $(ASMFLAGS) -MD $@ $< -o $(basename $@).o
+.DELETE_ON_ERROR:
 
-$(OUTDIR)/%.d: %.c
+$(OUTDIR)/%.o: %.asm
 	@mkdir -p $(dir $@)
-	$(CROSS_CC) $(CFLAGS) $< -o $(basename $@).o
+	$(NASM) $(ASMFLAGS) -MD $(basename $@).d $< -o $@
+
+$(OUTDIR)/%.o: %.c
+	@mkdir -p $(dir $@)
+	$(CROSS_CC) $(CFLAGS) $< -o $@
 
 $(MARKER):
+	@mkdir -p $(OUTDIR)
 	podman build -t $(TAG) -f ./build.containerfile .
 	touch $@
 
