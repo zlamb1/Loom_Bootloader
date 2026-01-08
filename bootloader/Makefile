@@ -13,7 +13,7 @@ SRCS := $(TARGET_SRCS) src/core/main.c
 OBJS := $(foreach src,$(SRCS),$(OUTDIR)/$(basename $(src)).o)
 DEPS := $(OBJS:.o=.d)
 
-LNK_SCRIPT := src/arch/i686/loom.ld
+LNK_SCRIPT := $(TARGET_DIR)/loom.ld
 
 ELF  := $(OUTDIR)/bootloader.elf
 BIN  := $(OUTDIR)/bootloader
@@ -22,7 +22,7 @@ NASM ?= nasm
 
 ASMFLAGS ?= -gdwarf -f elf32
 
-CROSS_CC ?= i686-elf-gcc
+CROSS_CC ?= $(TARGET)-elf-gcc
 
 INCDIR := include
 
@@ -33,8 +33,8 @@ CFLAGS ?= -g -std=gnu11 -Os -ffreestanding -Wall -Wextra -pedantic \
 # Required C flags.
 CFLAGS += -c -fno-strict-aliasing -mno-red-zone -MMD -I$(INCDIR)
 
-CROSS_LD ?= i686-elf-ld
-CROSS_OBJCOPY ?= i686-elf-objcopy
+CROSS_LD ?= $(TARGET)-elf-ld
+CROSS_OBJCOPY ?= $(TARGET)-elf-objcopy
 
 .PHONY: all podman-build build podman-clean clean
 
