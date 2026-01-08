@@ -4,7 +4,12 @@ PODMAN ?= podman
 MARKER := $(OUTDIR)/build.marker
 TAG := loomos-bootloader
 
-SRCS := src/arch/i686/stage1.asm src/arch/i686/stage2.asm src/arch/i686/disk.asm src/arch/i686/a20.asm src/arch/i686/tables.asm src/core/main.c
+TARGET := i686
+TARGET_DIR := src/arch/$(TARGET)
+TARGET_SRCS := stage1.asm stage2.asm disk.asm a20.asm tables.asm
+TARGET_SRCS := $(foreach src,$(TARGET_SRCS),$(TARGET_DIR)/$(src))
+
+SRCS := $(TARGET_SRCS) src/core/main.c
 OBJS := $(foreach src,$(SRCS),$(OUTDIR)/$(basename $(src)).o)
 DEPS := $(OBJS:.o=.d)
 
