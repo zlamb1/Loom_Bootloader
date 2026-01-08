@@ -23,7 +23,10 @@ BIN  := $(OUTDIR)/bootloader
 
 NASM ?= nasm
 
-ASMFLAGS ?= -gdwarf -f elf32
+ASMFLAGS ?= -gdwarf
+
+# Required NASM flags.
+ASMFLAGS += -f elf32
 
 CROSS_CC ?= $(TARGET)-elf-gcc
 
@@ -39,7 +42,7 @@ CFLAGS += -c -fno-strict-aliasing -mno-red-zone -MMD -I$(INCDIR)
 CROSS_LD ?= $(TARGET)-elf-ld
 CROSS_OBJCOPY ?= $(TARGET)-elf-objcopy
 
-.PHONY: all podman-build build podman-clean clean
+.PHONY: all build clean compile-commands podman-build podman-clean podman-compile-commands
 
 all: podman-build
 
@@ -47,6 +50,12 @@ podman-build: $(MARKER)
 	podman run -it --rm -v ./:/src $(TAG) make build
 
 build: $(BIN)
+
+compile-commands:
+	bear --output $(OUTDIR)/compile_commands.json -- make -B build
+
+podman-compile-commands:
+	podman run -it --rm -v ./:/src $(TAG) make compile-commands
 
 $(BIN): $(ELF)
 	$(CROSS_OBJCOPY) -S -g -O binary $< $@

@@ -38,7 +38,7 @@ FROM debian:stable
 
 COPY --from=builder /cross /opt/cross
 
-RUN apt-get update && apt-get install -y make libmpc-dev nasm
+RUN apt-get update && apt-get install -y make bear libmpc-dev nasm
 
 ENV PATH="/opt/cross/bin:$PATH"
 
