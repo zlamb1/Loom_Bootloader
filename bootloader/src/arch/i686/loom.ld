@@ -2,12 +2,14 @@ ENTRY(_start)
 
 SECTIONS {
     . = 0x7C00;
+    stage1s = .;
 
     .stage1 : {
         *(.stage1)
     }
 
     . = ALIGN(512);
+    stage1e = .;
 
     stage2s = .;
 
