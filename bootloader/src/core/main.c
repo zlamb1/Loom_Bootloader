@@ -1,8 +1,7 @@
 #include "loom/arch.h"
 #include "loom/compiler.h"
 #include "loom/console.h"
-#include "loom/print.h"
-#include "loom/string.h"
+#include "loom/shell.h"
 
 void
 loom_panic (const char *msg)
@@ -26,6 +25,8 @@ void NORETURN
 loom_main (void)
 {
   loom_arch_init ();
+
+  run_shell ();
 
   for (;;)
     ;

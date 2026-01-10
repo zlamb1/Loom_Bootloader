@@ -41,5 +41,6 @@ COPY --from=builder /cross /opt/cross
 RUN apt-get update && apt-get install -y make bear libmpc-dev nasm
 
 ENV PATH="/opt/cross/bin:$PATH"
+ENV BUILD_TYPE=
 
 WORKDIR /src
