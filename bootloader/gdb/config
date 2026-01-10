@@ -2,5 +2,5 @@ target remote localhost:1234
 
 layout src
 
-b *0x7C00
+b loom_main
 c 

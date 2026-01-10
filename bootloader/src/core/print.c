@@ -398,7 +398,6 @@ buffer_digits:
 
       if (prec.valid)
         {
-          // This deals with the edge case of octal with # flag.
           if (!prec.value)
             return 0;
           else

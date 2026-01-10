@@ -26,9 +26,6 @@ void NORETURN
 loom_main (void)
 {
   loom_arch_init ();
-  loom_printf ("Hello, world!\n");
-  loom_printf ("%#.0o\n", 0);
-  loom_printf ("%llu\n", 1LLU << 33);
 
   for (;;)
     ;
