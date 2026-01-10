@@ -2,12 +2,34 @@
 #include "loom/compiler.h"
 #include "loom/console.h"
 #include "loom/print.h"
+#include "loom/string.h"
+
+void
+loom_panic (const char *msg)
+{
+  static int count = 0;
+
+  if (count++ > 1)
+    for (;;)
+      ;
+
+  loom_con_clear ();
+
+  loom_con_write_str ("!!!PANIC!!!\n");
+  loom_con_write_str (msg);
+
+  for (;;)
+    ;
+}
 
 void NORETURN
 loom_main (void)
 {
   loom_arch_init ();
-  loom_con_write (6, "Hello!");
+  loom_printf ("Hello, world!\n");
+  loom_printf ("%#.0o\n", 0);
+  loom_printf ("%llu\n", 1LLU << 33);
+
   for (;;)
     ;
 }

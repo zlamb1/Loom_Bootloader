@@ -9,7 +9,7 @@ TARGET_DIR := src/arch/$(TARGET)
 TARGET_SRCS := stage1.asm stage2.asm disk.asm a20.asm tables.asm arch.c vga.c
 TARGET_SRCS := $(foreach src,$(TARGET_SRCS),$(TARGET_DIR)/$(src))
 
-CORE_SRCS := main.c console.c
+CORE_SRCS := main.c console.c print.c arith.c
 CORE_SRCS := $(foreach src,$(CORE_SRCS),src/core/$(src))
 
 SRCS := $(TARGET_SRCS) $(CORE_SRCS)
@@ -32,7 +32,7 @@ CROSS_CC ?= $(TARGET)-elf-gcc
 
 INCDIR := include
 
-CFLAGS ?= -g -std=gnu11 -Os -ffreestanding -Wall -Wextra -pedantic \
+CFLAGS ?= -g -std=gnu11 -Os -ffreestanding -Wall -Wextra \
 		  -Wundef -Wshadow -Wpointer-arith -Wcast-align -Wconversion -Wformat \
 		  -Wuninitialized -Werror
 
