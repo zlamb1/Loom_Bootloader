@@ -7,6 +7,7 @@ GLOBAL _start2
 EXTERN _print
 EXTERN _load_stage3
 EXTERN _enable_a20
+EXTERN _save_real_idt
 EXTERN _enter_pmode
 
 _start2:
@@ -14,6 +15,7 @@ _start2:
     call _print
     call _load_stage3
     call _enable_a20
+    call _save_real_idt
     call _enter_pmode
 
 EXTERN sbss

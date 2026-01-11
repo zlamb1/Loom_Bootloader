@@ -2,7 +2,7 @@
 #include "loom/print.h"
 
 void
-run_shell (void)
+loom_exec_shell (void)
 {
   loom_printf ("loom> ");
 

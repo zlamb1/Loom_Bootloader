@@ -25,8 +25,7 @@ void NORETURN
 loom_main (void)
 {
   loom_arch_init ();
-
-  run_shell ();
+  loom_exec_shell ();
 
   for (;;)
     ;
