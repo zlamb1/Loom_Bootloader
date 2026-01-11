@@ -8,7 +8,7 @@
 #define LOOM_ERR_BAD_ARG 1
 #define LOOM_ERR_ALLOC   2
 
-typedef loom_u8 loom_error;
+typedef loom_uint8_t loom_error_t;
 
 void NORETURN loom_panic (const char *msg);
 

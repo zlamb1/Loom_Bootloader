@@ -32,13 +32,13 @@ typedef struct
 } format_t;
 
 static void
-flush (const char *fmt, loom_usize *run, loom_usize *len)
+flush (const char *fmt, loom_usize_t *run, loom_usize_t *len)
 {
-  loom_usize tmprun = *run;
+  loom_usize_t tmprun = *run;
 
   if (tmprun)
     {
-      loom_usize tmplen = *len;
+      loom_usize_t tmplen = *len;
 
       if (tmplen > LOOM_USIZE_MAX - tmprun)
         *len = LOOM_USIZE_MAX;
@@ -236,13 +236,13 @@ printf_warn (unsigned int length, char spec)
 }
 
 static int
-printint (char ch, loom_usize cap, loom_write_buffer wbufs[], char nbuf[],
+printint (char ch, loom_usize_t cap, loom_write_buffer wbufs[], char nbuf[],
           va_list *args, unsigned int flags, unsigned int width,
           precision_t prec, unsigned int length)
 {
   unsigned int base = 10, _signed = 0, capitals = 0;
   int retval = 0;
-  loom_usize nlen = 0;
+  loom_usize_t nlen = 0;
   loom_write_buffer wbuf;
 
   union
@@ -394,7 +394,7 @@ buffer_digits:
 
   if (!n.u)
     {
-      loom_usize splats = 1;
+      loom_usize_t splats = 1;
 
       if (prec.valid)
         {
@@ -436,7 +436,7 @@ buffer_digits:
 pad:
   if (!prec.valid && flags & FLAG_PAD_ZEROES)
     {
-      loom_usize tmplen = loom_wbufs_char_len (wbufs) + nlen;
+      loom_usize_t tmplen = loom_wbufs_char_len (wbufs) + nlen;
 
       if (width > tmplen)
         loom_wbufs_append (cap, wbufs,
@@ -450,12 +450,12 @@ pad:
 }
 
 static const char *
-print (const char *fmt, loom_usize *len, va_list *args, unsigned int flags,
+print (const char *fmt, loom_usize_t *len, va_list *args, unsigned int flags,
        unsigned int width, precision_t prec, unsigned int length)
 {
   loom_write_buffer wbufs[8] = { 0 };
   char ch = fmt[0], nbuf[sizeof (uintmax_t) * CHAR_BIT];
-  loom_usize speclen = 0, cap = sizeof (wbufs) / sizeof (*wbufs);
+  loom_usize_t speclen = 0, cap = sizeof (wbufs) / sizeof (*wbufs);
 
   if (ch == 0)
     return fmt;
@@ -474,7 +474,7 @@ print (const char *fmt, loom_usize *len, va_list *args, unsigned int flags,
   if (ch == 's')
     {
       const char *s = va_arg (*args, const char *);
-      loom_usize slen = 0, max_slen = LOOM_USIZE_MAX;
+      loom_usize_t slen = 0, max_slen = LOOM_USIZE_MAX;
 
       if (length != LENGTH_NONE)
         printf_warn (length, 's');
@@ -535,10 +535,10 @@ done:
   return ++fmt;
 }
 
-loom_usize
+loom_usize_t
 loom_vprintf (const char *fmt, va_list args)
 {
-  loom_usize len = 0, run = 0;
+  loom_usize_t len = 0, run = 0;
   char ch;
 
   unsigned int flags, width, length;
@@ -595,11 +595,11 @@ done:
   return len;
 }
 
-loom_usize
+loom_usize_t
 loom_printf (const char *fmt, ...)
 {
   va_list args;
-  loom_usize len;
+  loom_usize_t len;
 
   va_start (args, fmt);
   len = loom_vprintf (fmt, args);

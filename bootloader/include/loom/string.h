@@ -4,10 +4,10 @@
 #include "compiler.h"
 #include "types.h"
 
-static UNUSED loom_usize
+static UNUSED loom_usize_t
 loom_strlen (const char *s)
 {
-  loom_usize len = 0;
+  loom_usize_t len = 0;
   for (; s[len]; ++len)
     ;
   return len;

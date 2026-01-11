@@ -23,20 +23,20 @@
 
 typedef struct
 {
-  loom_usize len, splats;
+  loom_usize_t len, splats;
   const char *s;
 } loom_write_buffer;
 
 typedef struct loom_console
 {
-  loom_usize (*get_x) (struct loom_console *);
-  loom_usize (*get_y) (struct loom_console *);
-  loom_u8 (*get_fg) (struct loom_console *);
-  loom_u8 (*get_bg) (struct loom_console *);
-  loom_error (*set_x) (struct loom_console *, loom_usize);
-  loom_error (*set_y) (struct loom_console *, loom_usize);
-  loom_error (*set_fg) (struct loom_console *, loom_u8);
-  loom_error (*set_bg) (struct loom_console *, loom_u8);
+  loom_usize_t (*get_x) (struct loom_console *);
+  loom_usize_t (*get_y) (struct loom_console *);
+  loom_uint8_t (*get_fg) (struct loom_console *);
+  loom_uint8_t (*get_bg) (struct loom_console *);
+  loom_error_t (*set_x) (struct loom_console *, loom_usize_t);
+  loom_error_t (*set_y) (struct loom_console *, loom_usize_t);
+  loom_error_t (*set_fg) (struct loom_console *, loom_uint8_t);
+  loom_error_t (*set_bg) (struct loom_console *, loom_uint8_t);
   void (*clear) (struct loom_console *);
   void (*write_all) (struct loom_console *, loom_write_buffer[]);
 
@@ -46,15 +46,15 @@ typedef struct loom_console
 
 extern loom_console *consoles;
 
-void loom_wbufs_prepend (loom_usize cap, loom_write_buffer wbufs[],
+void loom_wbufs_prepend (loom_usize_t cap, loom_write_buffer wbufs[],
                          loom_write_buffer wbuf);
-void loom_wbufs_append (loom_usize cap, loom_write_buffer wbufs[],
+void loom_wbufs_append (loom_usize_t cap, loom_write_buffer wbufs[],
                         loom_write_buffer wbuf);
-loom_usize loom_wbufs_char_len (loom_write_buffer wbufs[]);
+loom_usize_t loom_wbufs_char_len (loom_write_buffer wbufs[]);
 
 void loom_con_register (loom_console *con);
 void loom_con_clear (void);
-void loom_con_write (loom_usize len, const char *buf);
+void loom_con_write (loom_usize_t len, const char *buf);
 void loom_con_write_str (const char *s);
 void loom_con_write_all (loom_write_buffer wbufs[]);
 

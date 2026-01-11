@@ -1,9 +1,9 @@
-#include <stdint.h>
+#include "loom/types.h"
 
-uint64_t
-__udivmoddi4 (uint64_t n, uint64_t d, uint64_t *rem)
+loom_uint64_t
+__udivmoddi4 (loom_uint64_t n, loom_uint64_t d, loom_uint64_t *rem)
 {
-  uint64_t r = 0, q = 0;
+  loom_uint64_t r = 0, q = 0;
 
   for (int i = 63; i >= 0; i--)
     {

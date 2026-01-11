@@ -6,15 +6,15 @@
 
 typedef struct
 {
-  loom_u32 eax;
-  loom_u32 ebx;
-  loom_u32 ecx;
-  loom_u32 edx;
-  loom_u32 esi;
-  loom_u32 edi;
-  loom_u16 flags;
-  loom_u16 ds;
-  loom_u16 es;
+  loom_uint32_t eax;
+  loom_uint32_t ebx;
+  loom_uint32_t ecx;
+  loom_uint32_t edx;
+  loom_uint32_t esi;
+  loom_uint32_t edi;
+  loom_uint16_t flags;
+  loom_uint16_t ds;
+  loom_uint16_t es;
 } PACKED loom_bios_args_t;
 
 #endif

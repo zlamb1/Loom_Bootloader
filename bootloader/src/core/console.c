@@ -4,10 +4,10 @@
 loom_console *consoles = NULL;
 
 void
-loom_wbufs_prepend (loom_usize cap, loom_write_buffer wbufs[],
+loom_wbufs_prepend (loom_usize_t cap, loom_write_buffer wbufs[],
                     loom_write_buffer wbuf)
 {
-  loom_usize i = 0;
+  loom_usize_t i = 0;
 
   for (; i < cap - 1; ++i)
     if (wbufs[i].s == NULL)
@@ -28,10 +28,10 @@ loom_wbufs_prepend (loom_usize cap, loom_write_buffer wbufs[],
 }
 
 void
-loom_wbufs_append (loom_usize cap, loom_write_buffer wbufs[],
+loom_wbufs_append (loom_usize_t cap, loom_write_buffer wbufs[],
                    loom_write_buffer wbuf)
 {
-  loom_usize i = 0;
+  loom_usize_t i = 0;
 
   for (; i < cap - 1; ++i)
     if (wbufs[i].s == NULL)
@@ -44,15 +44,15 @@ loom_wbufs_append (loom_usize cap, loom_write_buffer wbufs[],
   wbufs[i + 1] = (loom_write_buffer) { 0 };
 }
 
-loom_usize
+loom_usize_t
 loom_wbufs_char_len (loom_write_buffer wbufs[])
 {
-  loom_usize char_len = 0;
+  loom_usize_t char_len = 0;
   loom_write_buffer *wbuf = wbufs;
 
   while (wbuf->s)
     {
-      loom_usize tmp;
+      loom_usize_t tmp;
 
       if (!wbuf->splats)
         goto cont;
@@ -97,7 +97,7 @@ loom_con_clear (void)
 }
 
 void
-loom_con_write (loom_usize len, const char *buf)
+loom_con_write (loom_usize_t len, const char *buf)
 {
   loom_console *con = consoles;
 
@@ -115,7 +115,7 @@ void
 loom_con_write_str (const char *s)
 {
   loom_console *con = consoles;
-  loom_usize len = loom_strlen (s);
+  loom_usize_t len = loom_strlen (s);
 
   while (con != NULL)
     {
