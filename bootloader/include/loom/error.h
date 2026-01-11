@@ -10,6 +10,6 @@
 
 typedef loom_uint8_t loom_error_t;
 
-void NORETURN loom_panic (const char *msg);
+void NORETURN EXPORT (loom_panic) (const char *msg);
 
 #endif

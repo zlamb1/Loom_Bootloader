@@ -39,6 +39,10 @@ SECTIONS {
         *(.rodata.*)
     }
 
+    .stage3.syms : {
+        *(.symtab)
+    }
+
     . = ALIGN(512);
     stage3e = .;
 
