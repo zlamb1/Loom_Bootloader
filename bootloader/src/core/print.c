@@ -18,7 +18,8 @@
 #define LENGTH_Z    6
 #define LENGTH_T    7
 
-#define WBUF(LEN, S) (loom_write_buffer){ .len = (LEN), .s = (S), .splats = 1 }
+#define WBUF(LEN, S)                                                          \
+  (loom_write_buffer_t){ .len = (LEN), .s = (S), .splats = 1 }
 
 typedef struct
 {
@@ -236,14 +237,14 @@ printf_warn (unsigned int length, char spec)
 }
 
 static int
-printint (char ch, loom_usize_t cap, loom_write_buffer wbufs[], char nbuf[],
+printint (char ch, loom_usize_t cap, loom_write_buffer_t wbufs[], char nbuf[],
           va_list *args, unsigned int flags, unsigned int width,
           precision_t prec, unsigned int length)
 {
   unsigned int base = 10, _signed = 0, capitals = 0;
   int retval = 0;
   loom_usize_t nlen = 0;
-  loom_write_buffer wbuf;
+  loom_write_buffer_t wbuf;
 
   union
   {
@@ -405,7 +406,7 @@ buffer_digits:
         }
 
       nlen = splats;
-      wbuf = (loom_write_buffer) { .len = 1, .s = "0", .splats = splats };
+      wbuf = (loom_write_buffer_t) { .len = 1, .s = "0", .splats = splats };
       goto pad;
     }
 
@@ -428,7 +429,7 @@ buffer_digits:
   if (prec.valid && prec.value > nlen)
     // Leading zeroes for precision go before number.
     loom_wbufs_append (cap, wbufs,
-                       (loom_write_buffer) {
+                       (loom_write_buffer_t) {
                            .len = 1, .s = "0", .splats = prec.value - nlen });
 
   wbuf = WBUF (nlen, nbuf);
@@ -440,7 +441,7 @@ pad:
 
       if (width > tmplen)
         loom_wbufs_append (cap, wbufs,
-                           (loom_write_buffer) {
+                           (loom_write_buffer_t) {
                                .len = 1, .s = "0", .splats = width - tmplen });
       retval = 1;
     }
@@ -453,7 +454,7 @@ static const char *
 print (const char *fmt, loom_usize_t *len, va_list *args, unsigned int flags,
        unsigned int width, precision_t prec, unsigned int length)
 {
-  loom_write_buffer wbufs[8] = { 0 };
+  loom_write_buffer_t wbufs[8] = { 0 };
   char ch = fmt[0], nbuf[sizeof (uintmax_t) * CHAR_BIT];
   loom_usize_t speclen = 0, cap = sizeof (wbufs) / sizeof (*wbufs);
 
@@ -511,7 +512,7 @@ pad:
 
   if (width > speclen)
     {
-      loom_write_buffer wbuf = (loom_write_buffer) {
+      loom_write_buffer_t wbuf = (loom_write_buffer_t) {
         .len = 1, .s = " ", .splats = width - speclen
       };
 

@@ -25,37 +25,37 @@ typedef struct
 {
   loom_usize_t len, splats;
   const char *s;
-} loom_write_buffer;
+} loom_write_buffer_t;
 
-typedef struct loom_console
+typedef struct loom_console_t
 {
-  loom_usize_t (*get_x) (struct loom_console *);
-  loom_usize_t (*get_y) (struct loom_console *);
-  loom_uint8_t (*get_fg) (struct loom_console *);
-  loom_uint8_t (*get_bg) (struct loom_console *);
-  loom_error_t (*set_x) (struct loom_console *, loom_usize_t);
-  loom_error_t (*set_y) (struct loom_console *, loom_usize_t);
-  loom_error_t (*set_fg) (struct loom_console *, loom_uint8_t);
-  loom_error_t (*set_bg) (struct loom_console *, loom_uint8_t);
-  void (*clear) (struct loom_console *);
-  void (*write_all) (struct loom_console *, loom_write_buffer[]);
+  loom_usize_t (*get_x) (struct loom_console_t *);
+  loom_usize_t (*get_y) (struct loom_console_t *);
+  loom_uint8_t (*get_fg) (struct loom_console_t *);
+  loom_uint8_t (*get_bg) (struct loom_console_t *);
+  loom_error_t (*set_x) (struct loom_console_t *, loom_usize_t);
+  loom_error_t (*set_y) (struct loom_console_t *, loom_usize_t);
+  loom_error_t (*set_fg) (struct loom_console_t *, loom_uint8_t);
+  loom_error_t (*set_bg) (struct loom_console_t *, loom_uint8_t);
+  void (*clear) (struct loom_console_t *);
+  void (*write_all) (struct loom_console_t *, loom_write_buffer_t[]);
 
   void *data;
-  struct loom_console *next;
-} loom_console;
+  struct loom_console_t *next;
+} loom_console_t;
 
-extern loom_console *consoles;
+extern loom_console_t *consoles;
 
-void loom_wbufs_prepend (loom_usize_t cap, loom_write_buffer wbufs[],
-                         loom_write_buffer wbuf);
-void loom_wbufs_append (loom_usize_t cap, loom_write_buffer wbufs[],
-                        loom_write_buffer wbuf);
-loom_usize_t loom_wbufs_char_len (loom_write_buffer wbufs[]);
+void loom_wbufs_prepend (loom_usize_t cap, loom_write_buffer_t wbufs[],
+                         loom_write_buffer_t wbuf);
+void loom_wbufs_append (loom_usize_t cap, loom_write_buffer_t wbufs[],
+                        loom_write_buffer_t wbuf);
+loom_usize_t loom_wbufs_char_len (loom_write_buffer_t wbufs[]);
 
-void loom_con_register (loom_console *con);
+void loom_con_register (loom_console_t *con);
 void loom_con_clear (void);
 void loom_con_write (loom_usize_t len, const char *buf);
 void loom_con_write_str (const char *s);
-void loom_con_write_all (loom_write_buffer wbufs[]);
+void loom_con_write_all (loom_write_buffer_t wbufs[]);
 
 #endif
