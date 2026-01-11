@@ -582,6 +582,8 @@ read:
       goto read;
     }
 
+  flush (fmt - 1, &run, &len);
+
   fmt = parse_flags (fmt, &flags);
   fmt = parse_width (fmt, &flags, &width, &args);
   fmt = parse_precision (fmt, &prec, &args);

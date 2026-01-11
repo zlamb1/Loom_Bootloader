@@ -3,6 +3,7 @@ BITS 16
 SECTION .stage2.tables EXEC
 
 GLOBAL _save_real_idt
+GLOBAL _enter_rmode
 GLOBAL _enter_pmode
 
 _real_idtr:

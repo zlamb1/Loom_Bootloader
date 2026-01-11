@@ -8,7 +8,7 @@ TAG := loomos-bootloader
 
 TARGET := i686
 TARGET_DIR := src/arch/$(TARGET)
-TARGET_SRCS := stage1.asm stage2.asm disk.asm a20.asm tables.asm arch.c vga.c
+TARGET_SRCS := stage1.asm stage2.asm disk.asm a20.asm tables.asm int.asm arch.c vga.c
 TARGET_SRCS := $(foreach src,$(TARGET_SRCS),$(TARGET_DIR)/$(src))
 
 CORE_SRCS := main.c console.c print.c arith.c shell.c
