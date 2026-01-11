@@ -41,7 +41,11 @@ CFLAGS ?= -g -std=gnu11 -Os -ffreestanding -Wall -Wextra \
 # Required C flags.
 CFLAGS += -c -fno-strict-aliasing -mno-red-zone -MMD -I$(INCDIR)
 
-CROSS_LD ?= $(TARGET)-elf-ld
+LNKFLAGS ?= -flto
+
+# Required link flags.
+LNKFLAGS += -nostdlib
+
 CROSS_OBJCOPY ?= $(TARGET)-elf-objcopy
 
 .PHONY: all build clean compile-commands container-clean
@@ -71,7 +75,7 @@ $(BIN): $(ELF)
 	$(CROSS_OBJCOPY) -S -g -O binary $< $@
 
 $(ELF): $(OBJS) $(LNK_SCRIPT)
-	$(CROSS_LD) $(LDFLAGS) -T $(LNK_SCRIPT) $(OBJS) -o $@
+	$(CROSS_CC) $(LNKFLAGS) -T $(LNK_SCRIPT) $(OBJS) -o $@
 
 .DELETE_ON_ERROR:
 
