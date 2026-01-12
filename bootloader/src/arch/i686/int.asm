@@ -13,11 +13,12 @@ _stack: DD 0
 ; like the PIC, PIT, etc...
 
 loom_bios_int:
+    push ebp
+
     pushfd
     push ebx
     push esi
     push edi
-    push ebp
 
     mov DWORD [_stack], esp
 
@@ -107,10 +108,10 @@ BITS 32
     mov bx, WORD [_es]
     mov WORD [eax+28], bx
 
-    pop ebp
     pop edi
     pop esi
     pop ebx
     popf
 
+    pop ebp
     ret

@@ -15,9 +15,10 @@ CFLAGS ?= -g -std=gnu11 -Os -ffreestanding -Wall -Wextra \
 
 # Required C flags.
 INC = -I$(INCDIR)
-CFLAGS += -c -fno-strict-aliasing -fno-omit-frame-pointer -mno-red-zone -MMD $(INC)
+CFLAGS += -c -fno-strict-aliasing -fno-omit-frame-pointer \
+	      -mno-red-zone -MMD $(INC)
 
-LNKFLAGS ?= -flto
+LNKFLAGS ?=
 
 # Required link flags.
 LNKFLAGS += -nostdlib

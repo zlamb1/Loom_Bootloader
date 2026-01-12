@@ -38,7 +38,7 @@ FROM debian:stable
 
 COPY --from=builder /cross /opt/cross
 
-RUN apt-get update && apt-get install -y make bear libmpc-dev nasm
+RUN apt-get update && apt-get install -y make bear gawk nasm libmpc-dev
 
 ENV PATH="/opt/cross/bin:$PATH"
 ENV BUILD_TYPE=

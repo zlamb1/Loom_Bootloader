@@ -1,9 +1,10 @@
-SRCS := main.c \
+SRCS := arith.c \
 	    console.c \
+		main.c \
+		panic.c \
 		print.c \
-		arith.c \
 		shell.c \
-		panic.c
+		symbol.c
 
 SRCS := $(foreach src,$(SRCS),src/core/$(src))
 

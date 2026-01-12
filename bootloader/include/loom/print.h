@@ -8,6 +8,6 @@
 
 loom_usize_t EXPORT (loom_vprintf) (const char *fmt, va_list args);
 loom_usize_t PRINTF (1, 2) EXPORT (loom_printf) (const char *fmt, ...);
-loom_usize_t PRINTF (1, 2) EXPORT (loom_wprintf) (const char *fmt, ...);
+loom_usize_t PRINTF (1, 2) loom_wprintf (const char *fmt, ...);
 
 #endif

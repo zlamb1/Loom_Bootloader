@@ -9,6 +9,8 @@ include mk/srcs.mk
 OBJS := $(foreach src,$(SRCS),$(OUTDIR)/$(basename $(src)).o)
 DEPS := $(OBJS:.o=.d)
 
+include mk/syms.mk
+
 ELF   := $(OUTDIR)/bootloader.elf
 BIN   := $(OUTDIR)/bootloader
 
@@ -63,9 +65,7 @@ debug: build
 	qemu-system-i386 -drive format=raw,file=$(BIN) -nic none -m 64M -s -S &
 	gdb -q $(ELF) -x gdb/config
 
-clean:
-	rm -f $(ELF)
-	rm -f $(BIN)
-	rm -f $(OBJS)
+clean::
+	rm -f $(ELF) $(BIN) $(OBJS)
 
 -include $(DEPS)
