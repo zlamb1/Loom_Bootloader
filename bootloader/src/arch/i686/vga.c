@@ -1,3 +1,4 @@
+#include "loom/arch/i686/io.h"
 #include "loom/console.h"
 
 #define ROWS 25
@@ -18,12 +19,6 @@ typedef struct
   loom_uint8_t attribs;
   loom_console_t interface;
 } loom_vga_console;
-
-static void
-loom_outb (loom_uint16_t port, loom_uint8_t v)
-{
-  __asm__ volatile ("outb %1, %0" ::"Nd"(port), "a"(v));
-}
 
 static void
 loom_vga_sync_cursor (loom_usize_t x, loom_usize_t y)

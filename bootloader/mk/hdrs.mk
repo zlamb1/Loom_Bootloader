@@ -15,7 +15,11 @@ HDRS := arch.h \
 
 ifeq ($(TARGET),i686)
 
-HDRS += arch/i686/bios.h
+HDRS += arch/i686/bios.h \
+		arch/i686/idt.h \
+		arch/i686/io.h \
+		arch/i686/isr.h \
+		arch/i686/pic.h
 
 endif
 

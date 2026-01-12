@@ -10,6 +10,9 @@ loom_main (void)
 {
   loom_arch_init ();
   loom_register_export_symbols ();
+
+  //__asm__ volatile ("mov $0, %edx; div %edx");
+
   loom_exec_shell ();
 
   for (;;)

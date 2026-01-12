@@ -1,5 +1,7 @@
 #include "loom/arch.h"
 #include "loom/arch/i686/bios.h"
+#include "loom/arch/i686/idt.h"
+#include "loom/arch/i686/pic.h"
 #include "loom/mm.h"
 
 typedef struct
@@ -35,6 +37,11 @@ loom_arch_init (void)
 {
   loom_vga_con_register ();
   loom_arch_mmap_iterate (mmap_mm_hook);
+  loom_pic_remap (0x20, 0x28);
+  loom_pic_disable ();
+  loom_idt_init ();
+  loom_load_idtr ();
+  loom_arch_sti ();
 }
 
 void
@@ -83,4 +90,16 @@ loom_arch_mmap_iterate (mmap_hook hook)
 
       hook (e820.address, e820.length, type);
     }
+}
+
+void
+loom_arch_sti (void)
+{
+  __asm__ volatile ("sti" ::: "memory");
+}
+
+void
+loom_arch_cli (void)
+{
+  __asm__ volatile ("cli" ::: "memory");
 }

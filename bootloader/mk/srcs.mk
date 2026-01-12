@@ -15,7 +15,21 @@ TSRCS :=
 ifeq ($(TARGET),i686)
 
 TGTDIR := src/arch/$(TARGET)
-TGTSRCS := stage1.asm stage2.asm disk.asm a20.asm tables.asm int.asm arch.c vga.c
+
+TGTSRCS := stage1.asm \
+	  	   stage2.asm \
+		   disk.asm \
+		   a20.asm \
+		   tables.asm \
+		   int.asm \
+		   isr.asm \
+		   arch.c \
+		   vga.c \
+		   pic.c \
+		   io.c \
+		   idt.c \
+		   exception.c
+
 LNKSCRPT := $(TGTDIR)/loom.ld
 
 endif
