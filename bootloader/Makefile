@@ -14,7 +14,7 @@ include mk/syms.mk
 ELF   := $(OUTDIR)/bootloader.elf
 BIN   := $(OUTDIR)/bootloader
 
-.PHONY: all build clean compile-commands
+.PHONY: all build clean compile-commands dbg
 
 .DEFAULT_GOAL := all
 
@@ -61,7 +61,7 @@ $(MARKER):
 qemu: build
 	qemu-system-i386 -drive format=raw,file=$(BIN) -nic none -m 64M
 
-debug: build
+dbg: build
 	qemu-system-i386 -drive format=raw,file=$(BIN) -nic none -m 64M -s -S &
 	gdb -q $(ELF) -x gdb/config
 

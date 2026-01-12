@@ -10,7 +10,6 @@ loom_main (void)
 {
   loom_arch_init ();
   loom_register_export_symbols ();
-
   loom_exec_shell ();
 
   for (;;)
