@@ -6,9 +6,10 @@ extern char stage2s;
 extern char stage3e;
 
 void
-loom_panic (const char *msg)
+loom_panic (const char *fmt, ...)
 {
   static int count = 0;
+  va_list args;
 
   if (count++ >= 1)
     for (;;)
@@ -17,7 +18,9 @@ loom_panic (const char *msg)
   loom_con_clear ();
 
   loom_printf ("!!!PANIC!!!\n");
-  loom_con_write_str (msg);
+  va_start (args, fmt);
+  loom_vprintf (fmt, args);
+  va_end (args);
 
   void **ebp = (void **) __builtin_frame_address (0);
 
