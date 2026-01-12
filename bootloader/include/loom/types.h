@@ -12,6 +12,7 @@ typedef uint32_t loom_uint32_t;
 typedef uint64_t loom_uint64_t;
 
 typedef uint32_t loom_usize_t;
+typedef uintptr_t loom_uintptr_t;
 
 #define LOOM_USIZE_MAX UINT32_MAX
 
