@@ -5,6 +5,7 @@ HDRS := arch.h \
 		error.h \
 		main.h \
 		mmap.h \
+		mm.h \
 		print.h \
 		shell.h \
 		sp.h \

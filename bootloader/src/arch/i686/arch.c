@@ -1,5 +1,6 @@
 #include "loom/arch.h"
 #include "loom/arch/i686/bios.h"
+#include "loom/mm.h"
 
 typedef struct
 {
@@ -11,9 +12,29 @@ typedef struct
 void loom_vga_con_register (void);
 
 void
+mmap_mm_hook (loom_uint64_t address, loom_uint64_t length,
+              loom_memory_type_t type)
+{
+  if (address >= 0xffffffff || address >= LOOM_USIZE_MAX
+      || type != LOOM_MEMORY_TYPE_FREE)
+    return;
+
+  if (address < 0x100000)
+    {
+      if (address + length <= 0x100000)
+        return;
+      length -= 0x100000 - address;
+      address = 0x100000;
+    }
+
+  loom_mm_add_region ((loom_usize_t) address, (loom_usize_t) length);
+}
+
+void
 loom_arch_init (void)
 {
   loom_vga_con_register ();
+  loom_arch_mmap_iterate (mmap_mm_hook);
 }
 
 void

@@ -1,6 +1,7 @@
 SRCS := arith.c \
 	    console.c \
 		main.c \
+		mm.c \
 		panic.c \
 		print.c \
 		shell.c \

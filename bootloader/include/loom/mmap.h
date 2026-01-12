@@ -1,6 +1,7 @@
 #ifndef LOOM_MMAP_H
 #define LOOM_MMAP_H 1
 
+#include "compiler.h"
 #include "types.h"
 
 typedef enum
@@ -18,5 +19,20 @@ typedef struct
   loom_uint64_t length;
   loom_memory_type_t type;
 } loom_mmap_entry_t;
+
+static UNUSED const char *
+loom_memory_type_str (loom_memory_type_t type)
+{
+  if (type == LOOM_MEMORY_TYPE_FREE)
+    return "Free";
+  else if (type == LOOM_MEMORY_TYPE_ACPI)
+    return "ACPI";
+  else if (type == LOOM_MEMORY_TYPE_ACPI_NVS)
+    return "ACPI NVS";
+  else if (type == LOOM_MEMORY_TYPE_BAD_RAM)
+    return "Bad Ram";
+  else
+    return "Reserved";
+}
 
 #endif
