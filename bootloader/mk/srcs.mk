@@ -4,6 +4,7 @@ SRCS := arith.c \
 		panic.c \
 		print.c \
 		shell.c \
+		sp.c \
 		symbol.c
 
 SRCS := $(foreach src,$(SRCS),src/core/$(src))

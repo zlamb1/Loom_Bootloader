@@ -7,6 +7,7 @@ HDRS := arch.h \
 		mmap.h \
 		print.h \
 		shell.h \
+		sp.h \
 		string.h \
 		symbol.h \
 		types.h
