@@ -139,7 +139,7 @@ loom_vga_write_wbuf (loom_console_t *con, loom_write_buffer_t wbuf,
         {
         case '\b':
           if (index)
-            VMEM[--index] = (loom_uint16_t) ' ' | attribs;
+            --index;
           continue;
         case '\r':
           index = (index / COLS) * COLS;

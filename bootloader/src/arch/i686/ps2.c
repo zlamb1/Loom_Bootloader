@@ -116,7 +116,9 @@ loom_ps2_read (loom_input_dev_t *_dev, loom_input_t *input)
 
   sc = (loom_uint8_t) ps2_dev->buf[head];
   press = (sc & 0x80) == 0;
-  sc = (loom_uint8_t) (sc & ~0x80);
+
+  if (sc != 0xE0)
+    sc = (loom_uint8_t) (sc & ~0x80);
 
   ps2_dev->head = (head + 1) & (CAP - 1);
 
