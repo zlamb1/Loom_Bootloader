@@ -1,4 +1,5 @@
 SRCS := arith.c \
+		command.c \
 	    console.c \
 		input.c \
 		keycode.c \
@@ -8,6 +9,7 @@ SRCS := arith.c \
 		print.c \
 		shell.c \
 		sp.c \
+		string.c \
 		symbol.c
 
 SRCS := $(foreach src,$(SRCS),src/core/$(src))

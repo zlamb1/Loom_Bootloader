@@ -1,6 +1,7 @@
 INCDIR := include
 
 HDRS := arch.h \
+		command.h \
         console.h \
 		error.h \
 		input.h \

@@ -1,17 +1,35 @@
 #include "loom/shell.h"
+#include "loom/command.h"
 #include "loom/error.h"
 #include "loom/input.h"
 #include "loom/keycode.h"
 #include "loom/mm.h"
 #include "loom/print.h"
 
-#define CAP 4096
+#define CAP    4096
+#define PROMPT "loom> "
 
 typedef struct
 {
   loom_usize_t len, cursor;
   char *buf;
 } shell_t;
+
+void
+shell_exec_command (shell_t *shell)
+{
+  loom_command_t *command;
+
+  if (shell->buf[0] == 0)
+    return;
+
+  command = loom_command_find (shell->buf);
+
+  if (!command)
+    loom_printf ("\ncommand not found: '%s'", shell->buf);
+
+  loom_printf ("\n");
+}
 
 void
 shell_write_keycode (shell_t *shell, int mods, int keycode)
@@ -40,9 +58,10 @@ shell_write_keycode (shell_t *shell, int mods, int keycode)
 
       break;
     case LOOM_KEY_ENTER:
+      shell_exec_command (shell);
       shell->len = 0;
       shell->cursor = 0;
-      loom_printf ("\nloom> ");
+      loom_printf (PROMPT);
       break;
     case LOOM_KEY_LEFT:
       if (shell->cursor)
@@ -85,7 +104,7 @@ shell_write_keycode (shell_t *shell, int mods, int keycode)
 void
 loom_exec_shell (void)
 {
-  loom_printf ("loom> ");
+  loom_printf (PROMPT);
 
   loom_input_dev_t *dev = loom_get_root_input_dev ();
 
