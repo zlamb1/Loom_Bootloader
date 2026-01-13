@@ -35,7 +35,17 @@ loom_input_dev_read (loom_input_dev_t *dev, loom_input_t *input)
       else if (input->keycode == LOOM_KEY_RIGHTALT)
         mask = LOOM_INPUT_MOD_RIGHTALT;
       else if (input->keycode == LOOM_KEY_CAPSLOCK)
-        mask = LOOM_INPUT_MOD_CAPSLOCK;
+        {
+          if (input->press)
+            {
+              if (dev->mods & LOOM_INPUT_MOD_CAPSLOCK)
+                dev->mods &= ~LOOM_INPUT_MOD_CAPSLOCK;
+              else
+                dev->mods |= LOOM_INPUT_MOD_CAPSLOCK;
+            }
+
+          return 1;
+        }
       else
         return 1;
 
