@@ -51,4 +51,5 @@ loom_vectors:
 %assign i 0
 %rep 256
     DD isr_stub_%+i
+    %assign i i+1
 %endrep

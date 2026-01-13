@@ -9,5 +9,6 @@ void EXPORT (loom_pic_mask) (loom_uint8_t irq);
 void EXPORT (loom_pic_unmask) (loom_uint8_t irq);
 void EXPORT (loom_pic_eoi) (loom_uint8_t irq);
 void EXPORT (loom_pic_disable) (void);
+void EXPORT (loom_pic_register_isr) (loom_uint8_t irq, void *isr);
 
 #endif

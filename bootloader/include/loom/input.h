@@ -1,0 +1,31 @@
+#ifndef LOOM_INPUT_H
+#define LOOM_INPUT_H 1
+
+#include "compiler.h"
+
+typedef struct
+{
+  int press;
+  int keycode;
+} loom_input_t;
+
+#define LOOM_INPUT_MOD_LEFTSHIFT  (1 << 1)
+#define LOOM_INPUT_MOD_RIGHTSHIFT (1 << 2)
+#define LOOM_INPUT_MOD_LEFTALT    (1 << 3)
+#define LOOM_INPUT_MOD_RIGHTALT   (1 << 4)
+#define LOOM_INPUT_MOD_CAPSLOCK   (1 << 5)
+
+typedef struct loom_input_dev_t
+{
+  int (*read) (struct loom_input_dev_t *, loom_input_t *);
+  int mods;
+  void *data;
+  struct loom_input_dev_t *next;
+} loom_input_dev_t;
+
+void EXPORT (loom_register_input_dev) (loom_input_dev_t *dev);
+loom_input_dev_t *EXPORT (loom_get_root_input_dev) (void);
+
+int EXPORT (loom_input_dev_read) (loom_input_dev_t *dev, loom_input_t *input);
+
+#endif

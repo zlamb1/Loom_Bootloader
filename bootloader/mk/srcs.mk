@@ -1,5 +1,7 @@
 SRCS := arith.c \
 	    console.c \
+		input.c \
+		keycode.c \
 		main.c \
 		mm.c \
 		panic.c \
@@ -28,7 +30,8 @@ TGTSRCS := stage1.asm \
 		   pic.c \
 		   io.c \
 		   idt.c \
-		   exception.c
+		   exception.c \
+		   ps2.c
 
 LNKSCRPT := $(TGTDIR)/loom.ld
 

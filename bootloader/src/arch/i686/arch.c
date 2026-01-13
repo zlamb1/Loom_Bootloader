@@ -2,6 +2,7 @@
 #include "loom/arch/i686/bios.h"
 #include "loom/arch/i686/idt.h"
 #include "loom/arch/i686/pic.h"
+#include "loom/arch/i686/ps2.h"
 #include "loom/mm.h"
 
 typedef struct
@@ -40,6 +41,7 @@ loom_arch_init (void)
   loom_pic_remap (0x20, 0x28);
   loom_pic_disable ();
   loom_idt_init ();
+  loom_ps2_kb_init ();
   loom_load_idtr ();
   loom_arch_sti ();
 }
@@ -102,4 +104,19 @@ void
 loom_arch_cli (void)
 {
   __asm__ volatile ("cli" ::: "memory");
+}
+
+int
+loom_arch_irq_save (void)
+{
+  int flags;
+  __asm__ volatile ("pushf; pop %0" : "=r"(flags)::"memory");
+  return flags;
+}
+
+void
+loom_arch_irq_restore (int flags)
+{
+  if (flags & 0x200)
+    loom_arch_sti ();
 }

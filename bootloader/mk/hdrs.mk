@@ -3,6 +3,8 @@ INCDIR := include
 HDRS := arch.h \
         console.h \
 		error.h \
+		input.h \
+		keycode.h \
 		main.h \
 		mmap.h \
 		mm.h \
@@ -19,7 +21,8 @@ HDRS += arch/i686/bios.h \
 		arch/i686/idt.h \
 		arch/i686/io.h \
 		arch/i686/isr.h \
-		arch/i686/pic.h
+		arch/i686/pic.h \
+		arch/i686/ps2.h
 
 endif
 

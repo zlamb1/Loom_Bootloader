@@ -12,4 +12,7 @@ void EXPORT (loom_arch_mmap_iterate) (mmap_hook hook);
 void EXPORT (loom_arch_sti) (void);
 void EXPORT (loom_arch_cli) (void);
 
+int EXPORT (loom_arch_irq_save) (void);
+void EXPORT (loom_arch_irq_restore) (int);
+
 #endif
