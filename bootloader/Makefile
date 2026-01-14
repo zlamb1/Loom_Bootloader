@@ -66,6 +66,6 @@ dbg: build
 	gdb -q $(ELF) -x gdb/config
 
 clean::
-	rm -f $(ELF) $(BIN) $(OBJS)
+	rm -f $(ELF) $(BIN) $(DEPS) $(OBJS)
 
 -include $(DEPS)

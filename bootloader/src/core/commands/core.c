@@ -15,24 +15,34 @@ typedef struct
 static loom_bool_t
 parse_console_color (char *arg, loom_console_color_t *color)
 {
+  int c;
+
   static color_map_t color_map[] = {
-    { "0", LOOM_CONSOLE_COLOR_BLACK },
-    { "1", LOOM_CONSOLE_COLOR_BLUE },
-    { "2", LOOM_CONSOLE_COLOR_GREEN },
-    { "3", LOOM_CONSOLE_COLOR_CYAN },
-    { "4", LOOM_CONSOLE_COLOR_RED },
-    { "5", LOOM_CONSOLE_COLOR_PURPLE },
-    { "6", LOOM_CONSOLE_COLOR_BROWN },
-    { "7", LOOM_CONSOLE_COLOR_LIGHT_GRAY },
-    { "8", LOOM_CONSOLE_COLOR_DARK_GRAY },
-    { "9", LOOM_CONSOLE_COLOR_LIGHT_BLUE },
-    { "10", LOOM_CONSOLE_COLOR_LIGHT_GREEN },
-    { "11", LOOM_CONSOLE_COLOR_LIGHT_CYAN },
-    { "12", LOOM_CONSOLE_COLOR_LIGHT_RED },
-    { "13", LOOM_CONSOLE_COLOR_LIGHT_PURPLE },
-    { "14", LOOM_CONSOLE_COLOR_YELLOW },
-    { "15", LOOM_CONSOLE_COLOR_WHITE },
+    { "black", LOOM_CONSOLE_COLOR_BLACK },
+    { "blue", LOOM_CONSOLE_COLOR_BLUE },
+    { "green", LOOM_CONSOLE_COLOR_GREEN },
+    { "cyan", LOOM_CONSOLE_COLOR_CYAN },
+    { "red", LOOM_CONSOLE_COLOR_RED },
+    { "purple", LOOM_CONSOLE_COLOR_PURPLE },
+    { "brown", LOOM_CONSOLE_COLOR_BROWN },
+    { "light gray", LOOM_CONSOLE_COLOR_LIGHT_GRAY },
+    { "dark gray", LOOM_CONSOLE_COLOR_DARK_GRAY },
+    { "light blue", LOOM_CONSOLE_COLOR_LIGHT_BLUE },
+    { "light green", LOOM_CONSOLE_COLOR_LIGHT_GREEN },
+    { "light cyan", LOOM_CONSOLE_COLOR_LIGHT_CYAN },
+    { "light red", LOOM_CONSOLE_COLOR_LIGHT_RED },
+    { "light purple", LOOM_CONSOLE_COLOR_LIGHT_PURPLE },
+    { "yellow", LOOM_CONSOLE_COLOR_YELLOW },
+    { "white", LOOM_CONSOLE_COLOR_WHITE },
   };
+
+  if (loom_strtoi (arg, &c) == LOOM_ERR_NONE)
+    {
+      if (c < 0 || c > LOOM_CONSOLE_COLOR_MAX)
+        return 0;
+      *color = (loom_console_color_t) c;
+      return 1;
+    }
 
   loom_strlower (arg);
 
@@ -99,31 +109,24 @@ loom_cmd_clear (UNUSED loom_command_t *cmd, UNUSED loom_usize_t argc,
     }
 }
 
+static void
+register_cmd (const char *name, loom_fn_t fn)
+{
+  loom_command_t *cmd = loom_malloc (sizeof (loom_command_t));
+
+  if (!cmd)
+    return;
+
+  cmd->name = name;
+  cmd->fn = fn;
+
+  loom_register_command (cmd);
+}
+
 void
 loom_init_core_cmds (void)
 {
-  loom_command_t *fg_cmd = loom_malloc (sizeof (loom_command_t));
-  loom_command_t *bg_cmd = loom_malloc (sizeof (loom_command_t));
-  loom_command_t *clear_cmd = loom_malloc (sizeof (loom_command_t));
-
-  if (!fg_cmd || !bg_cmd)
-    {
-      loom_free (fg_cmd);
-      loom_free (bg_cmd);
-      loom_free (clear_cmd);
-      return;
-    }
-
-  fg_cmd->name = "fg";
-  fg_cmd->fn = loom_cmd_fg;
-
-  bg_cmd->name = "bg";
-  bg_cmd->fn = loom_cmd_bg;
-
-  clear_cmd->name = "clear";
-  clear_cmd->fn = loom_cmd_clear;
-
-  loom_register_command (fg_cmd);
-  loom_register_command (bg_cmd);
-  loom_register_command (clear_cmd);
+  register_cmd ("fg", loom_cmd_fg);
+  register_cmd ("bg", loom_cmd_bg);
+  register_cmd ("clear", loom_cmd_clear);
 }
