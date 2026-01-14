@@ -29,3 +29,14 @@ loom_streq (const char *s1, const char *s2)
       s2++;
     }
 }
+
+void
+EXPORT (loom_strlower) (char *s)
+{
+  while (s[0])
+    {
+      if (s[0] >= 'A' && s[0] <= 'Z')
+        s[0] += 0x20;
+      ++s;
+    }
+}

@@ -15,25 +15,91 @@ typedef struct
   char *buf;
 } shell_t;
 
-void
+static char *
+shell_parse_arg (char *buf, loom_usize_t *pos)
+{
+  loom_usize_t runpos = *pos, runlen = 0;
+
+  while (buf[runpos])
+    {
+      if (buf[runpos] == ' ')
+        {
+          if (runlen)
+            break;
+          goto next;
+        }
+
+      ++runlen;
+
+    next:
+      ++runpos;
+    }
+
+  if (!runlen)
+    return NULL;
+
+  if (buf[runpos])
+    {
+      buf[runpos] = 0;
+      *pos = runpos + 1;
+    }
+  else
+    *pos = runpos;
+
+  return buf + (runpos - runlen);
+}
+
+static void
 shell_exec_command (shell_t *shell)
 {
   loom_command_t *command;
+  loom_usize_t argc = 0, argvc = 0, pos = 0;
+  char **argv = NULL, *arg;
 
-  if (shell->buf[0] == 0)
+  while ((arg = shell_parse_arg (shell->buf, &pos)))
+    {
+      if (argc == argvc)
+        {
+          char **newargv;
+          loom_usize_t oldargvc = argvc;
+
+          if (!argvc)
+            argvc = 1;
+          else
+            argvc *= 2;
+
+          newargv = loom_realloc (argv, oldargvc * sizeof (char *),
+                                  argvc * sizeof (char *));
+          if (!newargv)
+            {
+              loom_free (argv);
+              loom_panic ("Out of memory.");
+            }
+
+          argv = newargv;
+        }
+
+      argv[argc++] = arg;
+    }
+
+  if (!argc)
     return;
 
-  command = loom_command_find (shell->buf);
+  command = loom_find_command (argv[0]);
 
-  if (!command)
-    loom_printf ("\ncommand not found: '%s'", shell->buf);
+  if (command)
+    command->fn (command, argc, argv);
+  else
+    loom_printf ("unknown command: '%s'\n", argv[0]);
 
-  loom_printf ("\n");
+  loom_free (argv);
 }
 
-void
+static void
 shell_write_keycode (shell_t *shell, int mods, int keycode)
 {
+  char *buf = shell->buf;
+
   switch (keycode)
     {
     case LOOM_KEY_BACKSPACE:
@@ -42,15 +108,15 @@ shell_write_keycode (shell_t *shell, int mods, int keycode)
 
       if (shell->cursor-- == shell->len--)
         {
-          shell->buf[shell->len] = 0;
+          buf[shell->len] = 0;
           loom_printf ("\b \b");
           return;
         }
 
-      loom_printf ("\b%s \b", shell->buf + shell->cursor + 1);
+      loom_printf ("\b%s \b", buf + shell->cursor + 1);
       for (loom_usize_t i = shell->cursor; i < shell->len; ++i)
         {
-          shell->buf[i] = shell->buf[i + 1];
+          buf[i] = shell->buf[i + 1];
           loom_printf ("\b");
         }
 
@@ -58,6 +124,7 @@ shell_write_keycode (shell_t *shell, int mods, int keycode)
 
       break;
     case LOOM_KEY_ENTER:
+      loom_printf ("\n");
       shell_exec_command (shell);
       shell->len = 0;
       shell->cursor = 0;
@@ -89,11 +156,11 @@ shell_write_keycode (shell_t *shell, int mods, int keycode)
         if (shell->cursor == shell->len)
           {
             shell->cursor++;
-            shell->buf[shell->len++] = ch;
-            shell->buf[shell->len + 1] = 0;
+            buf[shell->len++] = ch;
+            buf[shell->len + 1] = 0;
           }
         else
-          shell->buf[shell->cursor] = ch;
+          buf[shell->cursor] = ch;
 
         loom_printf ("%c", ch);
         break;

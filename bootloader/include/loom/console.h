@@ -21,6 +21,11 @@
 #define LOOM_CONSOLE_COLOR_WHITE        15
 #define LOOM_CONSOLE_COLOR_MAX          15
 
+#define LOOM_CONSOLE_DEFAULT_FG LOOM_CONSOLE_COLOR_WHITE
+#define LOOM_CONSOLE_DEFAULT_BG LOOM_CONSOLE_COLOR_BLACK
+
+typedef loom_uint8_t loom_console_color_t;
+
 typedef struct
 {
   loom_usize_t len, splats;
