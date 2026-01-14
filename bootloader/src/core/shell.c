@@ -1,5 +1,6 @@
 #include "loom/shell.h"
 #include "loom/command.h"
+#include "loom/console.h"
 #include "loom/error.h"
 #include "loom/input.h"
 #include "loom/keycode.h"
@@ -115,10 +116,14 @@ shell_write_keycode (shell_t *shell, int mods, int keycode)
 
       loom_printf ("\b%s \b", buf + shell->cursor + 1);
       for (loom_usize_t i = shell->cursor; i < shell->len; ++i)
-        {
-          buf[i] = shell->buf[i + 1];
-          loom_printf ("\b");
-        }
+        buf[i] = shell->buf[i + 1];
+
+      {
+        loom_write_buffer_t wbufs[]
+            = { { .len = 1, .splats = shell->len - shell->cursor, .s = "\b" },
+                { 0 } };
+        loom_con_write_all (wbufs);
+      }
 
       shell->buf[shell->len] = 0;
 
@@ -128,6 +133,7 @@ shell_write_keycode (shell_t *shell, int mods, int keycode)
       shell_exec_command (shell);
       shell->len = 0;
       shell->cursor = 0;
+      shell->buf[0] = 0;
       loom_printf (PROMPT);
       break;
     case LOOM_KEY_LEFT:
@@ -158,11 +164,29 @@ shell_write_keycode (shell_t *shell, int mods, int keycode)
             shell->cursor++;
             buf[shell->len++] = ch;
             buf[shell->len + 1] = 0;
+            loom_printf ("%c", ch);
           }
         else
-          buf[shell->cursor] = ch;
+          {
+            loom_write_buffer_t wbufs[] = {
+              { .len = 1, .splats = shell->len - shell->cursor, .s = "\b" },
+              { 0 }
+            };
 
-        loom_printf ("%c", ch);
+            for (loom_usize_t i = shell->len - 1; i >= shell->cursor; --i)
+              {
+                buf[i + 1] = buf[i];
+                if (!i)
+                  break;
+              }
+
+            buf[shell->cursor++] = ch;
+            buf[++shell->len] = 0;
+
+            loom_printf ("%c%s", ch, buf + shell->cursor);
+            loom_con_write_all (wbufs);
+          }
+
         break;
       }
     }
@@ -177,8 +201,11 @@ loom_exec_shell (void)
 
   shell_t shell = { 0 };
   shell.buf = loom_malloc (CAP);
+
   if (!shell.buf)
     loom_panic ("Out of memory.");
+
+  shell.buf[0] = 0;
 
   for (;;)
     {
