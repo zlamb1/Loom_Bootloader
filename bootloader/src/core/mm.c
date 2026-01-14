@@ -20,6 +20,7 @@ typedef struct arena_t
 {
   loom_usize_t length;
   loom_usize_t offset;
+  loom_usize_t prev_alloc;
   loom_uint32_t magic;
   struct arena_t *next;
 } arena_t;
@@ -59,6 +60,7 @@ loom_mm_add_region (loom_usize_t address, loom_usize_t length)
   arena_t *arena = (arena_t *) address;
   arena->length = length - aligned_arena_size;
   arena->offset = aligned_arena_size;
+  arena->prev_alloc = 0;
   arena->next = arenas;
   arena->magic = MAGIC_OF (arena);
 
@@ -123,6 +125,7 @@ loom_malloc (loom_usize_t size)
 
       arena->length -= size;
       arena->offset += size;
+      arena->prev_alloc = size;
       arena->magic = MAGIC_OF (arena);
 
       return p;
@@ -199,10 +202,6 @@ loom_realloc (void *p, loom_usize_t oldsize, loom_usize_t newsize)
 void
 loom_free (void *p)
 {
-  // No-op for this allocator.
-  // We can still validate the pointer.
-
-  arena_t *arena = arenas;
   loom_usize_t arena_aligned_size = ALIGN_UP (sizeof (arena_t));
 
   loom_uintptr_t addr = (loom_uintptr_t) p;
@@ -214,21 +213,29 @@ loom_free (void *p)
   if (!addr)
     return;
 
-  while (arena)
-    {
-      loom_uintptr_t arena_addr;
+  LOOM_LIST_ITERATE (arenas, arena)
+  {
+    loom_uintptr_t arena_addr;
 
-      if (arena->magic != MAGIC_OF (arena))
-        loom_panic ("heap corruption detected");
+    if (arena->magic != MAGIC_OF (arena))
+      loom_panic ("heap corruption detected");
 
-      arena_addr = (loom_uintptr_t) arena;
+    arena_addr = (loom_uintptr_t) arena;
 
-      if (addr >= arena_addr + arena_aligned_size
-          && addr < arena_addr + arena->offset)
+    if (addr >= arena_addr + arena_aligned_size
+        && addr < arena_addr + arena->offset)
+      {
+        if (addr + arena->prev_alloc == arena_addr + arena->offset)
+          {
+            arena->offset -= arena->prev_alloc;
+            arena->length += arena->prev_alloc;
+            arena->prev_alloc = 0;
+            arena->magic = MAGIC_OF (arena);
+          }
+
         return;
-
-      arena = arena->next;
-    }
+      }
+  }
 
   loom_panic ("invalid pointer");
 }

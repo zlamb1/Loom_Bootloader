@@ -121,7 +121,7 @@ loom_cmd_memory (UNUSED loom_command_t *cmd, loom_usize_t argc, char *argv[])
   if (free)
     loom_printf ("%lu bytes free\n", loom_mm_bytes_free ());
   else
-    loom_printf ("%lu bytes allocted\n", loom_mm_bytes_allocated ());
+    loom_printf ("%lu bytes allocated\n", loom_mm_bytes_allocated ());
 }
 
 static void
