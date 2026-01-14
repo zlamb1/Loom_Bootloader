@@ -110,6 +110,21 @@ loom_cmd_clear (UNUSED loom_command_t *cmd, UNUSED loom_usize_t argc,
 }
 
 static void
+loom_cmd_memory (UNUSED loom_command_t *cmd, loom_usize_t argc, char *argv[])
+{
+  int free = 1;
+
+  if (argc > 1
+      && (loom_streq (argv[1], "allocated") || loom_streq (argv[1], "0")))
+    free = 0;
+
+  if (free)
+    loom_printf ("%lu bytes free\n", loom_mm_bytes_free ());
+  else
+    loom_printf ("%lu bytes allocted\n", loom_mm_bytes_allocated ());
+}
+
+static void
 register_cmd (const char *name, loom_fn_t fn)
 {
   loom_command_t *cmd = loom_malloc (sizeof (loom_command_t));
@@ -129,4 +144,5 @@ loom_init_core_cmds (void)
   register_cmd ("fg", loom_cmd_fg);
   register_cmd ("bg", loom_cmd_bg);
   register_cmd ("clear", loom_cmd_clear);
+  register_cmd ("memory", loom_cmd_memory);
 }

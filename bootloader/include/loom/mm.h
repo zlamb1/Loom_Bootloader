@@ -6,6 +6,9 @@
 
 void loom_mm_add_region (loom_usize_t address, loom_usize_t length);
 
+loom_usize_t loom_mm_bytes_free (void);
+loom_usize_t loom_mm_bytes_allocated (void);
+
 void *EXPORT (loom_malloc) (loom_usize_t size);
 void *EXPORT (loom_zalloc) (loom_usize_t size);
 void *EXPORT (loom_calloc) (loom_usize_t n, loom_usize_t size);

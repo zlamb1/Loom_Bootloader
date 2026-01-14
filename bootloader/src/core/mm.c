@@ -1,6 +1,7 @@
 #include <stddef.h>
 
 #include "loom/error.h"
+#include "loom/list.h"
 #include "loom/mm.h"
 
 #define ALIGN         _Alignof (max_align_t)
@@ -62,6 +63,36 @@ loom_mm_add_region (loom_usize_t address, loom_usize_t length)
   arena->magic = MAGIC_OF (arena);
 
   arenas = arena;
+}
+
+loom_usize_t
+loom_mm_bytes_free (void)
+{
+  loom_usize_t bytes = 0;
+
+  LOOM_LIST_ITERATE (arenas, arena)
+  {
+    if (arena->magic != MAGIC_OF (arena))
+      loom_panic ("heap corruption detected");
+    bytes += arena->length;
+  }
+
+  return bytes;
+}
+
+loom_usize_t
+loom_mm_bytes_allocated (void)
+{
+  loom_usize_t bytes = 0;
+
+  LOOM_LIST_ITERATE (arenas, arena)
+  {
+    if (arena->magic != MAGIC_OF (arena))
+      loom_panic ("heap corruption detected");
+    bytes += arena->offset;
+  }
+
+  return bytes;
 }
 
 void *
