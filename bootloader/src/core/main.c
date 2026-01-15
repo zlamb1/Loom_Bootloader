@@ -13,7 +13,6 @@ loom_main (void)
   loom_register_export_symbols ();
   loom_init_core_cmds ();
   loom_shell_exec ();
-
   for (;;)
     ;
 }

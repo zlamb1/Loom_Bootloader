@@ -37,7 +37,7 @@ loom_panic (const char *fmt, ...)
           || (uintptr_t) ebp > (uintptr_t) next)
         break;
 
-      symbol = loom_find_symbol (addr);
+      symbol = loom_symbol_find (addr);
       loom_printf ("%s() @ %p\n", symbol ? symbol->name : "???", addr);
 
       ebp = next;

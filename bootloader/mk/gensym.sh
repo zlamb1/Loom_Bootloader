@@ -17,8 +17,8 @@ EOF
 grep -hv '^#' "$@" | \
 gawk 'BEGIN { i=0 }
       match($0, /EXPORT *\(([A-Za-z0-9_]+)\)/, arr) \
-      { print "\tloom_register_symbol(\"" arr[1] "\", " arr[1] ");"; i++ } \
-      END { print "\tcompile_assert(" i " <= CSYMTAB, \"Symbol table full.\");" }' \
+      { print "\tloom_symbol_register(\"" arr[1] "\", " arr[1] ");"; i++ } \
+      END { print "\tcompile_assert(" i " <= LOOM_SYMTAB_SIZE, \"Symbol table full.\");" }' \
      >>$OUTFILE
 
 echo "}" >>"$OUTFILE"

@@ -1,28 +1,37 @@
 #include "loom/symbol.h"
+#include "loom/mm.h"
 #include "loom/types.h"
 
-static loom_uint16_t size = 0;
-static loom_symbol_t symtab[CSYMTAB];
+loom_symtab_t loom_symtab;
 
 int
-EXPORT (loom_register_symbol) (const char *name, void *p)
+EXPORT (loom_symbol_register) (const char *name, void *p)
 {
-  if (size >= sizeof (symtab) / sizeof (*symtab))
+  loom_symbol_t *symbol;
+
+  if (loom_symtab.length >= LOOM_SYMTAB_SIZE)
     return 0;
 
-  symtab[size++] = (loom_symbol_t) { .name = name, .p = p };
+  symbol = loom_malloc (sizeof (loom_symbol_t));
+  if (!symbol)
+    return 0;
+
+  symbol->name = name;
+  symbol->p = p;
+
+  loom_symtab.symbols[loom_symtab.length++] = symbol;
 
   return 1;
 }
 
 loom_symbol_t *
-loom_find_symbol (void *p)
+loom_symbol_find (void *p)
 {
   loom_symbol_t *nearest = NULL;
 
-  for (int i = 0; i < size; i++)
+  for (loom_usize_t i = 0; i < loom_symtab.length; i++)
     {
-      loom_symbol_t *symbol = symtab + i;
+      loom_symbol_t *symbol = loom_symtab.symbols[i];
 
       if (p < symbol->p)
         continue;

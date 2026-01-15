@@ -1,3 +1,4 @@
+#include "loom/types.h"
 #ifndef LOOM_SYMBOL_H
 #define LOOM_SYMBOL_H 1
 
@@ -9,14 +10,20 @@ typedef struct
   void *p;
 } loom_symbol_t;
 
-#define CSYMTAB 64
+typedef struct
+{
+  loom_usize_t length;
+#define LOOM_SYMTAB_SIZE 128
+  loom_symbol_t *symbols[LOOM_SYMTAB_SIZE];
+} loom_symtab_t;
 
-// This function's source is generated at compile time
-// by gensym.sh.
+extern loom_symtab_t loom_symtab;
+
+// This function's source is generated at compile time by gensym.sh.
 void loom_register_export_symbols (void);
 
-int EXPORT (loom_register_symbol) (const char *, void *);
+int EXPORT (loom_symbol_register) (const char *, void *);
 
-loom_symbol_t *EXPORT (loom_find_symbol) (void *);
+loom_symbol_t *EXPORT (loom_symbol_find) (void *);
 
 #endif
