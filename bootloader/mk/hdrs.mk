@@ -3,6 +3,7 @@ INCDIR := include
 HDRS := arch.h \
 		command.h \
         console.h \
+		disk.h \
 		error.h \
 		input.h \
 		keycode.h \

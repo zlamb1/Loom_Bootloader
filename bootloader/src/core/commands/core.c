@@ -1,10 +1,11 @@
 #include "loom/command.h"
 #include "loom/console.h"
+#include "loom/list.h"
 #include "loom/mm.h"
 #include "loom/print.h"
 #include "loom/string.h"
 
-extern loom_console_t *consoles;
+extern loom_console_t *loom_console_list;
 
 typedef struct
 {
@@ -61,7 +62,6 @@ parse_console_color (char *arg, loom_console_color_t *color)
 static void
 loom_cmd_fg (UNUSED loom_command_t *cmd, loom_usize_t argc, char *argv[])
 {
-  loom_console_t *console = consoles;
   loom_console_color_t color = LOOM_CONSOLE_DEFAULT_FG;
 
   if (argc > 1 && !parse_console_color (argv[1], &color))
@@ -70,17 +70,15 @@ loom_cmd_fg (UNUSED loom_command_t *cmd, loom_usize_t argc, char *argv[])
       return;
     }
 
-  while (console)
-    {
-      console->set_fg (console, color);
-      console = console->next;
-    }
+  LOOM_LIST_ITERATE (loom_console_list, console)
+  {
+    console->set_fg (console, color);
+  }
 }
 
 static void
 loom_cmd_bg (UNUSED loom_command_t *cmd, loom_usize_t argc, char *argv[])
 {
-  loom_console_t *console = consoles;
   loom_console_color_t color = LOOM_CONSOLE_DEFAULT_BG;
 
   if (argc > 1 && !parse_console_color (argv[1], &color))
@@ -89,24 +87,17 @@ loom_cmd_bg (UNUSED loom_command_t *cmd, loom_usize_t argc, char *argv[])
       return;
     }
 
-  while (console)
-    {
-      console->set_bg (console, color);
-      console = console->next;
-    }
+  LOOM_LIST_ITERATE (loom_console_list, console)
+  {
+    console->set_bg (console, color);
+  }
 }
 
 static void
 loom_cmd_clear (UNUSED loom_command_t *cmd, UNUSED loom_usize_t argc,
                 UNUSED char *argv[])
 {
-  loom_console_t *console = consoles;
-
-  while (console)
-    {
-      console->clear (console);
-      console = console->next;
-    }
+  LOOM_LIST_ITERATE (loom_console_list, console) { console->clear (console); }
 }
 
 static void

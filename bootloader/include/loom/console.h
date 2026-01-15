@@ -49,7 +49,7 @@ typedef struct loom_console_t
   struct loom_console_t *next;
 } loom_console_t;
 
-extern loom_console_t *consoles;
+extern loom_console_t *loom_console_list;
 
 void loom_wbufs_prepend (loom_usize_t cap, loom_write_buffer_t wbufs[],
                          loom_write_buffer_t wbuf);

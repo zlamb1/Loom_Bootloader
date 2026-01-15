@@ -1,5 +1,35 @@
 #include "loom/string.h"
 
+void
+loom_memcpy (char *restrict dst, const char *restrict src, loom_usize_t count)
+{
+  char *d = dst;
+  const char *s = src;
+
+  if (!d || !s)
+    loom_panic ("loom_memcpy");
+
+  for (loom_usize_t i = 0; i < count; ++i)
+    *d++ = *s++;
+}
+
+void
+loom_memmove (char *dst, const char *src, loom_usize_t count)
+{
+  char *d = dst;
+  const char *s = src;
+
+  if (!d || !s)
+    loom_panic ("loom_memmove");
+
+  if ((loom_address_t) s < (loom_address_t) d)
+    while (count--)
+      d[count] = s[count];
+  else
+    for (loom_usize_t i = 0; i < count; ++i)
+      d[i] = s[i];
+}
+
 loom_usize_t
 loom_strlen (const char *s)
 {

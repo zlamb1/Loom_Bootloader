@@ -1,7 +1,7 @@
 #include "loom/console.h"
 #include "loom/string.h"
 
-loom_console_t *consoles = NULL;
+loom_console_t *loom_console_list = NULL;
 
 void
 loom_wbufs_prepend (loom_usize_t cap, loom_write_buffer_t wbufs[],
@@ -80,14 +80,14 @@ loom_con_register (loom_console_t *con)
   con->set_bg (con, LOOM_CONSOLE_COLOR_BLACK);
   con->clear (con);
 
-  con->next = consoles;
-  consoles = con;
+  con->next = loom_console_list;
+  loom_console_list = con;
 }
 
 void
 loom_con_clear (void)
 {
-  loom_console_t *con = consoles;
+  loom_console_t *con = loom_console_list;
 
   while (con != NULL)
     {
@@ -99,7 +99,7 @@ loom_con_clear (void)
 void
 loom_con_write (loom_usize_t len, const char *buf)
 {
-  loom_console_t *con = consoles;
+  loom_console_t *con = loom_console_list;
 
   while (con != NULL)
     {
@@ -114,7 +114,7 @@ loom_con_write (loom_usize_t len, const char *buf)
 void
 loom_con_write_str (const char *s)
 {
-  loom_console_t *con = consoles;
+  loom_console_t *con = loom_console_list;
   loom_usize_t len = loom_strlen (s);
 
   while (con != NULL)
@@ -130,7 +130,7 @@ loom_con_write_str (const char *s)
 void
 loom_con_write_all (loom_write_buffer_t wbufs[])
 {
-  loom_console_t *con = consoles;
+  loom_console_t *con = loom_console_list;
 
   while (con != NULL)
     {

@@ -2,6 +2,7 @@ SRCS := commands/core.c \
 		arith.c \
 		command.c \
 	    console.c \
+		disk.c \
 		input.c \
 		keycode.c \
 		main.c \
