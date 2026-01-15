@@ -46,7 +46,7 @@ flush (const char *fmt, loom_usize_t *run, loom_usize_t *len)
       else
         *len = tmplen + tmprun;
 
-      loom_con_write (*run, fmt - tmprun);
+      loom_console_write (*run, fmt - tmprun);
 
       *run = 0;
     }
@@ -530,7 +530,7 @@ write:
   else
     *len = *len + speclen;
 
-  loom_con_write_all (wbufs);
+  loom_console_write_all (wbufs);
 
 done:
   return ++fmt;
@@ -576,7 +576,7 @@ read:
           flush (fmt - 1, &run, &len);
           if (len < LOOM_USIZE_MAX)
             ++len;
-          loom_con_write (1, "%");
+          loom_console_write (1, "%");
         }
 
       ++fmt;

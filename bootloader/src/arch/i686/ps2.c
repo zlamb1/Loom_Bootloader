@@ -13,11 +13,11 @@ compile_assert ((CAP & (CAP - 1)) == 0 && CAP != 0,
 
 typedef struct
 {
-  loom_input_dev_t interface;
+  loom_input_source_t interface;
   loom_uint8_t lastkey;
   volatile loom_usize_t head, tail;
   volatile char *buf;
-} loom_ps2_dev_t;
+} loom_ps2_keyboard_t;
 
 static int sc1_to_kc[128] = {
   [0x01] = LOOM_KEY_ESCAPE,     [0x02] = LOOM_KEY_1,
@@ -75,22 +75,22 @@ static int sc1_e0_to_kc[128] = {
   [0x52] = LOOM_KEY_INSERT,  [0x53] = LOOM_KEY_DELETE,
 };
 
-static loom_ps2_dev_t dev = { 0 };
+static loom_ps2_keyboard_t keyboard = { 0 };
 
 static void
 loom_kb_isr (UNUSED loom_uint32_t intno, UNUSED loom_uint32_t error_code)
 {
-  if (dev.buf)
+  if (keyboard.buf)
     {
       char ch = (char) loom_inb (0x60);
 
-      loom_usize_t next_tail = (dev.tail + 1) & (CAP - 1);
+      loom_usize_t next_tail = (keyboard.tail + 1) & (CAP - 1);
 
-      if (dev.head == next_tail)
+      if (keyboard.head == next_tail)
         goto done;
 
-      dev.buf[dev.tail] = ch;
-      dev.tail = next_tail;
+      keyboard.buf[keyboard.tail] = ch;
+      keyboard.tail = next_tail;
     }
 
 done:
@@ -98,9 +98,9 @@ done:
 }
 
 static int
-loom_ps2_read (loom_input_dev_t *_dev, loom_input_t *input)
+loom_ps2_read (loom_input_source_t *src, loom_input_event_t *evt)
 {
-  loom_ps2_dev_t *ps2_dev = (loom_ps2_dev_t *) _dev->data;
+  loom_ps2_keyboard_t *ps2_keyboard = (loom_ps2_keyboard_t *) src->data;
   loom_usize_t head, tail;
 
   int keycode = 0, press;
@@ -108,30 +108,30 @@ loom_ps2_read (loom_input_dev_t *_dev, loom_input_t *input)
 
   int flags = loom_arch_irq_save ();
 
-  head = ps2_dev->head;
-  tail = ps2_dev->tail;
+  head = ps2_keyboard->head;
+  tail = ps2_keyboard->tail;
 
   if (head == tail)
     return 0;
 
-  sc = (loom_uint8_t) ps2_dev->buf[head];
+  sc = (loom_uint8_t) ps2_keyboard->buf[head];
   press = (sc & 0x80) == 0;
 
   if (sc != 0xE0)
     sc = (loom_uint8_t) (sc & ~0x80);
 
-  ps2_dev->head = (head + 1) & (CAP - 1);
+  ps2_keyboard->head = (head + 1) & (CAP - 1);
 
   loom_arch_irq_restore (flags);
 
-  if (dev.lastkey == 0xE0)
+  if (ps2_keyboard->lastkey == 0xE0)
     {
       keycode = sc1_e0_to_kc[sc];
-      dev.lastkey = 0;
+      ps2_keyboard->lastkey = 0;
       goto done;
     }
 
-  dev.lastkey = sc;
+  ps2_keyboard->lastkey = sc;
 
   if (sc == 0xE0)
     return 0;
@@ -142,8 +142,8 @@ done:
   if (!keycode)
     return 0;
 
-  input->press = press;
-  input->keycode = keycode;
+  evt->press = press;
+  evt->keycode = keycode;
 
   return 1;
 }
@@ -151,17 +151,17 @@ done:
 void
 loom_ps2_kb_init (void)
 {
-  dev.interface.read = loom_ps2_read;
-  dev.interface.data = &dev;
+  keyboard.interface.read = loom_ps2_read;
+  keyboard.interface.data = &keyboard;
 
-  dev.head = 0;
-  dev.tail = 0;
-  dev.buf = loom_malloc (CAP);
+  keyboard.head = 0;
+  keyboard.tail = 0;
+  keyboard.buf = loom_malloc (CAP);
 
-  if (!dev.buf)
+  if (!keyboard.buf)
     return;
 
-  loom_register_input_dev (&dev.interface);
+  loom_input_source_register (&keyboard.interface);
 
   loom_pic_register_isr (1, loom_kb_isr);
   loom_pic_unmask (1);

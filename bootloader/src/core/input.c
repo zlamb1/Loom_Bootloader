@@ -1,47 +1,41 @@
 #include "loom/input.h"
 #include "loom/keycode.h"
 
-static loom_input_dev_t *root;
+loom_input_source_t *loom_input_sources;
 
 void
-loom_register_input_dev (loom_input_dev_t *dev)
+loom_input_source_register (loom_input_source_t *src)
 {
-  dev->next = root;
-  root = dev;
-}
-
-loom_input_dev_t *
-loom_get_root_input_dev (void)
-{
-  return root;
+  src->next = loom_input_sources;
+  loom_input_sources = src;
 }
 
 int
-loom_input_dev_read (loom_input_dev_t *dev, loom_input_t *input)
+loom_input_source_read (loom_input_source_t *src, loom_input_event_t *evt)
 {
-  if (!dev)
+  if (!src)
     return 0;
 
-  if (dev->read (dev, input))
+  if (src->read (src, evt))
     {
       int mask;
 
-      if (input->keycode == LOOM_KEY_LEFTSHIFT)
+      if (evt->keycode == LOOM_KEY_LEFTSHIFT)
         mask = LOOM_INPUT_MOD_LEFTSHIFT;
-      else if (input->keycode == LOOM_KEY_RIGHTSHIFT)
+      else if (evt->keycode == LOOM_KEY_RIGHTSHIFT)
         mask = LOOM_INPUT_MOD_RIGHTSHIFT;
-      else if (input->keycode == LOOM_KEY_LEFTALT)
+      else if (evt->keycode == LOOM_KEY_LEFTALT)
         mask = LOOM_INPUT_MOD_LEFTALT;
-      else if (input->keycode == LOOM_KEY_RIGHTALT)
+      else if (evt->keycode == LOOM_KEY_RIGHTALT)
         mask = LOOM_INPUT_MOD_RIGHTALT;
-      else if (input->keycode == LOOM_KEY_CAPSLOCK)
+      else if (evt->keycode == LOOM_KEY_CAPSLOCK)
         {
-          if (input->press)
+          if (evt->press)
             {
-              if (dev->mods & LOOM_INPUT_MOD_CAPSLOCK)
-                dev->mods &= ~LOOM_INPUT_MOD_CAPSLOCK;
+              if (src->mods & LOOM_INPUT_MOD_CAPSLOCK)
+                src->mods &= ~LOOM_INPUT_MOD_CAPSLOCK;
               else
-                dev->mods |= LOOM_INPUT_MOD_CAPSLOCK;
+                src->mods |= LOOM_INPUT_MOD_CAPSLOCK;
             }
 
           return 1;
@@ -49,10 +43,10 @@ loom_input_dev_read (loom_input_dev_t *dev, loom_input_t *input)
       else
         return 1;
 
-      if (input->press)
-        dev->mods |= mask;
+      if (evt->press)
+        src->mods |= mask;
       else
-        dev->mods &= ~mask;
+        src->mods &= ~mask;
 
       return 1;
     }

@@ -5,7 +5,7 @@
 #include "loom/print.h"
 #include "loom/string.h"
 
-extern loom_console_t *loom_console_list;
+extern loom_console_t *loom_consoles;
 
 typedef struct
 {
@@ -70,7 +70,7 @@ loom_cmd_fg (UNUSED loom_command_t *cmd, loom_usize_t argc, char *argv[])
       return;
     }
 
-  LOOM_LIST_ITERATE (loom_console_list, console)
+  LOOM_LIST_ITERATE (loom_consoles, console)
   {
     console->set_fg (console, color);
   }
@@ -87,7 +87,7 @@ loom_cmd_bg (UNUSED loom_command_t *cmd, loom_usize_t argc, char *argv[])
       return;
     }
 
-  LOOM_LIST_ITERATE (loom_console_list, console)
+  LOOM_LIST_ITERATE (loom_consoles, console)
   {
     console->set_bg (console, color);
   }
@@ -97,7 +97,7 @@ static void
 loom_cmd_clear (UNUSED loom_command_t *cmd, UNUSED loom_usize_t argc,
                 UNUSED char *argv[])
 {
-  LOOM_LIST_ITERATE (loom_console_list, console) { console->clear (console); }
+  LOOM_LIST_ITERATE (loom_consoles, console) { console->clear (console); }
 }
 
 static void
@@ -106,7 +106,8 @@ loom_cmd_memory (UNUSED loom_command_t *cmd, loom_usize_t argc, char *argv[])
   int free = 1;
 
   if (argc > 1
-      && (loom_streq (argv[1], "allocated") || loom_streq (argv[1], "0")))
+      && (loom_streq (argv[1], "0") || loom_streq (argv[1], "a")
+          || loom_streq (argv[1], "allocated")))
     free = 0;
 
   if (free)
@@ -116,7 +117,7 @@ loom_cmd_memory (UNUSED loom_command_t *cmd, loom_usize_t argc, char *argv[])
 }
 
 static void
-register_cmd (const char *name, loom_fn_t fn)
+command_register (const char *name, loom_fn_t fn)
 {
   loom_command_t *cmd = loom_malloc (sizeof (loom_command_t));
 
@@ -126,14 +127,14 @@ register_cmd (const char *name, loom_fn_t fn)
   cmd->name = name;
   cmd->fn = fn;
 
-  loom_register_command (cmd);
+  loom_command_register (cmd);
 }
 
 void
 loom_init_core_cmds (void)
 {
-  register_cmd ("fg", loom_cmd_fg);
-  register_cmd ("bg", loom_cmd_bg);
-  register_cmd ("clear", loom_cmd_clear);
-  register_cmd ("memory", loom_cmd_memory);
+  command_register ("fg", loom_cmd_fg);
+  command_register ("bg", loom_cmd_bg);
+  command_register ("clear", loom_cmd_clear);
+  command_register ("memory", loom_cmd_memory);
 }

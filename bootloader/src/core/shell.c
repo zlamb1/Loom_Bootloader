@@ -86,7 +86,7 @@ shell_exec_command (shell_t *shell)
   if (!argc)
     return;
 
-  command = loom_find_command (argv[0]);
+  command = loom_command_find (argv[0]);
 
   if (command)
     command->fn (command, argc, argv);
@@ -122,7 +122,7 @@ shell_write_keycode (shell_t *shell, int mods, int keycode)
         loom_write_buffer_t wbufs[]
             = { { .len = 1, .splats = shell->len - shell->cursor, .s = "\b" },
                 { 0 } };
-        loom_con_write_all (wbufs);
+        loom_console_write_all (wbufs);
       }
 
       shell->buf[shell->len] = 0;
@@ -184,7 +184,7 @@ shell_write_keycode (shell_t *shell, int mods, int keycode)
             buf[++shell->len] = 0;
 
             loom_printf ("%c%s", ch, buf + shell->cursor);
-            loom_con_write_all (wbufs);
+            loom_console_write_all (wbufs);
           }
 
         break;
@@ -193,11 +193,11 @@ shell_write_keycode (shell_t *shell, int mods, int keycode)
 }
 
 void
-loom_exec_shell (void)
+loom_shell_exec (void)
 {
   loom_printf (PROMPT);
 
-  loom_input_dev_t *dev = loom_get_root_input_dev ();
+  loom_input_source_t *src = loom_input_sources;
 
   shell_t shell = { 0 };
   shell.buf = loom_malloc (CAP);
@@ -209,14 +209,14 @@ loom_exec_shell (void)
 
   for (;;)
     {
-      loom_input_t input;
+      loom_input_event_t evt;
 
-      if (dev && loom_input_dev_read (dev, &input))
+      if (src && loom_input_source_read (src, &evt))
         {
-          if (!input.press)
+          if (!evt.press)
             continue;
 
-          shell_write_keycode (&shell, dev->mods, input.keycode);
+          shell_write_keycode (&shell, src->mods, evt.keycode);
         }
     }
 }

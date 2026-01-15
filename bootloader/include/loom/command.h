@@ -16,7 +16,9 @@ typedef struct loom_command_t
   struct loom_command_t *next;
 } loom_command_t;
 
-void EXPORT (loom_register_command) (loom_command_t *command);
-loom_command_t *EXPORT (loom_find_command) (const char *name);
+extern loom_command_t *loom_commands;
+
+void EXPORT (loom_command_register) (loom_command_t *command);
+loom_command_t *EXPORT (loom_command_find) (const char *name);
 
 #endif

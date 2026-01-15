@@ -215,5 +215,5 @@ static loom_vga_console vga_con = {
 void
 loom_vga_con_register (void)
 {
-  loom_con_register (&vga_con.interface);
+  loom_console_register (&vga_con.interface);
 }

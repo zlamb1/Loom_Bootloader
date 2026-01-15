@@ -2,24 +2,24 @@
 #include "loom/mm.h"
 #include "loom/string.h"
 
-loom_disk_dev_t *loom_disks = NULL;
+loom_disk_t *loom_disks = NULL;
 
 void
-loom_register_disk_dev (loom_disk_dev_t *dev)
+loom_disk_register (loom_disk_t *disk)
 {
-  dev->next = loom_disks;
-  loom_disks = dev;
+  disk->next = loom_disks;
+  loom_disks = disk;
 }
 
 loom_error_t
-loom_disk_read (loom_disk_dev_t *disk_dev, loom_usize_t offset,
-                loom_usize_t count, char *buf)
+loom_disk_read (loom_disk_t *disk, loom_usize_t offset, loom_usize_t count,
+                char *buf)
 {
   loom_error_t error = LOOM_ERR_NONE;
   loom_usize_t bpb, block, rem;
   char *bounce = NULL;
 
-  if (!disk_dev)
+  if (!disk)
     return LOOM_ERR_BAD_ARG;
 
   if (!count)
@@ -28,7 +28,7 @@ loom_disk_read (loom_disk_dev_t *disk_dev, loom_usize_t offset,
   if (!buf)
     return LOOM_ERR_BAD_ARG;
 
-  bpb = disk_dev->bpb;
+  bpb = disk->bpb;
 
   if (!bpb)
     return LOOM_ERR_BAD_BLOCK_SIZE;
@@ -46,7 +46,7 @@ loom_disk_read (loom_disk_dev_t *disk_dev, loom_usize_t offset,
       if (!bounce)
         return LOOM_ERR_ALLOC;
 
-      if ((error = disk_dev->read (disk_dev, block, 1, bounce)))
+      if ((error = disk->read (disk, block, 1, bounce)))
         goto done;
 
       loom_memcpy (buf, bounce + rem, read);
@@ -67,7 +67,7 @@ loom_disk_read (loom_disk_dev_t *disk_dev, loom_usize_t offset,
           goto done;
         }
 
-      if ((error = disk_dev->read (disk_dev, block, blocks, buf)))
+      if ((error = disk->read (disk, block, blocks, buf)))
         goto done;
 
       bytes = blocks * bpb;
@@ -92,7 +92,7 @@ loom_disk_read (loom_disk_dev_t *disk_dev, loom_usize_t offset,
             }
         }
 
-      if ((error = disk_dev->read (disk_dev, block, 1, bounce)))
+      if ((error = disk->read (disk, block, 1, bounce)))
         goto done;
 
       loom_memcpy (buf, bounce, count);

@@ -1,7 +1,8 @@
 #include "loom/console.h"
+#include "loom/list.h"
 #include "loom/string.h"
 
-loom_console_t *loom_console_list = NULL;
+loom_console_t *loom_consoles = NULL;
 
 void
 loom_wbufs_prepend (loom_usize_t cap, loom_write_buffer_t wbufs[],
@@ -74,67 +75,53 @@ loom_wbufs_char_len (loom_write_buffer_t wbufs[])
 }
 
 void
-loom_con_register (loom_console_t *con)
+loom_console_register (loom_console_t *console)
 {
-  con->set_fg (con, LOOM_CONSOLE_COLOR_WHITE);
-  con->set_bg (con, LOOM_CONSOLE_COLOR_BLACK);
-  con->clear (con);
+  console->set_fg (console, LOOM_CONSOLE_COLOR_WHITE);
+  console->set_bg (console, LOOM_CONSOLE_COLOR_BLACK);
+  console->clear (console);
 
-  con->next = loom_console_list;
-  loom_console_list = con;
+  console->next = loom_consoles;
+  loom_consoles = console;
 }
 
 void
-loom_con_clear (void)
+loom_console_clear (void)
 {
-  loom_console_t *con = loom_console_list;
-
-  while (con != NULL)
-    {
-      con->clear (con);
-      con = con->next;
-    }
+  LOOM_LIST_ITERATE (loom_consoles, console) { console->clear (console); }
 }
 
 void
-loom_con_write (loom_usize_t len, const char *buf)
+loom_console_write (loom_usize_t len, const char *buf)
 {
-  loom_console_t *con = loom_console_list;
-
-  while (con != NULL)
-    {
-      con->write_all (con, (loom_write_buffer_t[]) {
-                               { .len = len, .splats = 1, .s = buf },
-                               { 0 },
-                           });
-      con = con->next;
-    }
+  LOOM_LIST_ITERATE (loom_consoles, console)
+  {
+    console->write_all (console, (loom_write_buffer_t[]) {
+                                     { .len = len, .splats = 1, .s = buf },
+                                     { 0 },
+                                 });
+  }
 }
 
 void
-loom_con_write_str (const char *s)
+loom_console_write_str (const char *s)
 {
-  loom_console_t *con = loom_console_list;
   loom_usize_t len = loom_strlen (s);
 
-  while (con != NULL)
-    {
-      con->write_all (con, (loom_write_buffer_t[]) {
-                               { .len = len, .splats = 1, .s = s },
-                               { 0 },
-                           });
-      con = con->next;
-    }
+  LOOM_LIST_ITERATE (loom_consoles, console)
+  {
+    console->write_all (console, (loom_write_buffer_t[]) {
+                                     { .len = len, .splats = 1, .s = s },
+                                     { 0 },
+                                 });
+  }
 }
 
 void
-loom_con_write_all (loom_write_buffer_t wbufs[])
+loom_console_write_all (loom_write_buffer_t wbufs[])
 {
-  loom_console_t *con = loom_console_list;
-
-  while (con != NULL)
-    {
-      con->write_all (con, wbufs);
-      con = con->next;
-    }
+  LOOM_LIST_ITERATE (loom_consoles, console)
+  {
+    console->write_all (console, wbufs);
+  }
 }
