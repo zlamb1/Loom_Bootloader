@@ -3,6 +3,7 @@ SRCS := commands/core.c \
 		command.c \
 	    console.c \
 		disk.c \
+		error.c \
 		input.c \
 		keycode.c \
 		main.c \

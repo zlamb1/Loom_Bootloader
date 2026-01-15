@@ -14,6 +14,8 @@
 
 typedef loom_uint8_t loom_error_t;
 
+const char *EXPORT (loom_strerror) (loom_error_t);
+
 void NORETURN PRINTF (1, 2) EXPORT (loom_panic) (const char *fmt, ...);
 
 #endif
