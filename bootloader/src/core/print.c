@@ -636,16 +636,14 @@ snprintf_write_all (loom_write_buffer_t wbufs[], void *data)
       wbuf = wbufs[i];
 
       for (loom_usize_t j = 0; j < wbuf.splats; ++j)
-        {
-          for (loom_usize_t k = 0; k < wbuf.len; ++k)
-            {
-              if (!ctx->length)
-                return;
+        for (loom_usize_t k = 0; k < wbuf.len; ++k)
+          {
+            if (!ctx->length)
+              return;
 
-              *ctx->s++ = wbuf.s[k];
-              --ctx->length;
-            }
-        }
+            *ctx->s++ = wbuf.s[k];
+            --ctx->length;
+          }
     }
 }
 
@@ -654,14 +652,17 @@ loom_vsnprintf (char *s, loom_usize_t n, const char *fmt, va_list args)
 {
   loom_usize_t length;
   snprintf_context_t ctx = {
-    .length = n,
+    .length = n ? n - 1 : 0,
     .s = s,
   };
 
   length = loom_bvprintf (snprintf_write_all, &ctx, fmt, args);
 
+  if (ctx.length >= n)
+    loom_panic ("loom_vsnprintf");
+
   if (n)
-    s[n - 1] = 0;
+    s[n - ctx.length - 1] = 0;
 
   return length;
 }
