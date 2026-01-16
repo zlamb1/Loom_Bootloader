@@ -1,7 +1,7 @@
 #include "loom/partition.h"
 
-loom_partition_scheme_t *loom_partition_scheme_list = NULL;
-loom_partition_t *loom_partition_list = NULL;
+loom_partition_scheme_t *loom_partition_schemes = NULL;
+loom_partition_t *loom_partitions = NULL;
 
 void
 loom_register_partition_scheme (loom_partition_scheme_t *partition_scheme)

@@ -6,6 +6,10 @@
 #include "compiler.h"
 #include "types.h"
 
+loom_usize_t EXPORT (loom_vsnprintf) (char *s, loom_usize_t n, const char *fmt,
+                                      va_list args);
+loom_usize_t PRINTF (3, 4)
+    EXPORT (loom_snprintf) (char *s, loom_usize_t n, const char *fmt, ...);
 loom_usize_t EXPORT (loom_vprintf) (const char *fmt, va_list args);
 loom_usize_t PRINTF (1, 2) EXPORT (loom_printf) (const char *fmt, ...);
 loom_usize_t PRINTF (1, 2) loom_wprintf (const char *fmt, ...);

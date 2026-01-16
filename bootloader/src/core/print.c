@@ -32,8 +32,22 @@ typedef struct
   unsigned int base;
 } format_t;
 
+typedef void (*write_all) (loom_write_buffer_t wbufs[], void *data);
+
 static void
-flush (const char *fmt, loom_usize_t *run, loom_usize_t *len)
+write (write_all write_fn, void *data, loom_usize_t len, const char *buf)
+{
+  write_fn (
+      (loom_write_buffer_t[]) {
+          { .len = len, .splats = 1, .s = buf },
+          { 0 },
+      },
+      data);
+}
+
+static void
+flush (write_all write_fn, void *data, const char *fmt, loom_usize_t *run,
+       loom_usize_t *len)
 {
   loom_usize_t tmprun = *run;
 
@@ -46,7 +60,7 @@ flush (const char *fmt, loom_usize_t *run, loom_usize_t *len)
       else
         *len = tmplen + tmprun;
 
-      loom_console_write (*run, fmt - tmprun);
+      write (write_fn, data, *run, fmt - tmprun);
 
       *run = 0;
     }
@@ -451,8 +465,9 @@ pad:
 }
 
 static const char *
-print (const char *fmt, loom_usize_t *len, va_list *args, unsigned int flags,
-       unsigned int width, precision_t prec, unsigned int length)
+print (write_all write_fn, void *data, const char *fmt, loom_usize_t *len,
+       va_list *args, unsigned int flags, unsigned int width, precision_t prec,
+       unsigned int length)
 {
   loom_write_buffer_t wbufs[8] = { 0 };
   char ch = fmt[0], nbuf[sizeof (uintmax_t) * CHAR_BIT];
@@ -479,6 +494,12 @@ print (const char *fmt, loom_usize_t *len, va_list *args, unsigned int flags,
 
       if (length != LENGTH_NONE)
         printf_warn (length, 's');
+
+      if (s == NULL)
+        {
+          loom_wbufs_append (cap, wbufs, WBUF (6, "(null)"));
+          goto pad;
+        }
 
       if (prec.valid)
         max_slen = prec.value;
@@ -530,14 +551,14 @@ write:
   else
     *len = *len + speclen;
 
-  loom_console_write_all (wbufs);
+  write_fn (wbufs, data);
 
 done:
   return ++fmt;
 }
 
 loom_usize_t
-loom_vprintf (const char *fmt, va_list args)
+loom_bvprintf (write_all write_fn, void *data, const char *fmt, va_list args)
 {
   loom_usize_t len = 0, run = 0;
   char ch;
@@ -556,7 +577,7 @@ read:
       if (run < LOOM_USIZE_MAX)
         ++run;
       else
-        flush (fmt, &run, &len);
+        flush (write_fn, data, fmt, &run, &len);
 
       ++fmt;
       goto read;
@@ -569,33 +590,105 @@ read:
       if (run < LOOM_USIZE_MAX)
         {
           ++run;
-          flush (fmt - 1, &run, &len);
+          flush (write_fn, data, fmt - 1, &run, &len);
         }
       else
         {
-          flush (fmt - 1, &run, &len);
+          flush (write_fn, data, fmt - 1, &run, &len);
           if (len < LOOM_USIZE_MAX)
             ++len;
-          loom_console_write (1, "%");
+          write (write_fn, data, 1, "%");
         }
 
       ++fmt;
       goto read;
     }
 
-  flush (fmt - 1, &run, &len);
+  flush (write_fn, data, fmt - 1, &run, &len);
 
   fmt = parse_flags (fmt, &flags);
   fmt = parse_width (fmt, &flags, &width, &args);
   fmt = parse_precision (fmt, &prec, &args);
   fmt = parse_length (fmt, &length);
-  fmt = print (fmt, &len, &args, flags, width, prec, length);
+  fmt = print (write_fn, data, fmt, &len, &args, flags, width, prec, length);
 
   goto read;
 
 done:
-  flush (fmt, &run, &len);
+  flush (write_fn, data, fmt, &run, &len);
   return len;
+}
+
+typedef struct
+{
+  loom_usize_t length;
+  char *s;
+} snprintf_context_t;
+
+static void
+snprintf_write_all (loom_write_buffer_t wbufs[], void *data)
+{
+  loom_write_buffer_t wbuf;
+  snprintf_context_t *ctx = (snprintf_context_t *) data;
+
+  for (int i = 0; wbufs[i].s != NULL; ++i)
+    {
+      wbuf = wbufs[i];
+
+      for (loom_usize_t j = 0; j < wbuf.splats; ++j)
+        {
+          for (loom_usize_t k = 0; k < wbuf.len; ++k)
+            {
+              if (!ctx->length)
+                return;
+
+              *ctx->s++ = wbuf.s[k];
+              --ctx->length;
+            }
+        }
+    }
+}
+
+loom_usize_t
+loom_vsnprintf (char *s, loom_usize_t n, const char *fmt, va_list args)
+{
+  loom_usize_t length;
+  snprintf_context_t ctx = {
+    .length = n,
+    .s = s,
+  };
+
+  length = loom_bvprintf (snprintf_write_all, &ctx, fmt, args);
+
+  if (n)
+    s[n - 1] = 0;
+
+  return length;
+}
+
+loom_usize_t
+loom_snprintf (char *s, loom_usize_t n, const char *fmt, ...)
+{
+  va_list args;
+  loom_usize_t length;
+
+  va_start (args, fmt);
+  length = loom_vsnprintf (s, n, fmt, args);
+  va_end (args);
+
+  return length;
+}
+
+static void
+console_write_all (loom_write_buffer_t wbufs[], UNUSED void *data)
+{
+  loom_console_write_all (wbufs);
+}
+
+loom_usize_t
+loom_vprintf (const char *fmt, va_list args)
+{
+  return loom_bvprintf (console_write_all, NULL, fmt, args);
 }
 
 loom_usize_t

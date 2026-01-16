@@ -1,5 +1,6 @@
 #include "loom/disk.h"
 #include "loom/mm.h"
+#include "loom/partition.h"
 #include "loom/string.h"
 
 loom_disk_t *loom_disks = NULL;

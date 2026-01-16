@@ -1,6 +1,7 @@
 #include "loom/main.h"
 #include "loom/arch.h"
 #include "loom/commands/core.h"
+#include "loom/print.h"
 #include "loom/shell.h"
 #include "loom/symbol.h"
 

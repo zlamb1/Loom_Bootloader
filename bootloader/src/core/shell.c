@@ -156,7 +156,7 @@ shell_write_keycode (shell_t *shell, int mods, int keycode)
 
         ch = loom_keycode_to_char (mods, keycode);
 
-        if (!ch)
+        if (!ch || ch == '\t' || ch == '\r')
           return;
 
         if (shell->cursor == shell->len)

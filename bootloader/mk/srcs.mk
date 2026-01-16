@@ -11,6 +11,7 @@ SRCS := commands/core.c \
 		main.c \
 		mm.c \
 		panic.c \
+		partition.c \
 		print.c \
 		shell.c \
 		sp.c \
