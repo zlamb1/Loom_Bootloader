@@ -1,4 +1,5 @@
 #include "loom/crypto/md5.h"
+#include "loom/crypto/crypto.h"
 #include "loom/endian.h"
 #include "loom/string.h"
 
@@ -112,7 +113,7 @@ loom_md5_hash (loom_usize_t length, const char *buf, char digest[16])
           A = D;
           D = C;
           C = B;
-          B += (F << s[i]) | (F >> (32 - s[i]));
+          B += loom_rotate_left (F, s[i]);
         }
 
       a0 += A;
