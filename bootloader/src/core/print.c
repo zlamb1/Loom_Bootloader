@@ -3,11 +3,11 @@
 #include "loom/console.h"
 #include "loom/print.h"
 
-#define FLAG_LEFT_JUSTIFY (1 << 0)
-#define FLAG_FORCE_SIGN   (1 << 1)
-#define FLAG_BLANK_SIGN   (1 << 2)
-#define FLAG_PREFIX       (1 << 3)
-#define FLAG_PAD_ZEROES   (1 << 4)
+#define FLAG_LEFT_JUSTIFY (1u << 0)
+#define FLAG_FORCE_SIGN   (1u << 1)
+#define FLAG_BLANK_SIGN   (1u << 2)
+#define FLAG_PREFIX       (1u << 3)
+#define FLAG_PAD_ZEROES   (1u << 4)
 
 #define LENGTH_NONE 0
 #define LENGTH_HH   1
@@ -93,6 +93,12 @@ read:
       tmp |= FLAG_PAD_ZEROES;
       break;
     default:
+      if (tmp & FLAG_FORCE_SIGN)
+        tmp &= ~FLAG_BLANK_SIGN;
+
+      if (tmp & FLAG_LEFT_JUSTIFY)
+        tmp &= ~FLAG_PAD_ZEROES;
+
       *flags = tmp;
       return fmt;
     }
