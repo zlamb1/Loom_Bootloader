@@ -7,13 +7,13 @@
 
 typedef struct loom_disk_t
 {
+  loom_error_t (*read) (struct loom_disk_t *, loom_usize_t, loom_usize_t,
+                        char *);
+
   loom_usize_t bpb; // Bytes per block.
   loom_usize_t blocks;
   void *data;
   struct loom_disk_t *next;
-
-  loom_error_t (*read) (struct loom_disk_t *, loom_usize_t, loom_usize_t,
-                        char *);
 } loom_disk_t;
 
 extern loom_disk_t *loom_disks;

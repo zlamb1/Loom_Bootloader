@@ -25,18 +25,24 @@ SECTIONS {
     stage3s = .;
 
     .stage3.text : {
+        stext = .;
         *(.text)
         *(.text.*)
+        etext = .;
     }
 
     .stage3.data : {
+        sdata = .;
         *(.data)
         *(.data.*)
+        edata = .;
     }
 
     .stage3.rodata : {
+        srodata = .;
         *(.rodata)
         *(.rodata.*)
+        erodata = .;
     }
 
     . = ALIGN(512);

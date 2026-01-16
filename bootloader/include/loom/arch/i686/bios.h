@@ -19,4 +19,6 @@ typedef struct
 
 void EXPORT (loom_bios_int) (loom_uint8_t intno, loom_bios_args_t *args);
 
+void loom_bios_disk_probe (void);
+
 #endif

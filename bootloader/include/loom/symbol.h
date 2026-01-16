@@ -1,8 +1,8 @@
-#include "loom/types.h"
 #ifndef LOOM_SYMBOL_H
 #define LOOM_SYMBOL_H 1
 
 #include "compiler.h"
+#include "loom/types.h"
 
 typedef struct
 {

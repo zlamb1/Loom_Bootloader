@@ -18,6 +18,10 @@ INC = -I$(INCDIR)
 CFLAGS += -c -fno-strict-aliasing -fno-omit-frame-pointer \
 	      -mno-red-zone -MMD $(INC)
 
+ifeq ($(TARGET),i686)
+CFLAGS += -DLOOM_LITTLE_ENDIAN
+endif
+
 LNKFLAGS ?=
 
 # Required link flags.

@@ -1,4 +1,5 @@
 SRCS := commands/core.c \
+		crypto/md5.c \
 		arith.c \
 		command.c \
 	    console.c \
@@ -36,7 +37,8 @@ TGTSRCS := stage1.asm \
 		   io.c \
 		   idt.c \
 		   exception.c \
-		   ps2.c
+		   ps2.c \
+		   bios.c
 
 LNKSCRPT := $(TGTDIR)/loom.ld
 

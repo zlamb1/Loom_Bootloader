@@ -38,6 +38,7 @@ loom_arch_init (void)
 {
   loom_vga_con_register ();
   loom_arch_mmap_iterate (mmap_mm_hook);
+  loom_bios_disk_probe ();
   loom_pic_remap (0x20, 0x28);
   loom_pic_disable ();
   loom_idt_init ();
