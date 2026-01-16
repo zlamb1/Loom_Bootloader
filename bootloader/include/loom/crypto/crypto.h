@@ -19,8 +19,10 @@
     __r;                                                                      \
   })
 
-void
-loom_printhash (loom_usize_t length, const char *digest)
+typedef unsigned char loom_digest_t;
+
+static inline void
+loom_print_hash (loom_usize_t length, const loom_digest_t *digest)
 {
   for (loom_usize_t i = 0; i < length; ++i)
     loom_printf ("%02hhx", digest[i]);

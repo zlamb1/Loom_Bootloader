@@ -1,7 +1,7 @@
 #include "loom/string.h"
 
 void
-loom_memcpy (char *restrict dst, const char *restrict src, loom_usize_t count)
+loom_memcpy (void *restrict dst, const void *restrict src, loom_usize_t count)
 {
   char *d = dst;
   const char *s = src;
@@ -14,7 +14,7 @@ loom_memcpy (char *restrict dst, const char *restrict src, loom_usize_t count)
 }
 
 void
-loom_memmove (char *dst, const char *src, loom_usize_t count)
+loom_memmove (void *dst, const void *src, loom_usize_t count)
 {
   char *d = dst;
   const char *s = src;
