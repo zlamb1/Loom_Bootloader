@@ -14,11 +14,8 @@
 #define LOOM_ERR_BAD_ELF_HDR    7
 #define LOOM_ERR_BAD_ELF_PHDR   8
 #define LOOM_ERR_BAD_ELF_SHDR   9
-#define LOOM_ERR_BAD_ELF_SHIDX  10
-#define LOOM_ERR_BAD_ELF_SYMIDX 11
-#define LOOM_ERR_BAD_ELF_STRIDX 12
-#define LOOM_ERR_BAD_ELF_REL    13
-#define LOOM_ERR_BAD_MODULE     14
+#define LOOM_ERR_BAD_ELF_REL    10
+#define LOOM_ERR_BAD_MODULE     11
 
 #define LOOM_ERROR(COND, ERROR, ...)                                          \
   do                                                                          \
