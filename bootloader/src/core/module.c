@@ -1,0 +1,531 @@
+#include "loom/module.h"
+#include "loom/elf.h"
+#include "loom/endian.h"
+#include "loom/error.h"
+#include "loom/list.h"
+#include "loom/mm.h"
+#include "loom/print.h"
+#include "loom/string.h"
+#include "loom/symbol.h"
+
+loom_usize_t loom_modend;
+
+typedef struct
+{
+  loom_usize_t size;
+  const char *strs;
+} strtab_t;
+
+typedef struct
+{
+  loom_usize_t entsize;
+  loom_usize_t ents;
+  loom_usize_t shidx;
+  loom_elf32_shdr_t *shdr;
+  strtab_t strtab;
+} symtab_t;
+
+typedef struct
+{
+  loom_elf32_ehdr_t *ehdr;
+  loom_usize_t size;
+  loom_module_t *mod;
+  loom_module_section_t **sections;
+  symtab_t *symtab;
+} section_iterate_context_t;
+
+typedef struct
+{
+  loom_elf32_ehdr_t *ehdr;
+  loom_module_section_t **sections;
+  symtab_t *symtab;
+} rel_iterate_context_t;
+
+loom_module_t *loom_modules;
+
+static int
+section_iterate (loom_usize_t shidx, loom_elf32_shdr_t *shdr, void *data)
+{
+  section_iterate_context_t *ctx = data;
+
+  if (loom_elf32_shdr_validate ((loom_address_t) ctx->ehdr, ctx->size, shdr))
+    return -1;
+
+  if (shidx == LOOM_SHN_UNDEF && shdr->type != LOOM_SHT_NULL)
+    {
+      loom_error (LOOM_ERR_BAD_ELF_SHDR,
+                  "Undefined section has non-null type");
+      return -1;
+    }
+
+  if (shdr->type == LOOM_SHT_SYMTAB)
+    {
+      loom_elf32_shdr_t *strtab;
+
+      if (ctx->symtab->shidx != LOOM_SHN_UNDEF)
+        {
+          loom_error (LOOM_ERR_BAD_MODULE,
+                      "Multiple symbol tables not supported in module");
+          return -1;
+        }
+
+      if (!(strtab = loom_elf32_shdr_get (ctx->ehdr, shdr->link))
+          || loom_elf32_strtab_validate (ctx->ehdr, ctx->size, strtab))
+        return -1;
+
+      if (shdr->entsize < sizeof (loom_elf32_sym_t))
+        {
+          loom_error (LOOM_ERR_BAD_ELF_SHDR,
+                      "Invalid symbol table entry size: %lu",
+                      (unsigned long) shdr->entsize);
+          return -1;
+        }
+
+      ctx->symtab->entsize = shdr->entsize;
+      ctx->symtab->ents = shdr->size / shdr->entsize;
+      ctx->symtab->shidx = shidx;
+      ctx->symtab->shdr = shdr;
+      ctx->symtab->strtab.size = strtab->size;
+      ctx->symtab->strtab.strs
+          = (const char *) ((loom_address_t) ctx->ehdr + strtab->offset);
+    }
+
+  if (shdr->flags & LOOM_SHF_ALLOC)
+    {
+      loom_module_section_t *section;
+
+      if (!shdr->size)
+        return 0;
+
+      if (shdr->addralign > 8)
+        {
+          loom_error (LOOM_ERR_BAD_ELF_SHDR,
+                      "Section alignment %lu not supported",
+                      (unsigned long) shdr->addralign);
+          return -1;
+        }
+
+      section = loom_malloc (sizeof (*section));
+      if (!section)
+        return -1;
+
+      section->shidx = shidx;
+      section->size = shdr->size;
+      section->next = ctx->mod->sections;
+
+      if (shdr->type == LOOM_SHT_NOBITS)
+        section->p = loom_zalloc (shdr->size);
+      else
+        section->p = loom_malloc (shdr->size);
+
+      if (!section->p)
+        {
+          loom_free (section);
+          return -1;
+        }
+
+      if (shdr->type != LOOM_SHT_NOBITS)
+        loom_memcpy (section->p,
+                     (void *) ((loom_address_t) ctx->ehdr + shdr->offset),
+                     shdr->size);
+
+      ctx->mod->sections = section;
+      ctx->sections[shidx] = section;
+    }
+
+  return 0;
+}
+
+static int
+symbol_validate (const char *name, loom_elf32_sym_t *sym, loom_uint8_t type,
+                 loom_module_section_t **sections, loom_usize_t shents)
+{
+  if (LOOM_ELF32_ST_TYPE (sym->info) != type)
+    {
+      loom_error (LOOM_ERR_BAD_MODULE, "Module name symbol is not an object");
+      return -1;
+    }
+
+  if (sym->shidx == LOOM_SHN_UNDEF || sym->shidx >= shents)
+    {
+      loom_error (LOOM_ERR_BAD_MODULE,
+                  "Module symbol %s has an invalid section index", name);
+      return -1;
+    }
+
+  if (!sections[sym->shidx])
+    {
+      loom_error (LOOM_ERR_BAD_MODULE, "Symbol %s is in non-alloc section %lu",
+                  name, (unsigned long) sym->shidx);
+      return -1;
+    }
+
+  return 0;
+}
+
+static int
+rel_iterate (loom_elf32_rel_t *rel, loom_usize_t symtabidx,
+             UNUSED loom_elf32_shdr_t *symtab, loom_usize_t targetidx,
+             UNUSED loom_elf32_shdr_t *target, void *data)
+{
+  loom_usize_t symidx;
+  loom_address_t addr;
+  loom_module_section_t *section;
+
+  rel_iterate_context_t *ctx = data;
+
+  symidx = LOOM_ELF32_R_SYM (rel->info);
+
+  if (symidx >= ctx->symtab->ents)
+    {
+      loom_error (LOOM_ERR_BAD_MODULE,
+                  "Relocation references invalid symbol %lu",
+                  (unsigned long) symidx);
+      return -1;
+    }
+
+  if (symtabidx != ctx->symtab->shidx)
+    {
+      loom_error (LOOM_ERR_BAD_MODULE,
+                  "Relocation references different symbol table %lu",
+                  (unsigned long) symtabidx);
+      return -1;
+    }
+
+  section = ctx->sections[targetidx];
+
+  if (!section)
+    {
+      loom_error (LOOM_ERR_BAD_MODULE,
+                  "Relocation affects non-alloc section %lu",
+                  (unsigned long) targetidx);
+      return -1;
+    }
+
+  if (rel->offset > rel->offset + 4 || rel->offset + 4 > section->size)
+    {
+      loom_error (LOOM_ERR_BAD_ELF_REL, "Relocation overflows section");
+      return -1;
+    }
+
+  addr = (loom_address_t) ctx->ehdr + ctx->symtab->shdr->offset;
+  addr += symidx * ctx->symtab->entsize;
+
+  return loom_elf32_rel_fixup (rel, (loom_elf32_sym_t *) addr, section->p);
+}
+
+static int
+loom_module_load (void *p, loom_usize_t size)
+{
+  loom_elf32_ehdr_t *ehdr;
+  loom_elf32_sym_t *name_sym = NULL, *init_sym = NULL, *deinit_sym = NULL;
+
+  loom_module_t *mod = NULL;
+  loom_module_section_t **sections = NULL;
+
+  symtab_t symtab = { 0 };
+
+  if (loom_elf32_ehdr_load (p, size, &ehdr))
+    return -1;
+
+  mod = loom_malloc (sizeof (*mod));
+  sections = loom_zalloc (ehdr->shents * sizeof (*sections));
+
+  if (!mod || !sections)
+    goto error;
+
+  {
+    symtab.shidx = LOOM_SHN_UNDEF;
+
+    section_iterate_context_t ctx = {
+      .sections = sections,
+      .ehdr = ehdr,
+      .mod = mod,
+      .size = size,
+      .symtab = &symtab,
+    };
+
+    if (loom_elf32_shdr_iterate (ehdr, section_iterate, &ctx))
+      goto error;
+
+    if (symtab.shidx == LOOM_SHN_UNDEF)
+      {
+        loom_error (LOOM_ERR_BAD_MODULE, "Module symbol table not found");
+        goto error;
+      }
+  }
+
+  {
+    loom_address_t addr = (loom_address_t) ehdr;
+    addr += symtab.shdr->offset;
+
+    for (unsigned int i = 0; i < symtab.ents; ++i, addr += symtab.entsize)
+      {
+        loom_module_section_t *section;
+        loom_elf32_sym_t *sym = (void *) addr;
+        const char *name;
+
+        // Skip NULL symbol.
+        if (!i)
+          continue;
+
+        if (sym->name >= symtab.strtab.size)
+          {
+            loom_error (LOOM_ERR_BAD_ELF_SHDR,
+                        "Symbol has invalid index into string table");
+            goto error;
+          }
+
+        name = symtab.strtab.strs + sym->name;
+
+        if (loom_streq (name, "loom_mod_name"))
+          {
+            if (symbol_validate (name, sym, LOOM_STT_OBJECT, sections,
+                                 ehdr->shents))
+              goto error;
+
+            name_sym = sym;
+          }
+        else if (loom_streq (name, "loom_mod_init")
+                 || loom_streq (name, "loom_mod_deinit"))
+          {
+            if (symbol_validate (name, sym, LOOM_STT_FUNC, sections,
+                                 ehdr->shents))
+              goto error;
+
+            if (loom_streq (name, "loom_mod_init"))
+              init_sym = sym;
+            else
+              deinit_sym = sym;
+          }
+        else if (sym->shidx == LOOM_SHN_UNDEF)
+          {
+            loom_symbol_t *symbol = loom_symbol_lookup (name);
+
+            if (!symbol)
+              {
+                loom_error (LOOM_ERR_BAD_MODULE,
+                            "Could not resolve symbol '%s'", name);
+                goto error;
+              }
+
+            sym->value = (loom_uint32_t) symbol->p;
+            continue;
+          }
+
+        if (sym->shidx == LOOM_SHN_UNDEF || sym->shidx >= ehdr->shents)
+          {
+            loom_error (LOOM_ERR_BAD_MODULE,
+                        "Invalid section index %lu for symbol '%s'",
+                        (unsigned long) sym->shidx, name);
+            goto error;
+          }
+
+        section = sections[sym->shidx];
+        if (!section)
+          continue;
+
+        if (sym->value > LOOM_UINT32_MAX - sym->size)
+          {
+            loom_error (LOOM_ERR_BAD_MODULE,
+                        "Symbol '%s' offset overflows address space", name);
+            goto error;
+          }
+
+        if (sym->value + sym->size > section->size)
+          {
+            loom_error (LOOM_ERR_BAD_MODULE, "Symbol '%s' overflows section",
+                        name);
+            goto error;
+          }
+
+        if (sym->value > LOOM_UINT32_MAX - (loom_uint32_t) section->p)
+          {
+            loom_error (LOOM_ERR_BAD_MODULE,
+                        "Symbol offset overflows address space");
+            goto error;
+          }
+
+        sym->value += (loom_uint32_t) section->p;
+      }
+  }
+
+  if (!name_sym)
+    {
+      loom_error (LOOM_ERR_BAD_MODULE, "Module name not found");
+      goto error;
+    }
+
+  if (!init_sym)
+    {
+      loom_error (LOOM_ERR_BAD_MODULE, "Module init not found");
+      goto error;
+    }
+
+  {
+    rel_iterate_context_t ctx = {
+      .ehdr = ehdr,
+      .sections = sections,
+      .symtab = &symtab,
+    };
+
+    if (loom_elf32_rel_iterate (ehdr, rel_iterate, &ctx))
+      goto error;
+  }
+
+  loom_memcpy (&mod->name, (char *) name_sym->value, sizeof (&mod->name));
+
+  mod->init = (loom_module_init_t) init_sym->value;
+
+  if (deinit_sym)
+    mod->deinit = (loom_module_deinit_t) deinit_sym->value;
+  else
+    mod->deinit = NULL;
+
+  mod->prev = NULL;
+  mod->next = NULL;
+
+  loom_free (sections);
+
+  loom_module_add (mod);
+
+  return 0;
+
+error:
+  loom_free (sections);
+  if (mod)
+    loom_module_unload (mod);
+  return -1;
+}
+
+loom_address_t
+loom_modend_get (void)
+{
+  loom_module_header_t hdr;
+  loom_memcpy (&hdr, (void *) loom_modbase, sizeof (hdr));
+  return loom_modbase + loom_le32toh (hdr.size);
+}
+
+void
+loom_core_modules_load (void)
+{
+  loom_module_header_t hdr;
+  loom_uint32_t *modtab, modsize;
+
+  loom_usize_t addr;
+
+  if (!loom_modbase)
+    loom_panic ("loom_modbase not initialized");
+
+  loom_memcpy (&hdr, (void *) loom_modbase, sizeof (hdr));
+
+  hdr.magic = loom_le32toh (hdr.magic);
+  hdr.taboff = loom_le32toh (hdr.taboff);
+  hdr.modoff = loom_le32toh (hdr.modoff);
+  hdr.size = loom_le32toh (hdr.size);
+
+  if (hdr.magic != LOOM_MODULE_HEADER_MAGIC)
+    loom_panic ("bad module header magic: 0x%lx", (unsigned long) hdr.magic);
+
+  if (hdr.size < LOOM_MODULE_HEADER_MIN_SIZE
+      || loom_modbase > LOOM_USIZE_MAX - hdr.size)
+    loom_panic ("bad module header size: %lu", (unsigned long) hdr.size);
+
+  if (hdr.taboff >= hdr.size)
+    loom_panic ("bad module header taboff: %lu", (unsigned long) hdr.taboff);
+
+  if (hdr.taboff >= hdr.modoff)
+    loom_panic ("bad module header taboff: must be less than modoff");
+
+  loom_modend = loom_modbase + hdr.size;
+  modtab = (loom_uint32_t *) (loom_modbase + hdr.taboff);
+  addr = loom_modbase + hdr.modoff;
+
+  while (1)
+    {
+      if ((loom_address_t) modtab + sizeof (*modtab)
+          > loom_modbase + hdr.modoff)
+        loom_panic ("bad module header table: overflows modules");
+
+      loom_memcpy (&modsize, modtab, sizeof (loom_uint32_t));
+      modsize = loom_le32toh (modsize);
+
+      if (!modsize)
+        break;
+
+      if (addr > LOOM_USIZE_MAX - modsize)
+        loom_panic ("bad core module size: %lu", (unsigned long) modsize);
+
+      if (addr + modsize > loom_modend)
+        loom_panic ("bad core module size: %lu bytes past modend",
+                    (unsigned long) ((addr + modsize) - loom_modend));
+
+      if (loom_module_load ((void *) addr, modsize))
+        loom_printf ("Error loading core module: %s\n", loom_error_get ());
+
+      addr += modsize;
+      ++modtab;
+    }
+}
+
+void
+loom_module_add (loom_module_t *mod)
+{
+  mod->prev = NULL;
+  mod->next = loom_modules;
+  loom_modules = mod;
+
+  if (mod->init)
+    mod->init ();
+}
+
+loom_bool_t
+loom_module_remove (const char *name)
+{
+  LOOM_LIST_ITERATE (loom_modules, mod)
+  {
+    if (loom_streq (name, mod->name))
+      {
+        if (mod->deinit)
+          mod->deinit ();
+
+        if (mod->prev)
+          mod->prev->next = mod->next;
+
+        if (mod->next)
+          mod->next->prev = mod->prev;
+
+        if (mod == loom_modules)
+          loom_modules = mod->next;
+
+        loom_module_unload (mod);
+        return 1;
+      }
+  }
+
+  return 0;
+}
+
+void
+loom_module_unload (loom_module_t *mod)
+{
+  loom_module_section_t *section;
+
+  section = mod->sections;
+
+  if (mod->prev)
+    mod->prev->next = mod->next;
+
+  if (mod->next)
+    mod->next->prev = mod->prev;
+
+  while (section)
+    {
+      loom_module_section_t *next = section->next;
+      loom_free (section->p);
+      loom_free (section);
+      section = next;
+    }
+
+  loom_free (mod);
+}

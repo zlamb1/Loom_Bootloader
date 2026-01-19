@@ -3,6 +3,7 @@ BUILD_TYPE ?= podman
 
 include mk/container.mk
 include mk/toolchain.mk
+include mk/build.mk
 include mk/hdrs.mk
 include mk/srcs.mk
 
@@ -11,18 +12,21 @@ DEPS := $(OBJS:.o=.d)
 
 include mk/syms.mk
 
-ELF   := $(OUTDIR)/bootloader.elf
+ELF   := $(OUTDIR)/core.elf
+CORE  := $(OUTDIR)/core
 BIN   := $(OUTDIR)/bootloader
 
-.PHONY: all build clean compile-commands dbg
+.PHONY: all build clean compile-commands corebuild dbg
 
 .DEFAULT_GOAL := all
 
-all: build
+all: $(MODULE_TABLE_BIN) build
 
 ifeq ($(BUILD_TYPE),podman)
 
-build: $(MARKER)
+build: $(BIN)
+
+corebuild: $(MARKER)
 	$(RUN) make build
 
 compile-commands:
@@ -30,14 +34,17 @@ compile-commands:
 
 else
 
-build: $(BIN)
+build: $(CORE)
 
 compile-commands:
 	bear --output $(OUTDIR)/compile_commands.json -- make -B build
 
 endif
 
-$(BIN): $(ELF)
+$(BIN): corebuild $(MODULE_TABLE_BIN)
+	$(MODULE_TABLE_BIN) -i $(CORE) -o $(BIN) $(MOBJS)
+
+$(CORE): $(ELF) $(MOBJS)
 	$(CROSS_OBJCOPY) -O binary $< $@
 
 $(ELF): $(OBJS) $(LNKSCRPT)
@@ -69,3 +76,4 @@ clean::
 	rm -f $(ELF) $(BIN) $(DEPS) $(OBJS)
 
 -include $(DEPS)
+-include $(MDEPS)

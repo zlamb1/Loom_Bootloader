@@ -5,11 +5,13 @@ SRCS := commands/core.c \
 		command.c \
 	    console.c \
 		disk.c \
+		elf.c \
 		error.c \
 		input.c \
 		keycode.c \
 		main.c \
 		mm.c \
+		module.c \
 		panic.c \
 		partition.c \
 		print.c \
@@ -40,7 +42,8 @@ TGTSRCS := stage1.asm \
 		   idt.c \
 		   exception.c \
 		   ps2.c \
-		   bios.c
+		   bios.c \
+		   rel.c
 
 LNKSCRPT := $(TGTDIR)/loom.ld
 

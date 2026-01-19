@@ -1,12 +1,39 @@
 #include "loom/error.h"
+#include "loom/print.h"
 
-#define LOOM_ERR_NONE           0
-#define LOOM_ERR_BAD_ARG        1
-#define LOOM_ERR_ALLOC          2
-#define LOOM_ERR_OVERFLOW       3
-#define LOOM_ERR_RANGE          4
-#define LOOM_ERR_IO             5
-#define LOOM_ERR_BAD_BLOCK_SIZE 6
+#define ERROR_BUF_SIZE 64
+
+loom_error_t loom_errno;
+
+static char error_buf[ERROR_BUF_SIZE];
+
+void
+loom_error (loom_error_t error, const char *fmt, ...)
+{
+  loom_errno = error;
+
+  if (fmt)
+    {
+      va_list args;
+      va_start (args, fmt);
+      loom_vsnprintf (error_buf, ERROR_BUF_SIZE, fmt, args);
+      va_end (args);
+    }
+  else
+    loom_snprintf (error_buf, ERROR_BUF_SIZE, "%s", loom_strerror (error));
+}
+
+const char *
+loom_error_get (void)
+{
+  return error_buf;
+}
+
+void
+loom_error_clear (void)
+{
+  loom_error (LOOM_ERR_NONE, NULL);
+}
 
 const char *
 loom_strerror (loom_error_t error)

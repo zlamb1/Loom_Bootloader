@@ -43,9 +43,9 @@ SECTIONS {
         *(.rodata)
         *(.rodata.*)
         erodata = .;
+        . = ALIGN(512);
     }
 
-    . = ALIGN(512);
     stage3e = .;
 
     .stage3.bss (NOLOAD) : {

@@ -12,6 +12,22 @@ loom_command_register (loom_command_t *command)
   loom_commands = command;
 }
 
+void
+loom_command_unregister (loom_command_t *command)
+{
+  if (command->prev)
+    command->prev->next = command->next;
+
+  if (command->next)
+    command->next->prev = command->prev;
+
+  if (command == loom_commands)
+    loom_commands = command->next;
+
+  command->prev = NULL;
+  command->next = NULL;
+}
+
 loom_command_t *
 loom_command_find (const char *name)
 {

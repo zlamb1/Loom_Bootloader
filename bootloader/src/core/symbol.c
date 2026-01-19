@@ -1,5 +1,6 @@
 #include "loom/symbol.h"
 #include "loom/mm.h"
+#include "loom/string.h"
 #include "loom/types.h"
 
 loom_symtab_t loom_symtab;
@@ -41,4 +42,18 @@ loom_symbol_find (void *p)
     }
 
   return nearest;
+}
+
+loom_symbol_t *
+loom_symbol_lookup (const char *name)
+{
+  for (unsigned int i = 0; i < loom_symtab.length; ++i)
+    {
+      loom_symbol_t *symbol = loom_symtab.symbols[i];
+
+      if (loom_streq (name, symbol->name))
+        return symbol;
+    }
+
+  return NULL;
 }

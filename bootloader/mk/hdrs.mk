@@ -6,11 +6,13 @@ HDRS := crypto/md5.h \
 		command.h \
         console.h \
 		disk.h \
+		elf.h \
 		error.h \
 		input.h \
 		keycode.h \
 		main.h \
 		mmap.h \
+		module.h \
 		mm.h \
 		print.h \
 		shell.h \

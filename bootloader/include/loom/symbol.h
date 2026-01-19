@@ -25,5 +25,6 @@ void loom_register_export_symbols (void);
 int EXPORT (loom_symbol_register) (const char *, void *);
 
 loom_symbol_t *EXPORT (loom_symbol_find) (void *);
+loom_symbol_t *EXPORT (loom_symbol_lookup) (const char *);
 
 #endif

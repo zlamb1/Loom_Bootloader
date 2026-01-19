@@ -2,6 +2,7 @@
 #include "loom/console.h"
 #include "loom/list.h"
 #include "loom/mm.h"
+#include "loom/module.h"
 #include "loom/print.h"
 #include "loom/string.h"
 
@@ -12,6 +13,20 @@ typedef struct
   const char *key;
   loom_console_color_t color;
 } color_map_t;
+
+static void
+loom_cmd_rmmod (UNUSED loom_command_t *cmd, loom_usize_t argc, char *argv[])
+{
+  if (argc <= 1)
+    {
+      loom_printf ("usage: %s [MODULE]\n", argc ? argv[0] : "rmmod");
+      return;
+    }
+
+  for (loom_usize_t i = 1; i < argc; ++i)
+    if (!loom_module_remove (argv[1]))
+      loom_printf ("Module %s not found.\n", argv[1]);
+}
 
 static loom_bool_t
 parse_console_color (char *arg, loom_console_color_t *color)
@@ -133,6 +148,7 @@ command_register (const char *name, loom_fn_t fn)
 void
 loom_init_core_cmds (void)
 {
+  command_register ("rmmod", loom_cmd_rmmod);
   command_register ("fg", loom_cmd_fg);
   command_register ("bg", loom_cmd_bg);
   command_register ("clear", loom_cmd_clear);

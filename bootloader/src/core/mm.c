@@ -3,6 +3,7 @@
 #include "loom/error.h"
 #include "loom/list.h"
 #include "loom/mm.h"
+#include "loom/module.h"
 
 #define ALIGN         _Alignof (max_align_t)
 #define ALIGN_MINUS_1 (ALIGN - 1)
@@ -35,6 +36,8 @@ loom_mm_add_region (loom_usize_t address, loom_usize_t length)
 {
   loom_usize_t tmp;
   loom_usize_t aligned_arena_size;
+  loom_address_t modend;
+  loom_bool_t exit = 0;
 
   if (address > LOOM_USIZE_MAX - length)
     length = LOOM_USIZE_MAX - address;
@@ -44,13 +47,30 @@ loom_mm_add_region (loom_usize_t address, loom_usize_t length)
 
   tmp = ALIGN_UP (address);
 
-  if (tmp - address >= length)
+  if (tmp - address >= length || tmp > LOOM_USIZE_MAX - length)
     return;
 
   length -= tmp - address;
   length = ALIGN_DOWN (length);
 
   address = tmp;
+
+  modend = loom_modend_get ();
+
+  if (address < loom_modbase && address + length > loom_modbase)
+    {
+      exit = 1;
+      loom_mm_add_region (address, loom_modbase - address);
+    }
+
+  if (address < modend && address + length > modend)
+    {
+      exit = 1;
+      loom_mm_add_region (modend, (address + length) - modend);
+    }
+
+  if (exit)
+    return;
 
   aligned_arena_size = ALIGN_UP (sizeof (arena_t));
 
