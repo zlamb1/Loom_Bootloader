@@ -20,12 +20,16 @@ loom_error (loom_error_t error, const char *fmt, ...)
       va_end (args);
     }
   else
-    loom_snprintf (error_buf, ERROR_BUF_SIZE, "%s", loom_strerror (error));
+    error_buf[0] = 0;
 }
 
 const char *
 loom_error_get (void)
 {
+  if (!error_buf[0])
+    loom_snprintf (error_buf, ERROR_BUF_SIZE, "%s",
+                   loom_strerror (loom_errno));
+
   return error_buf;
 }
 

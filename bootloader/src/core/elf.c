@@ -1,92 +1,87 @@
 #include "loom/elf.h"
 #include "loom/error.h"
+#include "loom/math.h"
 
 int
 loom_elf32_ehdr_load (void *p, loom_usize_t size, loom_elf32_ehdr_t **ehdr)
 {
   loom_elf32_ehdr_t *_ehdr;
 
-  LOOM_ERROR (!p, LOOM_ERR_BAD_ARG, NULL);
-  LOOM_ERROR (!ehdr, LOOM_ERR_BAD_ARG, NULL);
-
-  LOOM_ERROR (size < sizeof (*_ehdr), LOOM_ERR_BAD_ELF_HDR,
-              "ELF size too small for header");
+  if (size < sizeof (*_ehdr))
+    LOOM_ERROR (LOOM_ERR_BAD_ELF_EHDR, "ELF header size %lu too small",
+                (ulong) size);
 
   _ehdr = p;
 
-  LOOM_ERROR (_ehdr->magic != LOOM_EH_MAGIC, LOOM_ERR_BAD_ELF_HDR,
-              "ELF magic not found");
+  if (_ehdr->size < sizeof (*_ehdr))
+    LOOM_ERROR (LOOM_ERR_BAD_ELF_EHDR, "invalid ELF header size %lu",
+                (ulong) _ehdr->size);
 
-  LOOM_ERROR (_ehdr->sig[0] != 'E' || _ehdr->sig[1] != 'L'
-                  || _ehdr->sig[2] != 'F',
-              LOOM_ERR_BAD_ELF_HDR, "ELF signature not found");
+  if (_ehdr->magic != LOOM_EH_MAG0 || _ehdr->sig[0] != LOOM_EH_MAG1
+      || _ehdr->sig[1] != LOOM_EH_MAG2 || _ehdr->sig[2] != LOOM_EH_MAG3)
+    LOOM_ERROR (LOOM_ERR_BAD_ELF_EHDR, "invalid ELF header magic");
 
-  LOOM_ERROR (_ehdr->class != LOOM_EH_CLASS_32, LOOM_ERR_BAD_ELF_HDR,
-              "bad ELF class: expected 32-bit ELF");
+  if (_ehdr->class != LOOM_EH_CLASS_32)
+    LOOM_ERROR (LOOM_ERR_BAD_ELF_EHDR,
+                "invalid ELF class 0x%lx (expected 32-bit)",
+                (ulong) _ehdr->class);
 
 #if defined(LOOM_LITTLE_ENDIAN)
-  LOOM_ERROR (_ehdr->data != LOOM_EH_DATA_LE, LOOM_ERR_BAD_ELF_HDR,
-              "ELF data encoding not supported: expected little endian");
+  if (_ehdr->data != LOOM_EH_DATA_LE)
+    LOOM_ERROR (LOOM_ERR_BAD_ELF_EHDR,
+                "invalid ELF data encoding 0x%lx (expected little endian)",
+                (ulong) _ehdr->data);
 #elif defined(LOOM_BIG_ENDIAN)
-  LOOM_ERROR (_ehdr->data != LOOM_EH_DATA_BE, LOOM_ERR_BAD_ELF_HDR,
-              "ELF data encoding not supported: expected big endian");
+  if (_ehdr->data != LOOM_EH_DATA_BE)
+    LOOM_ERROR (LOOM_ERR_BAD_ELF_EHDR,
+                "invalid ELF data encoding 0x%lx (expected big endian)",
+                (ulong) _ehdr->data);
 #else
 #error Unsupported Endianness
 #endif
 
-  LOOM_ERROR (_ehdr->type == LOOM_ET_NONE, LOOM_ERR_BAD_ELF_HDR,
-              "ELF type not supported: none");
+  if (_ehdr->type == LOOM_ET_NONE)
+    LOOM_ERROR (LOOM_ERR_BAD_ELF_EHDR, "ELF type 'none' not supported");
 
-  LOOM_ERROR (_ehdr->type == LOOM_ET_SHARED, LOOM_ERR_BAD_ELF_HDR,
-              "ELF type not supported: shared");
+  if (_ehdr->type == LOOM_ET_SHARED)
+    LOOM_ERROR (LOOM_ERR_BAD_ELF_EHDR, "ELF type 'shared' not supported");
 
-  LOOM_ERROR (_ehdr->type == LOOM_ET_CORE, LOOM_ERR_BAD_ELF_HDR,
-              "ELF type not supported: core");
+  if (_ehdr->type == LOOM_ET_SHARED)
+    LOOM_ERROR (LOOM_ERR_BAD_ELF_EHDR, "ELF type 'core' not supported");
 
-  LOOM_ERROR (_ehdr->type != LOOM_ET_REL && _ehdr->type != LOOM_ET_EXEC,
-              LOOM_ERR_BAD_ELF_HDR, "ELF type unknown: %u", _ehdr->type);
-
-  LOOM_ERROR (_ehdr->type == LOOM_ET_EXEC && !_ehdr->entry,
-              LOOM_ERR_BAD_ELF_HDR, "bad ELF entry point for executable");
+  if (_ehdr->type != LOOM_ET_REL && _ehdr->type != LOOM_ET_EXEC)
+    LOOM_ERROR (LOOM_ERR_BAD_ELF_EHDR, "unknown ELF type 0x%lx",
+                (ulong) _ehdr->type);
 
   if (_ehdr->phents)
     {
-      LOOM_ERROR (_ehdr->phentsize < sizeof (loom_elf32_phdr_t),
-                  LOOM_ERR_BAD_ELF_HDR,
-                  "bad ELF program header entry size: %u", _ehdr->phentsize);
+      loom_address_t phoff;
 
-      LOOM_ERROR (_ehdr->phents > LOOM_ADDRESS_MAX / _ehdr->phentsize
-                      || _ehdr->phoff > LOOM_ADDRESS_MAX
-                                            - _ehdr->phents * _ehdr->phentsize,
-                  LOOM_ERR_BAD_ELF_HDR,
-                  "bad ELF program header table: %u entries x %u entry size",
-                  _ehdr->phents, _ehdr->phentsize);
+      if (_ehdr->phentsize < sizeof (loom_elf32_phdr_t))
+        LOOM_ERROR (LOOM_ERR_BAD_ELF_EHDR,
+                    "invalid program header entry size %lu",
+                    (ulong) _ehdr->phentsize);
 
-      LOOM_ERROR (_ehdr->phoff + _ehdr->phents * _ehdr->phentsize > size,
-                  LOOM_ERR_BAD_ELF_HDR,
-                  "bad ELF program header table: overflows file");
+      if (loom_mul (_ehdr->phents, _ehdr->phentsize, &phoff)
+          || loom_add (_ehdr->phoff, phoff, &phoff) || phoff > size)
+        LOOM_ERROR (LOOM_ERR_BAD_ELF_EHDR,
+                    "invalid program header table size");
     }
 
   if (_ehdr->shents)
     {
-      LOOM_ERROR (_ehdr->shentsize < sizeof (loom_elf32_shdr_t),
-                  LOOM_ERR_BAD_ELF_HDR,
-                  "bad ELF section header entry size: %u", _ehdr->shentsize);
+      loom_address_t shoff;
 
-      LOOM_ERROR (_ehdr->shents > LOOM_ADDRESS_MAX / _ehdr->shentsize
-                      || _ehdr->shoff > LOOM_ADDRESS_MAX
-                                            - _ehdr->shents * _ehdr->shentsize,
-                  LOOM_ERR_BAD_ELF_HDR,
-                  "bad ELF section header table: %u entries x %u entry size",
-                  _ehdr->shents, _ehdr->shentsize);
+      if (_ehdr->shentsize < sizeof (loom_elf32_shdr_t))
+        LOOM_ERROR (LOOM_ERR_BAD_ELF_EHDR,
+                    "invalid section header entry size %lu",
+                    (ulong) _ehdr->shentsize);
 
-      LOOM_ERROR (_ehdr->shoff + _ehdr->shents * _ehdr->shentsize > size,
-                  LOOM_ERR_BAD_ELF_HDR,
-                  "bad ELF section header table: overflows file");
+      if (loom_mul (_ehdr->shents, _ehdr->shentsize, &shoff)
+          || loom_add (_ehdr->shoff, shoff, &shoff) || shoff > size)
+        LOOM_ERROR (LOOM_ERR_BAD_ELF_EHDR,
+                    "invalid section header table size");
     }
-
-  LOOM_ERROR (_ehdr->size < sizeof (*_ehdr), LOOM_ERR_BAD_ELF_HDR,
-              "bad ELF header size: %lu", (unsigned long) _ehdr->size);
 
   *ehdr = _ehdr;
 
@@ -97,26 +92,22 @@ int
 loom_elf32_shdr_validate (loom_address_t addr, loom_usize_t size,
                           loom_elf32_shdr_t *shdr)
 {
-  LOOM_ERROR (!shdr, LOOM_ERR_BAD_ARG, NULL);
+  loom_address_t shoff;
 
-  LOOM_ERROR (shdr->offset >= size, LOOM_ERR_BAD_ELF_SHDR,
-              "bad ELF section offset: %lu bytes past file",
-              (unsigned long) (shdr->offset - size + 1));
+  if (shdr->offset >= size)
+    LOOM_ERROR (LOOM_ERR_BAD_ELF_SHDR, "invalid section offset");
 
-  LOOM_ERROR (shdr->offset > LOOM_UINT32_MAX - shdr->size
-                  || addr > LOOM_ADDRESS_MAX - (shdr->offset + shdr->size),
-              LOOM_ERR_BAD_ELF_SHDR, "bad ELF section size: %lu is too large",
-              (unsigned long) shdr->size);
+  if (loom_add (shdr->offset, shdr->size, &shoff)
+      || loom_add (addr, shoff, &shoff))
+    LOOM_ERROR (LOOM_ERR_BAD_ELF_SHDR, "section size overflows");
 
-  LOOM_ERROR (
-      shdr->type != LOOM_SHT_NOBITS && shdr->offset + shdr->size > size,
-      LOOM_ERR_BAD_ELF_SHDR, "bad ELF section size: %lu bytes past file",
-      (unsigned long) (shdr->offset + shdr->size - size));
+  if (shdr->type != LOOM_SHT_NOBITS && shdr->offset + shdr->size > size)
+    LOOM_ERROR (LOOM_ERR_BAD_ELF_SHDR, "section overflows ELF");
 
-  LOOM_ERROR ((shdr->addralign & (shdr->addralign - 1)) != 0,
-              LOOM_ERR_BAD_ELF_SHDR,
-              "bad ELF section alignment: %lu is not a power of 2",
-              (unsigned long) shdr->addralign);
+  if ((shdr->addralign & (shdr->addralign - 1)) != 0)
+    LOOM_ERROR (LOOM_ERR_BAD_ELF_SHDR,
+                "section alignment %lu is not a power of 2",
+                (ulong) shdr->addralign);
 
   return 0;
 }
@@ -131,31 +122,20 @@ loom_elf32_strtab_validate (loom_elf32_ehdr_t *ehdr, loom_usize_t size,
     return -1;
 
   if (shdr->type != LOOM_SHT_STRTAB)
-    {
-      loom_error (LOOM_ERR_BAD_ELF_SHDR, "invalid type for string table: %lu",
-                  (unsigned long) shdr->type);
-      return -1;
-    }
+    LOOM_ERROR (LOOM_ERR_BAD_ELF_STRTAB, "invalid type 0x%lx for string table",
+                (ulong) shdr->type);
 
   strtab = (const char *) ((loom_address_t) ehdr + shdr->offset);
 
   if (!shdr->size)
-    {
-      loom_error (LOOM_ERR_BAD_ELF_SHDR, "empty string table");
-      return -1;
-    }
+    LOOM_ERROR (LOOM_ERR_BAD_ELF_STRTAB, "invalid size 0 for string table");
 
   if (strtab[0])
-    {
-      loom_error (LOOM_ERR_BAD_ELF_SHDR, "first index in string table not 0");
-      return -1;
-    }
+    LOOM_ERROR (LOOM_ERR_BAD_ELF_STRTAB,
+                "first element of string table not 0");
 
   if (strtab[shdr->size - 1])
-    {
-      loom_error (LOOM_ERR_BAD_ELF_SHDR, "last index in string table not 0");
-      return -1;
-    }
+    LOOM_ERROR (LOOM_ERR_BAD_ELF_STRTAB, "last element of string table not 0");
 
   return 0;
 }
@@ -212,25 +192,16 @@ rel_iterate_hook (UNUSED loom_usize_t shidx, loom_elf32_shdr_t *shdr,
     return 0;
 
   if (shdr->entsize < sizeof (loom_elf32_rel_t))
-    {
-      loom_error (LOOM_ERR_BAD_ELF_SHDR, "invalid relocation entry size: %lu",
-                  (unsigned long) shdr->entsize);
-      return -1;
-    }
+    LOOM_ERROR (LOOM_ERR_BAD_ELF_SHDR, "invalid relocation entry size %lu",
+                (ulong) shdr->entsize);
 
   if (!(symtab = loom_elf32_shdr_get (ctx->ehdr, shdr->link))
       || symtab->type != LOOM_SHT_SYMTAB)
-    {
-      loom_error (LOOM_ERR_BAD_ELF_SHDR,
-                  "relocation link is not symbol table");
-      return -1;
-    }
+    LOOM_ERROR (LOOM_ERR_BAD_ELF_SHDR,
+                "relocation link is not a symbol table");
 
   if (!(target = loom_elf32_shdr_get (ctx->ehdr, shdr->info)))
-    {
-      loom_error (LOOM_ERR_BAD_ELF_SHDR, "invalid relocation section");
-      return -1;
-    }
+    LOOM_ERROR (LOOM_ERR_BAD_ELF_SHDR, "invalid relocation target");
 
   addr = (loom_address_t) ctx->ehdr + shdr->offset;
 

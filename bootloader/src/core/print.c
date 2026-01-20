@@ -1,6 +1,7 @@
 #include <limits.h>
 
 #include "loom/console.h"
+#include "loom/math.h"
 #include "loom/print.h"
 
 #define FLAG_LEFT_JUSTIFY (1u << 0)
@@ -55,10 +56,8 @@ flush (write_all write_fn, void *data, const char *fmt, loom_usize_t *run,
     {
       loom_usize_t tmplen = *len;
 
-      if (tmplen > LOOM_USIZE_MAX - tmprun)
+      if (loom_add (tmplen, tmprun, len))
         *len = LOOM_USIZE_MAX;
-      else
-        *len = tmplen + tmprun;
 
       write (write_fn, data, *run, fmt - tmprun);
 
@@ -118,27 +117,29 @@ parse_width (const char *fmt, unsigned int *flags, unsigned int *width,
 
   if (ch == '*')
     {
-      int tmp = va_arg (*args, int);
+      tmpwidth = va_arg (*args, int);
 
-      if (tmp < 0)
+      if (tmpwidth < 0)
         {
           *flags |= FLAG_LEFT_JUSTIFY;
 
-          if (tmp == INT_MIN)
-            *width = ((unsigned int) INT_MAX) + 1;
-          else
-            *width = (unsigned int) (-tmp);
+          if (loom_mul (tmpwidth, -1, &tmpwidth))
+            tmpwidth = INT_MAX;
+
+          *width = (unsigned int) tmpwidth;
         }
       else
-        *width = (unsigned int) tmp;
+        *width = (unsigned int) tmpwidth;
 
       return ++fmt;
     }
 
   while (ch >= '0' && ch <= '9')
     {
-      if (tmpwidth < INT_MAX / 10 && (ch - '0') <= INT_MAX - tmpwidth * 10)
-        tmpwidth = tmpwidth * 10 + (ch - '0');
+      if (loom_mul (tmpwidth, 10, &tmpwidth)
+          || loom_add (tmpwidth, ch - '0', &tmpwidth))
+        tmpwidth = INT_MAX;
+
       ch = (++fmt)[0];
     }
 
@@ -150,7 +151,7 @@ static const char *
 parse_precision (const char *fmt, precision_t *prec, va_list *args)
 {
   char ch;
-  unsigned int tmpprec = 0;
+  int tmpprec = 0;
 
   ch = fmt[0];
 
@@ -164,14 +165,14 @@ parse_precision (const char *fmt, precision_t *prec, va_list *args)
 
   if (ch == '*')
     {
-      int tmp = va_arg (*args, int);
+      tmpprec = va_arg (*args, int);
 
-      if (tmp < 0)
+      if (tmpprec < 0)
         prec->valid = 0;
       else
         {
           prec->valid = 1;
-          prec->value = (unsigned int) tmp;
+          prec->value = (uint) tmpprec;
         }
 
       return ++fmt;
@@ -179,17 +180,15 @@ parse_precision (const char *fmt, precision_t *prec, va_list *args)
 
   while (ch >= '0' && ch <= '9')
     {
-      if (tmpprec < INT_MAX / 10
-          && (unsigned int) (ch - '0') <= INT_MAX - tmpprec * 10)
-        tmpprec = tmpprec * 10 + (unsigned int) (ch - '0');
+      if (loom_mul (tmpprec, 10, &tmpprec)
+          || loom_add (tmpprec, ch - '0', &tmpprec))
+        tmpprec = INT_MAX;
+
       ch = (++fmt)[0];
     }
 
-  if (tmpprec > INT_MAX)
-    loom_panic ("parse_precision");
-
   prec->valid = 1;
-  prec->value = tmpprec;
+  prec->value = (uint) tmpprec;
 
   return fmt;
 }

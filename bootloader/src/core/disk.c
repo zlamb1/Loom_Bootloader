@@ -1,4 +1,5 @@
 #include "loom/disk.h"
+#include "loom/math.h"
 #include "loom/mm.h"
 #include "loom/partition.h"
 #include "loom/string.h"
@@ -62,7 +63,7 @@ loom_disk_read (loom_disk_t *disk, loom_usize_t offset, loom_usize_t count,
     {
       loom_usize_t blocks = count / bpb, bytes;
 
-      if (blocks > LOOM_USIZE_MAX / bpb)
+      if (loom_mul (blocks, bpb, &bytes))
         {
           error = LOOM_ERR_OVERFLOW;
           goto done;
@@ -71,7 +72,6 @@ loom_disk_read (loom_disk_t *disk, loom_usize_t offset, loom_usize_t count,
       if ((error = disk->read (disk, block, blocks, buf)))
         goto done;
 
-      bytes = blocks * bpb;
       count -= bytes;
       buf += bytes;
 

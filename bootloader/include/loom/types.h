@@ -22,6 +22,11 @@ typedef uint32_t loom_usize_t;
 typedef uintptr_t loom_uintptr_t;
 typedef loom_uintptr_t loom_address_t;
 
+typedef unsigned char uchar;
+typedef unsigned short ushort;
+typedef unsigned int uint;
+typedef unsigned long ulong;
+
 #define LOOM_UINT8_MAX  UINT8_MAX
 #define LOOM_UINT16_MAX UINT16_MAX
 #define LOOM_UINT32_MAX UINT32_MAX

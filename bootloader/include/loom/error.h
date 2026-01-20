@@ -11,31 +11,18 @@
 #define LOOM_ERR_RANGE          4
 #define LOOM_ERR_IO             5
 #define LOOM_ERR_BAD_BLOCK_SIZE 6
-#define LOOM_ERR_BAD_ELF_HDR    7
+#define LOOM_ERR_BAD_ELF_EHDR   7
 #define LOOM_ERR_BAD_ELF_PHDR   8
 #define LOOM_ERR_BAD_ELF_SHDR   9
-#define LOOM_ERR_BAD_ELF_REL    10
-#define LOOM_ERR_BAD_MODULE     11
+#define LOOM_ERR_BAD_ELF_STRTAB 10
+#define LOOM_ERR_BAD_ELF_REL    11
+#define LOOM_ERR_BAD_MODULE     12
 
-#define LOOM_ERROR(COND, ERROR, ...)                                          \
+#define LOOM_ERROR(ERROR, ...)                                                \
   do                                                                          \
     {                                                                         \
-      if (COND)                                                               \
-        {                                                                     \
-          loom_error ((ERROR), ##__VA_ARGS__);                                \
-          return -1;                                                          \
-        }                                                                     \
-    }                                                                         \
-  while (0)
-
-#define LOOM_ERROR_GOTO(COND, LABEL, ERROR, ...)                              \
-  do                                                                          \
-    {                                                                         \
-      if (COND)                                                               \
-        {                                                                     \
-          loom_error ((ERROR), ##__VA_ARGS__);                                \
-          goto LABEL;                                                         \
-        }                                                                     \
+      loom_error ((ERROR), ##__VA_ARGS__);                                    \
+      return -1;                                                              \
     }                                                                         \
   while (0)
 

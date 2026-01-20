@@ -3,6 +3,7 @@
 #include "loom/endian.h"
 #include "loom/error.h"
 #include "loom/list.h"
+#include "loom/math.h"
 #include "loom/mm.h"
 #include "loom/print.h"
 #include "loom/string.h"
@@ -265,6 +266,7 @@ loom_module_load (void *p, loom_usize_t size)
       {
         loom_module_section_t *section;
         loom_elf32_sym_t *sym = (void *) addr;
+        loom_uint32_t tmp;
         const char *name;
 
         // Skip NULL symbol.
@@ -326,7 +328,7 @@ loom_module_load (void *p, loom_usize_t size)
         if (!section)
           continue;
 
-        if (sym->value > LOOM_UINT32_MAX - sym->size)
+        if (loom_add (sym->value, sym->size, &tmp))
           {
             loom_error (LOOM_ERR_BAD_MODULE,
                         "symbol %s offset overflows address space", name);
@@ -340,14 +342,14 @@ loom_module_load (void *p, loom_usize_t size)
             goto error;
           }
 
-        if (sym->value > LOOM_UINT32_MAX - (loom_uint32_t) section->p)
+        if (loom_add (sym->value, (loom_uint32_t) section->p, &tmp))
           {
             loom_error (LOOM_ERR_BAD_MODULE,
                         "symbol offset overflows address space");
             goto error;
           }
 
-        sym->value += (loom_uint32_t) section->p;
+        sym->value = tmp;
       }
   }
 
@@ -426,7 +428,7 @@ loom_core_modules_load (void)
     loom_panic ("bad module header magic: 0x%lx", (unsigned long) hdr.magic);
 
   if (hdr.size < LOOM_MODULE_HEADER_MIN_SIZE
-      || loom_modbase > LOOM_USIZE_MAX - hdr.size)
+      || loom_add (loom_modbase, hdr.size, &loom_modend))
     loom_panic ("bad module header size: %lu", (unsigned long) hdr.size);
 
   if (hdr.taboff >= hdr.size)
@@ -435,7 +437,6 @@ loom_core_modules_load (void)
   if (hdr.taboff >= hdr.modoff)
     loom_panic ("bad module header taboff: must be less than modoff");
 
-  loom_modend = loom_modbase + hdr.size;
   modtab = (loom_uint32_t *) (loom_modbase + hdr.taboff);
   addr = loom_modbase + hdr.modoff;
 
@@ -451,17 +452,16 @@ loom_core_modules_load (void)
       if (!modsize)
         break;
 
-      if (addr > LOOM_USIZE_MAX - modsize)
-        loom_panic ("bad core module size: %lu", (unsigned long) modsize);
+      if (loom_add (addr, modsize, &addr))
+        loom_panic ("bad core module size %lu", (unsigned long) modsize);
 
-      if (addr + modsize > loom_modend)
-        loom_panic ("bad core module size: %lu bytes past modend",
-                    (unsigned long) ((addr + modsize) - loom_modend));
+      if (addr > loom_modend)
+        loom_panic ("bad core module size %lu bytes past modules end",
+                    (unsigned long) (addr - loom_modend));
 
-      if (loom_module_load ((void *) addr, modsize))
+      if (loom_module_load ((void *) (addr - modsize), modsize))
         loom_printf ("loom_module_load: %s\n", loom_error_get ());
 
-      addr += modsize;
       ++modtab;
     }
 }

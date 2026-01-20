@@ -1,5 +1,6 @@
 #include "loom/console.h"
 #include "loom/list.h"
+#include "loom/math.h"
 #include "loom/string.h"
 
 loom_console_t *loom_consoles = NULL;
@@ -58,14 +59,11 @@ loom_wbufs_char_len (loom_write_buffer_t wbufs[])
       if (!wbuf->splats)
         goto cont;
 
-      if (wbuf->len > LOOM_USIZE_MAX / wbuf->splats)
+      if (loom_mul (wbuf->len, wbuf->splats, &tmp))
         return LOOM_USIZE_MAX;
 
-      tmp = wbuf->len * wbuf->splats;
-      if (char_len > LOOM_USIZE_MAX - tmp)
+      if (loom_add (char_len, tmp, &char_len))
         return LOOM_USIZE_MAX;
-
-      char_len += tmp;
 
     cont:
       ++wbuf;

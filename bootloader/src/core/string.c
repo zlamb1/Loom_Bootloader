@@ -1,4 +1,5 @@
 #include "loom/string.h"
+#include "loom/math.h"
 
 void
 loom_memcpy (void *restrict dst, const void *restrict src, loom_usize_t count)
@@ -125,16 +126,13 @@ loom_strtoi (char *s, int *out)
           return LOOM_ERR_BAD_ARG;
         }
 
-      if ((neg && n > INT_MIN / base) || (!neg && n > INT_MAX / base))
-        return LOOM_ERR_OVERFLOW;
-
       prev = n;
-      n *= base;
 
-      if ((neg && n < INT_MIN + cv) || (!neg && n > INT_MAX - cv))
+      if (loom_mul (n, base, &n))
         return LOOM_ERR_OVERFLOW;
 
-      n += neg ? -cv : cv;
+      if (loom_add (n, neg ? -cv : cv, &n))
+        return LOOM_ERR_OVERFLOW;
 
       if (!n)
         ++z;
@@ -151,6 +149,10 @@ loom_strtoi (char *s, int *out)
     next:
       s++;
     }
+
+  // Reject sign-only case (e.g '-')
+  if (neg && !n && !z)
+    return LOOM_ERR_BAD_ARG;
 
   *out = n;
   return LOOM_ERR_NONE;

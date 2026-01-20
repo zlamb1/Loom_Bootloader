@@ -1,4 +1,5 @@
 #include "loom/partition.h"
+#include "loom/math.h"
 
 loom_partition_scheme_t *loom_partition_schemes = NULL;
 loom_partition_t *loom_partitions = NULL;
@@ -28,13 +29,13 @@ loom_partition_read (loom_partition_t *p, loom_usize_t offset,
 
   while (!curp->root)
     {
-      if (block > LOOM_USIZE_MAX - curp->start)
+      if (loom_add (block, curp->start, &block))
         return LOOM_ERR_OVERFLOW;
       block += curp->start;
       curp = curp->parent;
     }
 
-  if (block > LOOM_USIZE_MAX - curp->start)
+  if (loom_add (block, curp->start, &block))
     return LOOM_ERR_OVERFLOW;
 
   block += curp->start;
@@ -43,11 +44,10 @@ loom_partition_read (loom_partition_t *p, loom_usize_t offset,
   if (!disk->bpb)
     return LOOM_ERR_BAD_BLOCK_SIZE;
 
-  if (block > LOOM_USIZE_MAX / disk->bpb)
+  if (loom_mul (block, disk->bpb, &start))
     return LOOM_ERR_OVERFLOW;
 
-  start = block * disk->bpb;
-  if (start > LOOM_USIZE_MAX - offset)
+  if (loom_add (start, offset, &start))
     return LOOM_ERR_OVERFLOW;
 
   block_count = count / disk->bpb;
@@ -61,5 +61,5 @@ loom_partition_read (loom_partition_t *p, loom_usize_t offset,
   if (block_count > p->length)
     return LOOM_ERR_RANGE;
 
-  return loom_disk_read (disk, start + offset, count, buf);
+  return loom_disk_read (disk, start, count, buf);
 }

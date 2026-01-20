@@ -2,6 +2,7 @@
 
 #include "loom/error.h"
 #include "loom/list.h"
+#include "loom/math.h"
 #include "loom/mm.h"
 #include "loom/module.h"
 
@@ -47,10 +48,9 @@ loom_mm_add_region (loom_usize_t address, loom_usize_t length)
 
   tmp = ALIGN_UP (address);
 
-  if (tmp - address >= length || tmp > LOOM_USIZE_MAX - length)
+  if (loom_sub (length, tmp - address, &length))
     return;
 
-  length -= tmp - address;
   length = ALIGN_DOWN (length);
 
   address = tmp;
@@ -125,7 +125,7 @@ loom_malloc (loom_usize_t size)
   if (!size)
     return NULL;
 
-  if (size > LOOM_USIZE_MAX - ALIGN)
+  if (size > LOOM_USIZE_MAX - ALIGN_MINUS_1)
     return NULL;
 
   size = ALIGN_UP (size);
@@ -178,12 +178,7 @@ loom_calloc (loom_usize_t n, loom_usize_t size)
   if (!size)
     return NULL;
 
-  if (n > LOOM_USIZE_MAX / size)
-    return NULL;
-
-  size *= n;
-
-  if (size > LOOM_USIZE_MAX - ALIGN_MINUS_1)
+  if (loom_mul (n, size, &size))
     return NULL;
 
   return loom_zalloc (size);
@@ -226,12 +221,12 @@ loom_free (void *p)
 
   loom_uintptr_t addr = (loom_uintptr_t) p;
 
-  if (addr != ALIGN_DOWN (addr))
-    loom_panic ("invalid pointer");
-
   // Do nothing on NULL.
   if (!addr)
     return;
+
+  if (addr != ALIGN_DOWN (addr))
+    loom_panic ("invalid pointer");
 
   LOOM_LIST_ITERATE (arenas, arena)
   {

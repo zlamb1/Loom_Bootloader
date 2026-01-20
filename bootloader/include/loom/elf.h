@@ -6,9 +6,11 @@
 
 typedef struct
 {
-#define LOOM_EH_MAGIC 0x7F
+#define LOOM_EH_MAG0 0x7F
   loom_uint8_t magic;
-#define LOOM_EH_SIG "ELF"
+#define LOOM_EH_MAG1 'E'
+#define LOOM_EH_MAG2 'L'
+#define LOOM_EH_MAG3 'F'
   char sig[3];
 #define LOOM_EH_CLASS_32 1
 #define LOOM_EH_CLASS_64 2
