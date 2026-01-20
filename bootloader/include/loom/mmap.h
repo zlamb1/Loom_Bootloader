@@ -20,6 +20,14 @@ typedef struct
   loom_memory_type_t type;
 } loom_mmap_entry_t;
 
+typedef struct
+{
+  loom_usize_t count;
+  loom_mmap_entry_t *entries;
+} loom_mmap_t;
+
+extern loom_mmap_t loom_mmap;
+
 static UNUSED const char *
 loom_memory_type_str (loom_memory_type_t type)
 {
@@ -34,5 +42,11 @@ loom_memory_type_str (loom_memory_type_t type)
   else
     return "Reserved";
 }
+
+void loom_mmap_init (void);
+
+int EXPORT (loom_mmap_iterate) (int (*hook) (loom_mmap_entry_t *entry,
+                                             void *data),
+                                void *data);
 
 #endif

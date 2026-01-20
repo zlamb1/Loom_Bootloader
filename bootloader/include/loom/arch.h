@@ -4,10 +4,11 @@
 #include "compiler.h"
 #include "mmap.h"
 
-typedef void (*mmap_hook) (loom_uint64_t, loom_uint64_t, loom_memory_type_t);
+typedef void (*mmap_hook) (loom_uint64_t, loom_uint64_t, loom_memory_type_t,
+                           void *);
 
 void EXPORT (loom_arch_init) (void);
-void EXPORT (loom_arch_mmap_iterate) (mmap_hook hook);
+void EXPORT (loom_arch_mmap_iterate) (mmap_hook hook, void *);
 
 void EXPORT (loom_arch_sti) (void);
 void EXPORT (loom_arch_cli) (void);

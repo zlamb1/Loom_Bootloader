@@ -16,6 +16,14 @@ typedef struct
   char *buf;
 } shell_t;
 
+static void
+shell_print_prompt (void)
+{
+  loom_console_set_fg (LOOM_CONSOLE_COLOR_LIGHT_CYAN);
+  loom_printf (PROMPT);
+  loom_console_set_fg (LOOM_CONSOLE_DEFAULT_FG);
+}
+
 static char *
 shell_parse_arg (char *buf, loom_usize_t *pos)
 {
@@ -134,7 +142,7 @@ shell_write_keycode (shell_t *shell, int mods, int keycode)
       shell->len = 0;
       shell->cursor = 0;
       shell->buf[0] = 0;
-      loom_printf (PROMPT);
+      shell_print_prompt ();
       break;
     case LOOM_KEY_LEFT:
       if (shell->cursor)
@@ -195,8 +203,6 @@ shell_write_keycode (shell_t *shell, int mods, int keycode)
 void
 loom_shell_exec (void)
 {
-  loom_printf (PROMPT);
-
   loom_input_source_t *src = loom_input_sources;
 
   shell_t shell = { 0 };
@@ -206,6 +212,8 @@ loom_shell_exec (void)
     loom_panic ("Out of memory.");
 
   shell.buf[0] = 0;
+
+  shell_print_prompt ();
 
   for (;;)
     {

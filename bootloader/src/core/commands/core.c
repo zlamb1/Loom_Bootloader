@@ -7,8 +7,6 @@
 #include "loom/print.h"
 #include "loom/string.h"
 
-extern loom_console_t *loom_consoles;
-
 typedef struct
 {
   const char *key;
@@ -30,10 +28,47 @@ loom_cmd_rmmod (UNUSED loom_command_t *cmd, loom_usize_t argc, char *argv[])
 }
 
 static void
+loom_cmd_lsmod (UNUSED loom_command_t *cmd, UNUSED loom_usize_t argc,
+                UNUSED char *argv[])
+{
+  LOOM_LIST_ITERATE (loom_modules, mod) { loom_printf ("%s\n", mod->name); }
+}
+
+static void
 loom_cmd_reboot (UNUSED loom_command_t *cmd, UNUSED loom_usize_t argc,
                  UNUSED char *argv[])
 {
   loom_arch_reboot ();
+}
+
+static int
+mmap_print_hook (loom_mmap_entry_t *entry, UNUSED void *data)
+{
+  loom_printf ("%-#12llx%-#12llx%-12s\n", entry->address, entry->length,
+               loom_memory_type_str (entry->type));
+  return 0;
+}
+
+static void
+loom_cmd_mmap (UNUSED loom_command_t *cmd, UNUSED loom_usize_t argc,
+               UNUSED char *argv[])
+{
+  LOOM_LIST_ITERATE (loom_consoles, console)
+  {
+    console->set_fg (console, LOOM_CONSOLE_COLOR_YELLOW);
+  }
+
+  loom_printf ("%-12s%-12s%-12s\n", "ADDRESS", "LENGTH", "TYPE");
+
+  LOOM_LIST_ITERATE (loom_consoles, console)
+  {
+    console->set_fg (console, LOOM_CONSOLE_DEFAULT_FG);
+  }
+
+  if (loom_mmap.count)
+    loom_mmap_iterate (mmap_print_hook, NULL);
+  else
+    loom_printf ("No Entries\n");
 }
 
 static loom_bool_t
@@ -157,7 +192,9 @@ void
 loom_init_core_cmds (void)
 {
   command_register ("rmmod", loom_cmd_rmmod);
+  command_register ("lsmod", loom_cmd_lsmod);
   command_register ("reboot", loom_cmd_reboot);
+  command_register ("mmap", loom_cmd_mmap);
   command_register ("fg", loom_cmd_fg);
   command_register ("bg", loom_cmd_bg);
   command_register ("clear", loom_cmd_clear);

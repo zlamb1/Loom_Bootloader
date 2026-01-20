@@ -7,7 +7,12 @@ GLOBAL loom_bios_int
 EXTERN _enter_rmode
 EXTERN _enter_pmode
 
+ALIGN 4
+
 _stack: DD 0
+
+_idtr: DQ 0 
+       DQ 0
 
 ; This should not be called after reconfiguring any hardware
 ; like the PIC, PIT, etc...
@@ -19,6 +24,9 @@ loom_bios_int:
     push ebx
     push esi
     push edi
+
+    ; save protected mode IDTR
+    sidt [_idtr]
 
     mov DWORD [_stack], esp
 
@@ -107,6 +115,9 @@ BITS 32
 
     mov bx, WORD [_es]
     mov WORD [eax+28], bx
+
+    ; restore protected mode IDTR
+    lidt [_idtr]
 
     pop edi
     pop esi

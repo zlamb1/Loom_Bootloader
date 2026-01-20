@@ -42,6 +42,8 @@ typedef struct loom_module_t
 extern loom_address_t loom_modbase;
 extern loom_address_t loom_modend;
 
+extern loom_module_t *loom_modules;
+
 loom_address_t loom_modend_get (void);
 void loom_core_modules_load (void);
 

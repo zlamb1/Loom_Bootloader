@@ -16,7 +16,7 @@ void loom_vga_con_register (void);
 
 void
 mmap_mm_hook (loom_uint64_t address, loom_uint64_t length,
-              loom_memory_type_t type)
+              loom_memory_type_t type, UNUSED void *data)
 {
   if (address >= 0xffffffff || address >= LOOM_USIZE_MAX
       || type != LOOM_MEMORY_TYPE_FREE)
@@ -37,7 +37,7 @@ void
 loom_arch_init (void)
 {
   loom_vga_con_register ();
-  loom_arch_mmap_iterate (mmap_mm_hook);
+  loom_arch_mmap_iterate (mmap_mm_hook, NULL);
   loom_bios_disk_probe ();
   loom_pic_remap (0x20, 0x28);
   loom_pic_disable ();
@@ -48,7 +48,7 @@ loom_arch_init (void)
 }
 
 void
-loom_arch_mmap_iterate (mmap_hook hook)
+loom_arch_mmap_iterate (mmap_hook hook, void *data)
 {
   loom_bios_args_t args = { 0 };
   volatile e820_t e820;
@@ -91,7 +91,7 @@ loom_arch_mmap_iterate (mmap_hook hook)
           break;
         }
 
-      hook (e820.address, e820.length, type);
+      hook (e820.address, e820.length, type, data);
     }
 }
 
@@ -125,6 +125,9 @@ loom_arch_irq_restore (int flags)
 void
 loom_arch_reboot (void)
 {
+  // Make sure our IDT is loaded.
+  loom_idtr_load ();
+
   // Unmap GPF and DF handlers so we triple fault.
   loom_idt_vector_unmap (8);
   loom_idt_vector_unmap (13);

@@ -75,8 +75,8 @@ loom_wbufs_char_len (loom_write_buffer_t wbufs[])
 void
 loom_console_register (loom_console_t *console)
 {
-  console->set_fg (console, LOOM_CONSOLE_COLOR_WHITE);
-  console->set_bg (console, LOOM_CONSOLE_COLOR_BLACK);
+  console->set_fg (console, LOOM_CONSOLE_DEFAULT_FG);
+  console->set_bg (console, LOOM_CONSOLE_DEFAULT_BG);
   console->clear (console);
 
   console->next = loom_consoles;

@@ -11,6 +11,7 @@ SRCS := commands/core.c \
 		keycode.c \
 		main.c \
 		mm.c \
+		mmap.c \
 		module.c \
 		panic.c \
 		partition.c \

@@ -1,3 +1,4 @@
+#include "loom/list.h"
 #ifndef LOOM_CONSOLE_H
 #define LOOM_CONSOLE_H 1
 
@@ -62,5 +63,11 @@ void EXPORT (loom_console_clear) (void);
 void loom_console_write (loom_usize_t len, const char *buf);
 void loom_console_write_str (const char *s);
 void loom_console_write_all (loom_write_buffer_t wbufs[]);
+
+static inline void
+loom_console_set_fg (loom_console_color_t fg)
+{
+  LOOM_LIST_ITERATE (loom_consoles, console) { console->set_fg (console, fg); }
+}
 
 #endif
