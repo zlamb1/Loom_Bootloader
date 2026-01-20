@@ -1,3 +1,4 @@
+#include "loom/arch.h"
 #include "loom/command.h"
 #include "loom/console.h"
 #include "loom/list.h"
@@ -26,6 +27,13 @@ loom_cmd_rmmod (UNUSED loom_command_t *cmd, loom_usize_t argc, char *argv[])
   for (loom_usize_t i = 1; i < argc; ++i)
     if (!loom_module_remove (argv[1]))
       loom_printf ("Module %s not found.\n", argv[1]);
+}
+
+static void
+loom_cmd_reboot (UNUSED loom_command_t *cmd, UNUSED loom_usize_t argc,
+                 UNUSED char *argv[])
+{
+  loom_arch_reboot ();
 }
 
 static loom_bool_t
@@ -149,6 +157,7 @@ void
 loom_init_core_cmds (void)
 {
   command_register ("rmmod", loom_cmd_rmmod);
+  command_register ("reboot", loom_cmd_reboot);
   command_register ("fg", loom_cmd_fg);
   command_register ("bg", loom_cmd_bg);
   command_register ("clear", loom_cmd_clear);

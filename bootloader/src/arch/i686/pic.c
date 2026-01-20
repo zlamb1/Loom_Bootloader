@@ -107,5 +107,5 @@ loom_pic_register_isr (loom_uint8_t irq, void *isr)
       irq -= 8;
     }
 
-  loom_map_isr_vector (offset + irq, isr);
+  loom_isr_vector_map (offset + irq, isr);
 }

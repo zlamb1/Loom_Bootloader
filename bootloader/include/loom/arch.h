@@ -15,4 +15,6 @@ void EXPORT (loom_arch_cli) (void);
 int EXPORT (loom_arch_irq_save) (void);
 void EXPORT (loom_arch_irq_restore) (int);
 
+void NORETURN EXPORT (loom_arch_reboot) (void);
+
 #endif

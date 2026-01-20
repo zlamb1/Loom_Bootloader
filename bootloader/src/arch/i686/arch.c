@@ -43,7 +43,7 @@ loom_arch_init (void)
   loom_pic_disable ();
   loom_idt_init ();
   loom_ps2_kb_init ();
-  loom_load_idtr ();
+  loom_idtr_load ();
   loom_arch_sti ();
 }
 
@@ -120,4 +120,17 @@ loom_arch_irq_restore (int flags)
 {
   if (flags & 0x200)
     loom_arch_sti ();
+}
+
+void
+loom_arch_reboot (void)
+{
+  // Unmap GPF and DF handlers so we triple fault.
+  loom_idt_vector_unmap (8);
+  loom_idt_vector_unmap (13);
+
+  __asm__ volatile ("cli; ljmp $0xFFFF, $0");
+loop:
+  __asm__ volatile ("hlt");
+  goto loop;
 }
