@@ -121,19 +121,3 @@ loom_arch_irq_restore (int flags)
   if (flags & 0x200)
     loom_arch_sti ();
 }
-
-void
-loom_arch_reboot (void)
-{
-  // Make sure our IDT is loaded.
-  loom_idtr_load ();
-
-  // Unmap GPF and DF handlers so we triple fault.
-  loom_idt_vector_unmap (8);
-  loom_idt_vector_unmap (13);
-
-  __asm__ volatile ("cli; ljmp $0xFFFF, $0");
-loop:
-  __asm__ volatile ("hlt");
-  goto loop;
-}

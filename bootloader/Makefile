@@ -66,7 +66,7 @@ $(MARKER):
 	@touch $@
 
 qemu: build
-	qemu-system-i386 -drive format=raw,file=$(BIN) -nic none -m 64M
+	qemu-system-i386 -drive format=raw,file=$(BIN) -nic none -m 64M -machine pc,acpi=on
 
 dbg: build
 	qemu-system-i386 -drive format=raw,file=$(BIN) -nic none -m 64M -s -S &

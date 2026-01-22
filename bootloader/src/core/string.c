@@ -61,6 +61,22 @@ loom_streq (const char *s1, const char *s2)
     }
 }
 
+loom_bool_t
+EXPORT (loom_strneq) (const char *s1, const char *s2, loom_usize_t n)
+{
+  while (n)
+    {
+      if (s1[0] != s2[0])
+        return 0;
+
+      ++s1;
+      ++s2;
+      --n;
+    }
+
+  return 1;
+}
+
 void
 loom_strlower (char *s)
 {
