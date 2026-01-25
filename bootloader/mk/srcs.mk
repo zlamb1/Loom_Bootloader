@@ -8,6 +8,7 @@ SRCS := commands/core.c \
 		elf.c \
 		error.c \
 		input.c \
+		kernel_loader.c \
 		keycode.c \
 		main.c \
 		mm.c \

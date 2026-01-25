@@ -1,6 +1,7 @@
 #include "loom/arch.h"
 #include "loom/command.h"
 #include "loom/console.h"
+#include "loom/kernel_loader.h"
 #include "loom/list.h"
 #include "loom/mm.h"
 #include "loom/module.h"
@@ -189,6 +190,15 @@ memory_task (UNUSED loom_command_t *cmd, loom_usize_t argc, char *argv[])
   return 0;
 }
 
+static int
+boot_task (UNUSED loom_command_t *cmd, UNUSED loom_usize_t argc,
+           UNUSED char *argv[])
+{
+  loom_kernel_loader_boot ();
+  loom_error (LOOM_ERR_BAD_ARG, "no kernel loaded");
+  return -1;
+}
+
 static void
 command_register (const char *name, loom_task_t task)
 {
@@ -214,4 +224,5 @@ loom_init_core_cmds (void)
   command_register ("bg", bg_task);
   command_register ("clear", clear_task);
   command_register ("memory", memory_task);
+  command_register ("boot", boot_task);
 }
