@@ -4,16 +4,17 @@
 
 LOOM_MOD (hello)
 
-static void
-command_hello (UNUSED loom_command_t *cmd, UNUSED loom_usize_t argc,
-               UNUSED char *argv[])
+static int
+hello_task (UNUSED loom_command_t *cmd, UNUSED loom_usize_t argc,
+            UNUSED char *argv[])
 {
   loom_printf ("Hello!\n");
+  return 0;
 }
 
 static loom_command_t hello_command = {
   .name = "hello",
-  .fn = command_hello,
+  .task = hello_task,
 };
 
 LOOM_MOD_INIT () { loom_command_register (&hello_command); }

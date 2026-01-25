@@ -47,6 +47,7 @@ typedef struct loom_console_t
   void (*write_all) (struct loom_console_t *, loom_write_buffer_t[]);
 
   void *data;
+  loom_console_color_t save;
   struct loom_console_t *next;
 } loom_console_t;
 
@@ -60,6 +61,7 @@ loom_usize_t loom_wbufs_char_len (loom_write_buffer_t wbufs[]);
 
 void EXPORT (loom_console_register) (loom_console_t *console);
 void EXPORT (loom_console_clear) (void);
+
 void loom_console_write (loom_usize_t len, const char *buf);
 void loom_console_write_str (const char *s);
 void loom_console_write_all (loom_write_buffer_t wbufs[]);
@@ -68,6 +70,48 @@ static inline void
 loom_console_set_fg (loom_console_color_t fg)
 {
   LOOM_LIST_ITERATE (loom_consoles, console) { console->set_fg (console, fg); }
+}
+
+static inline void
+loom_console_save_fg (void)
+{
+  LOOM_LIST_ITERATE (loom_consoles, console)
+  {
+    console->save = console->get_fg (console);
+  }
+}
+
+static inline void
+loom_console_restore_fg (void)
+{
+  LOOM_LIST_ITERATE (loom_consoles, console)
+  {
+    console->set_fg (console, console->save);
+  }
+}
+
+static inline void
+loom_console_set_bg (loom_console_color_t bg)
+{
+  LOOM_LIST_ITERATE (loom_consoles, console) { console->set_bg (console, bg); }
+}
+
+static inline void
+loom_console_save_bg (void)
+{
+  LOOM_LIST_ITERATE (loom_consoles, console)
+  {
+    console->save = console->get_bg (console);
+  }
+}
+
+static inline void
+loom_console_restore_bg (void)
+{
+  LOOM_LIST_ITERATE (loom_consoles, console)
+  {
+    console->set_bg (console, console->save);
+  }
 }
 
 #endif
