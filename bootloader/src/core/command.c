@@ -8,7 +8,12 @@ loom_command_t *loom_commands = NULL;
 void
 loom_command_register (loom_command_t *command)
 {
+  command->prev = NULL;
   command->next = loom_commands;
+
+  if (loom_commands)
+    loom_commands->prev = command;
+
   loom_commands = command;
 }
 

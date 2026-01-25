@@ -469,36 +469,40 @@ loom_core_modules_load (void)
 }
 
 void
-loom_module_add (loom_module_t *mod)
+loom_module_add (loom_module_t *module)
 {
-  mod->prev = NULL;
-  mod->next = loom_modules;
-  loom_modules = mod;
+  module->prev = NULL;
+  module->next = loom_modules;
 
-  if (mod->init)
-    mod->init ();
+  if (loom_modules)
+    loom_modules->prev = module;
+
+  loom_modules = module;
+
+  if (module->init)
+    module->init ();
 }
 
 loom_bool_t
 loom_module_remove (const char *name)
 {
-  LOOM_LIST_ITERATE (loom_modules, mod)
+  LOOM_LIST_ITERATE (loom_modules, module)
   {
-    if (loom_streq (name, mod->name))
+    if (loom_streq (name, module->name))
       {
-        if (mod->deinit)
-          mod->deinit ();
+        if (module->deinit)
+          module->deinit ();
 
-        if (mod->prev)
-          mod->prev->next = mod->next;
+        if (module->prev)
+          module->prev->next = module->next;
 
-        if (mod->next)
-          mod->next->prev = mod->prev;
+        if (module->next)
+          module->next->prev = module->prev;
 
-        if (mod == loom_modules)
-          loom_modules = mod->next;
+        if (module == loom_modules)
+          loom_modules = module->next;
 
-        loom_module_unload (mod);
+        loom_module_unload (module);
         return 1;
       }
   }
@@ -512,12 +516,6 @@ loom_module_unload (loom_module_t *mod)
   loom_module_section_t *section;
 
   section = mod->sections;
-
-  if (mod->prev)
-    mod->prev->next = mod->next;
-
-  if (mod->next)
-    mod->next->prev = mod->prev;
 
   while (section)
     {
