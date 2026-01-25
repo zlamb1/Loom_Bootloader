@@ -173,3 +173,20 @@ loom_strtoi (char *s, int *out)
   *out = n;
   return LOOM_ERR_NONE;
 }
+
+int
+loom_memcmp (const void *lhs, const void *rhs, loom_usize_t count)
+{
+  const unsigned char *l = lhs;
+  const unsigned char *r = rhs;
+
+  while (count--)
+    {
+      if (*l != *r)
+        return (int) *l - (int) *r;
+      ++l;
+      ++r;
+    }
+
+  return 0;
+}

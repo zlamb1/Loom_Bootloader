@@ -237,6 +237,8 @@ loom_module_load (void *p, loom_usize_t size)
   if (!mod || !sections)
     goto error;
 
+  mod->sections = NULL;
+
   {
     symtab.shidx = LOOM_SHN_UNDEF;
 

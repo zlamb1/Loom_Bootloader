@@ -6,7 +6,7 @@
 loom_symtab_t loom_symtab;
 
 int
-EXPORT (loom_symbol_register) (const char *name, void *p)
+EXPORT (loom_symbol_register) (const char *name, loom_bool_t isfunc, void *p)
 {
   loom_symbol_t *symbol;
 
@@ -18,6 +18,7 @@ EXPORT (loom_symbol_register) (const char *name, void *p)
     return 0;
 
   symbol->name = name;
+  symbol->isfunc = isfunc;
   symbol->p = p;
 
   loom_symtab.symbols[loom_symtab.length++] = symbol;

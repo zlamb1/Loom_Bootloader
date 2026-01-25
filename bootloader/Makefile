@@ -66,14 +66,14 @@ $(MARKER):
 	@touch $@
 
 qemu: build
-	qemu-system-i386 -drive format=raw,file=$(BIN) -nic none -m 64M -machine pc,acpi=on
+	qemu-system-x86_64 -drive format=raw,file=$(BIN) -nic none -m 512M
 
 dbg: build
-	qemu-system-i386 -drive format=raw,file=$(BIN) -nic none -m 64M -s -S &
+	qemu-system-i386 -drive format=raw,file=$(BIN) -nic none -m 512M -s -S &
 	gdb -q $(ELF) -x gdb/config
 
 clean::
-	rm -f $(ELF) $(BIN) $(DEPS) $(OBJS)
+	rm -f $(ELF) $(CORE) $(BIN) $(DEPS) $(OBJS)
 
 -include $(DEPS)
 -include $(MDEPS)

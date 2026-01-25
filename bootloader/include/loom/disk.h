@@ -16,7 +16,7 @@ typedef struct loom_disk_t
   struct loom_disk_t *next;
 } loom_disk_t;
 
-extern loom_disk_t *loom_disks;
+extern loom_disk_t *EXPORT_VAR (loom_disks);
 
 void EXPORT (loom_disk_register) (loom_disk_t *disk);
 

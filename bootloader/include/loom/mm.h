@@ -4,6 +4,11 @@
 #include "compiler.h"
 #include "types.h"
 
+typedef struct loom_reserved_memory_t
+{
+  struct loom_reserved_memory_t *next;
+} loom_reserved_memory_t;
+
 void loom_mm_add_region (loom_usize_t address, loom_usize_t length);
 
 loom_usize_t loom_mm_bytes_free (void);
