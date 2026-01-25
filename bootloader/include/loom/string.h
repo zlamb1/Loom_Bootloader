@@ -13,9 +13,6 @@ int EXPORT (loom_memcmp) (const void *lhs, const void *rhs,
 
 loom_usize_t EXPORT (loom_strlen) (const char *s);
 int EXPORT (loom_strcmp) (const char *s1, const char *s2);
-loom_bool_t EXPORT (loom_streq) (const char *s1, const char *s2);
-loom_bool_t EXPORT (loom_strneq) (const char *s1, const char *s2,
-                                  loom_usize_t n);
 void EXPORT (loom_strlower) (char *s);
 loom_error_t EXPORT (loom_strtoi) (char *s, int *out);
 

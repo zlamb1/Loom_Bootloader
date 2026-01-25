@@ -38,7 +38,7 @@ loom_command_find (const char *name)
 {
   LOOM_LIST_ITERATE (loom_commands, command)
   {
-    if (loom_streq (command->name, name))
+    if (!loom_strcmp (command->name, name))
       return command;
   }
 

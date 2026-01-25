@@ -52,7 +52,7 @@ loom_symbol_lookup (const char *name)
     {
       loom_symbol_t *symbol = loom_symtab.symbols[i];
 
-      if (loom_streq (name, symbol->name))
+      if (!loom_strcmp (name, symbol->name))
         return symbol;
     }
 

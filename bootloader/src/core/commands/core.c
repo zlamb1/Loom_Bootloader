@@ -116,7 +116,7 @@ parse_console_color (char *arg, loom_console_color_t *color)
 
   for (unsigned int i = 0; i < sizeof (color_map) / sizeof (*color_map); ++i)
     {
-      if (loom_streq (arg, color_map[i].key))
+      if (!loom_strcmp (arg, color_map[i].key))
         {
           *color = color_map[i].color;
           return 1;
@@ -178,8 +178,8 @@ memory_task (UNUSED loom_command_t *cmd, loom_usize_t argc, char *argv[])
   int free = 1;
 
   if (argc > 1
-      && (loom_streq (argv[1], "0") || loom_streq (argv[1], "a")
-          || loom_streq (argv[1], "allocated")))
+      && (!loom_strcmp (argv[1], "0") || !loom_strcmp (argv[1], "a")
+          || !loom_strcmp (argv[1], "allocated")))
     free = 0;
 
   if (free)

@@ -284,7 +284,7 @@ loom_module_load (void *p, loom_usize_t size)
 
         name = symtab.strtab.strs + sym->name;
 
-        if (loom_streq (name, "loom_mod_name"))
+        if (!loom_strcmp (name, "loom_mod_name"))
           {
             if (symbol_validate (name, sym, LOOM_STT_OBJECT, sections,
                                  ehdr->shents))
@@ -292,14 +292,14 @@ loom_module_load (void *p, loom_usize_t size)
 
             name_sym = sym;
           }
-        else if (loom_streq (name, "loom_mod_init")
-                 || loom_streq (name, "loom_mod_deinit"))
+        else if (!loom_strcmp (name, "loom_mod_init")
+                 || !loom_strcmp (name, "loom_mod_deinit"))
           {
             if (symbol_validate (name, sym, LOOM_STT_FUNC, sections,
                                  ehdr->shents))
               goto error;
 
-            if (loom_streq (name, "loom_mod_init"))
+            if (!loom_strcmp (name, "loom_mod_init"))
               init_sym = sym;
             else
               deinit_sym = sym;
@@ -488,7 +488,7 @@ loom_module_remove (const char *name)
 {
   LOOM_LIST_ITERATE (loom_modules, module)
   {
-    if (loom_streq (name, module->name))
+    if (!loom_strcmp (name, module->name))
       {
         if (module->deinit)
           module->deinit ();

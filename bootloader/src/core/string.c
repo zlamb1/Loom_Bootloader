@@ -58,43 +58,6 @@ read:
   goto read;
 }
 
-loom_bool_t
-loom_streq (const char *s1, const char *s2)
-{
-  if (!s1 || !s2)
-    return 0;
-
-  if (s1 == s2)
-    return 1;
-
-  while (1)
-    {
-      if (s1[0] != s2[0])
-        return 0;
-      else if (!s1[0])
-        return 1;
-
-      s1++;
-      s2++;
-    }
-}
-
-loom_bool_t
-loom_strneq (const char *s1, const char *s2, loom_usize_t n)
-{
-  while (n)
-    {
-      if (s1[0] != s2[0])
-        return 0;
-
-      ++s1;
-      ++s2;
-      --n;
-    }
-
-  return 1;
-}
-
 void
 loom_strlower (char *s)
 {
