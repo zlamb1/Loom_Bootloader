@@ -125,7 +125,7 @@ loom_bios_disk_probe (void)
   loom_bios_args_t args = { 0 };
   volatile bios_disk_params_t params;
 
-  for (loom_uint8_t drive = 0x80; drive <= 0x80; ++drive)
+  for (loom_uint8_t drive = 0x80; drive <= 0x8F; ++drive)
     {
       bios_disk_t *disk;
 
