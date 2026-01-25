@@ -6,11 +6,11 @@
 
 struct loom_command_t;
 
-typedef void (*loom_fn_t) (struct loom_command_t *, loom_usize_t, char *[]);
+typedef int (*loom_task_t) (struct loom_command_t *, loom_usize_t, char *[]);
 
 typedef struct loom_command_t
 {
-  loom_fn_t fn;
+  loom_task_t task;
   const char *name;
   void *data;
   struct loom_command_t *prev, *next;

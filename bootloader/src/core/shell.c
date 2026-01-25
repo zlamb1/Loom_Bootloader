@@ -97,7 +97,18 @@ shell_exec_command (shell_t *shell)
   command = loom_command_find (argv[0]);
 
   if (command)
-    command->fn (command, argc, argv);
+    {
+      if (command->task (command, argc, argv))
+        {
+          loom_printf ("%s: ", argv[0]);
+          loom_console_save_fg ();
+          loom_console_set_fg (LOOM_CONSOLE_COLOR_LIGHT_RED);
+          loom_printf ("error: ");
+          loom_console_restore_fg ();
+          loom_printf ("%s\n", loom_error_get ());
+          loom_error_clear ();
+        }
+    }
   else
     loom_printf ("unknown command: '%s'\n", argv[0]);
 

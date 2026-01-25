@@ -1,5 +1,5 @@
 #include "loom/command.h"
-#include "loom/print.h"
+#include "loom/error.h"
 
 // LOOM_MOD (linux)
 
@@ -50,12 +50,12 @@ typedef struct
   loom_uint32_t kernel_info_offset;
 } PACKED setup_header_t;
 
-static void
-command_linux (UNUSED loom_command_t *cmd, UNUSED loom_usize_t argc,
-               UNUSED char *argv[])
+static int
+linux_task (UNUSED loom_command_t *cmd, UNUSED loom_usize_t argc,
+            UNUSED char *argv[])
 {
-  loom_printf ("Not yet implemented.\n");
-  return;
+  loom_error (LOOM_ERR_BAD_ARG, "unimplemented");
+  return -1;
 
   /*loom_memcpy (&hdr, (void *) loom_modbase, sizeof (hdr));
 
@@ -111,7 +111,7 @@ command_linux (UNUSED loom_command_t *cmd, UNUSED loom_usize_t argc,
 
 static loom_command_t linux_command = {
   .name = "linux",
-  .fn = command_linux,
+  .task = linux_task,
 };
 
 /*LOOM_MOD_INIT () { loom_command_register (&linux_command); }
