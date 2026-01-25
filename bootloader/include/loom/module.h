@@ -18,6 +18,8 @@ typedef struct
   loom_uint32_t modoff;
 #define LOOM_MODULE_HEADER_MIN_SIZE sizeof (loom_module_header_t) + 4
   loom_uint32_t size;
+  loom_uint32_t kernel_size;
+  loom_uint32_t initrdsize;
 } PACKED loom_module_header_t;
 
 typedef struct loom_module_section_t
@@ -39,10 +41,10 @@ typedef struct loom_module_t
   struct loom_module_t *prev, *next;
 } loom_module_t;
 
-extern loom_address_t loom_modbase;
-extern loom_address_t loom_modend;
+extern loom_address_t EXPORT_VAR (loom_modbase);
+extern loom_address_t EXPORT_VAR (loom_modend);
 
-extern loom_module_t *loom_modules;
+extern loom_module_t *EXPORT_VAR (loom_modules);
 
 loom_address_t loom_modend_get (void);
 void loom_core_modules_load (void);

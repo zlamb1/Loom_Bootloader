@@ -9,6 +9,6 @@ $(SYMS).o: $(SYMS).c
 	$(CROSS_CC) $(CFLAGS) $< -o $@
 
 clean::
-	rm -f $(SYMS).c
+	rm -f $(SYMS).c $(SYMS).d
 
 OBJS += $(SYMS).o

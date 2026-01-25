@@ -19,7 +19,8 @@ SRCS := commands/core.c \
 		shell.c \
 		sp.c \
 		string.c \
-		symbol.c 
+		symbol.c \
+		linux.c
 
 SRCS := $(foreach src,$(SRCS),src/core/$(src))
 

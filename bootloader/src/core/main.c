@@ -5,8 +5,7 @@
 #include "loom/shell.h"
 #include "loom/symbol.h"
 
-extern char stage1s;
-extern char erodata;
+extern void loom_mod_init (void);
 
 void
 loom_main (void)
@@ -16,6 +15,7 @@ loom_main (void)
   loom_register_export_symbols ();
   loom_init_core_cmds ();
   loom_core_modules_load ();
+  loom_mod_init ();
   loom_shell_exec ();
   for (;;)
     ;

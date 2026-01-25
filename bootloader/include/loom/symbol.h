@@ -7,6 +7,7 @@
 typedef struct
 {
   const char *name;
+  loom_bool_t isfunc;
   void *p;
 } loom_symbol_t;
 
@@ -22,9 +23,10 @@ extern loom_symtab_t loom_symtab;
 // This function's source is generated at compile time by gensym.sh.
 void loom_register_export_symbols (void);
 
-int EXPORT (loom_symbol_register) (const char *, void *);
+int EXPORT (loom_symbol_register) (const char *name, loom_bool_t isfunc,
+                                   void *p);
 
-loom_symbol_t *EXPORT (loom_symbol_find) (void *);
-loom_symbol_t *EXPORT (loom_symbol_lookup) (const char *);
+loom_symbol_t *EXPORT (loom_symbol_find) (void *p);
+loom_symbol_t *EXPORT (loom_symbol_lookup) (const char *name);
 
 #endif

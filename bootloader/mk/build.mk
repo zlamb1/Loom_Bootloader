@@ -1,4 +1,4 @@
-MODS ?= src/mods/hello.c
+MODS ?= src/mods/hello.c 
 MODULE_TABLE_BIN ?= $(OUTDIR)/module-table
 
 MOBJS := $(foreach mod,$(MODS),$(OUTDIR)/$(basename $(mod)).mod)

@@ -9,7 +9,7 @@ ASMFLAGS ?= -gdwarf
 # Required NASM flags.
 ASMFLAGS += -f elf32
 
-CFLAGS ?= -g -std=gnu11 -Os -ffreestanding -fstack-protector-strong -Wall -Wextra \
+CFLAGS ?= -g -Os -std=gnu11 -ffreestanding -fstack-protector-strong -Wall -Wextra \
 		  -Wundef -Wshadow -Wpointer-arith -Wcast-align -Wconversion -Wformat \
 		  -Wuninitialized -Werror
 

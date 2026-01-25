@@ -19,7 +19,7 @@ typedef struct
   char *data;
 } modules_t;
 
-static int binfd = -1, newbinfd = -1, modfd = -1;
+static int binfd = -1, kernelfd = -1, initrdfd = -1, newbinfd = -1, modfd = -1;
 static modules_t mods;
 
 static void
@@ -101,10 +101,11 @@ main (int argc, char *argv[])
   loom_module_header_t hdr;
   struct stat buf;
   uint32_t table_size, *table;
-  size_t binsize, modindex = 0, table_bytes;
+  size_t binsize, modindex = 0, table_bytes, kernel_size = 0, initrdsize = 0;
   char *bindata;
 
-  const char *inputpath = NULL, *outputpath = NULL;
+  const char *inputpath = NULL, *kernelpath = NULL, *initrdpath = NULL,
+             *outputpath = NULL;
 
   size_t nargmods = 0, cargmods = 0;
   char **argmods = NULL;
@@ -129,6 +130,24 @@ main (int argc, char *argv[])
           continue;
         }
 
+      if (!strncmp (argv[i], "-k", 3))
+        {
+          if (i == argc - 1)
+            error_with ("Expected kernel name after -k");
+          kernelpath = argv[i + 1];
+          ++i;
+          continue;
+        }
+
+      if (!strncmp (argv[i], "-d", 3))
+        {
+          if (i == argc - 1)
+            error_with ("Expected initrd name after -d");
+          initrdpath = argv[i + 1];
+          ++i;
+          continue;
+        }
+
       if (cargmods <= nargmods)
         {
           if (!cargmods)
@@ -146,6 +165,28 @@ main (int argc, char *argv[])
 
   if (inputpath == NULL)
     error_with ("Expected input binary (specify one with -i <binary>)");
+
+  if (kernelpath)
+    {
+      if ((kernelfd = open (kernelpath, O_RDONLY)) < 0)
+        error ();
+
+      if (fstat (kernelfd, &buf))
+        error ();
+
+      kernel_size = (size_t) buf.st_size;
+    }
+
+  if (initrdpath)
+    {
+      if ((initrdfd = open (initrdpath, O_RDONLY)) < 0)
+        error ();
+
+      if (fstat (initrdfd, &buf))
+        error ();
+
+      initrdsize = (size_t) buf.st_size;
+    }
 
   if (outputpath == NULL)
     error_with ("Expected output name (specify one with -o <name>)");
@@ -227,6 +268,8 @@ main (int argc, char *argv[])
   hdr.taboff = htole32 (sizeof (hdr));
   hdr.modoff = htole32 (sizeof (hdr) + table_bytes);
   hdr.size = htole32 (sizeof (hdr) + table_bytes + mods.len);
+  hdr.kernel_size = htole32 (kernel_size);
+  hdr.initrdsize = htole32 (initrdsize);
 
   bindata = malloc (binsize);
   if (!bindata)
@@ -246,6 +289,30 @@ main (int argc, char *argv[])
 
   // Write the module ELF files.
   write_all (newbinfd, mods.data, mods.len);
+
+  // Write the kernel.
+  if (kernel_size)
+    {
+      char *kbuf;
+
+      if (!(kbuf = malloc (kernel_size)))
+        error ();
+
+      read_all (kernelfd, kbuf, kernel_size);
+      write_all (newbinfd, kbuf, kernel_size);
+    }
+
+  // Write the initrd.
+  if (initrdsize)
+    {
+      char *initrdbuf;
+
+      if (!(initrdbuf = malloc (initrdsize)))
+        error ();
+
+      read_all (initrdfd, initrdbuf, initrdsize);
+      write_all (newbinfd, initrdbuf, initrdsize);
+    }
 
   {
     size_t align;
