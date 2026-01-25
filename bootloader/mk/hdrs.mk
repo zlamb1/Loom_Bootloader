@@ -9,6 +9,7 @@ HDRS := crypto/md5.h \
 		elf.h \
 		error.h \
 		input.h \
+		kernel_loader.h \
 		keycode.h \
 		main.h \
 		mmap.h \
