@@ -1,5 +1,6 @@
 #include "loom/string.h"
 #include "loom/math.h"
+#include "loom/mm.h"
 
 void
 loom_memcpy (void *restrict dst, const void *restrict src, loom_usize_t count)
@@ -40,6 +41,23 @@ loom_strlen (const char *s)
   return len;
 }
 
+int
+loom_strcmp (const char *s1, const char *s2)
+{
+  unsigned char c1, c2;
+read:
+  c1 = (unsigned char) (*s1++);
+  c2 = (unsigned char) (*s2++);
+
+  if (c1 != c2)
+    return (int) c1 - (int) c2;
+
+  if (c1 == '\0')
+    return 0;
+
+  goto read;
+}
+
 loom_bool_t
 loom_streq (const char *s1, const char *s2)
 {
@@ -62,7 +80,7 @@ loom_streq (const char *s1, const char *s2)
 }
 
 loom_bool_t
-EXPORT (loom_strneq) (const char *s1, const char *s2, loom_usize_t n)
+loom_strneq (const char *s1, const char *s2, loom_usize_t n)
 {
   while (n)
     {
@@ -189,4 +207,16 @@ loom_memcmp (const void *lhs, const void *rhs, loom_usize_t count)
     }
 
   return 0;
+}
+
+char *
+loom_strdup (const char *s)
+{
+  loom_usize_t len = loom_strlen (s);
+  char *dups;
+  if (len == LOOM_USIZE_MAX || !(dups = loom_malloc (len + 1)))
+    return NULL;
+  loom_memcpy (dups, s, len);
+  dups[len] = '\0';
+  return dups;
 }
