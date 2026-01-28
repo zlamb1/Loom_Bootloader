@@ -315,7 +315,7 @@ loom_realloc (void *p, loom_usize_t n)
   // This is undefined behavior if p
   // is misaligned or is an invalid pointer.
   chunk = (chunk_t *) ((char *) p - CHUNK_SIZE);
-  oldsize = chunk->size & CHUNK_FLAG_MASK;
+  oldsize = (chunk->size & CHUNK_FLAG_MASK) - CHUNK_SIZE;
   copy = n > oldsize ? oldsize : n;
 
   loom_memcpy (new, p, copy);
