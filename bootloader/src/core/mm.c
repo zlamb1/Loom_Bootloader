@@ -22,6 +22,8 @@
 #define CHUNK_ALIGN_DOWN(X) ((X) & ~CHUNK_SIZE_MINUS_1)
 #define CHUNK_ALIGN_UP(X)   CHUNK_ALIGN_DOWN ((X) + CHUNK_SIZE_MINUS_1)
 
+#define heap_panic() loom_panic ("heap corruption detected")
+
 typedef struct arena_t
 {
   loom_usize_t length;
@@ -54,8 +56,8 @@ compile_assert (MIN_ALLOC >= sizeof (arena_t),
 compile_assert (CHUNK_SIZE >= _Alignof (chunk_t),
                 "chunk_t alignment must be less than or equal to CHUNK_SIZE.");
 
-compile_assert (MIN_ALLOC >= sizeof (chunk_t),
-                "chunk_t must fit within MIN_ALLOC.");
+compile_assert (CHUNK_SIZE >= sizeof (chunk_t),
+                "chunk_t must fit within CHUNK_SIZE.");
 
 compile_assert (
     CHUNK_SIZE >= _Alignof (free_chunk_t),
@@ -102,7 +104,7 @@ loom_mm_add_region (loom_usize_t address, loom_usize_t length)
       loom_mm_add_region (modend, (address + length) - modend);
     }
 
-  if (exit || length < CHUNK_SIZE * 4)
+  if (exit || length < CHUNK_SIZE * 2 + MIN_ALLOC)
     return;
 
   free_chunk_t *fchunk = (free_chunk_t *) (address + MIN_ALLOC);
@@ -134,7 +136,7 @@ update_next (arena_t *arena, chunk_t *chunk, loom_bool_t differ)
   // If we either overflow the address space or the arena,
   // something went wrong.
   if (loom_add (address, chunk_size, &address) || address > arena_end)
-    loom_panic ("heap corruption detected");
+    heap_panic ();
 
   // We are the last chunk. There is no next chunk to update.
   if (address == arena_end)
@@ -143,11 +145,11 @@ update_next (arena_t *arena, chunk_t *chunk, loom_bool_t differ)
   // Minimum MIN_ALLOC per free_chunk_t or allocation.
   // If we have less than that, something went wrong.
   if (arena_end - address < MIN_ALLOC)
-    loom_panic ("heap corruption detected");
+    heap_panic ();
 
   // If our address is misaligned, something went wrong.
   if (address & CHUNK_SIZE_MINUS_1)
-    loom_panic ("heap corruption detected");
+    heap_panic ();
 
   nchunk = (chunk_t *) address;
 
@@ -155,7 +157,7 @@ update_next (arena_t *arena, chunk_t *chunk, loom_bool_t differ)
       i2 = nchunk->prev_size & CHUNK_FLAG_INUSE;
 
   if ((differ && i1 == i2) || (!differ && i1 != i2))
-    loom_panic ("heap corruption detected");
+    heap_panic ();
 
   nchunk->prev_size = chunk->size;
 }
@@ -168,7 +170,7 @@ unlink_free_chunk (arena_t *arena, free_chunk_t *fchunk)
   else
     {
       if (arena->freelist != fchunk)
-        loom_panic ("heap corruption detected");
+        heap_panic ();
 
       arena->freelist = fchunk->next;
       arena->magic = ARENA_MAGIC_OF (arena);
@@ -189,7 +191,7 @@ link_free_chunk (arena_t *arena, free_chunk_t *fchunk)
   if (arena->freelist)
     {
       if (arena->freelist->prev)
-        loom_panic ("heap corruption detected");
+        heap_panic ();
 
       arena->freelist->prev = fchunk;
     }
@@ -213,7 +215,7 @@ loom_malloc (loom_usize_t size)
     free_chunk_t *fchunk;
 
     if (ARENA_MAGIC_OF (arena) != arena->magic)
-      loom_panic ("heap corruption detected");
+      heap_panic ();
 
     fchunk = arena->freelist;
 
@@ -222,7 +224,7 @@ loom_malloc (loom_usize_t size)
         loom_usize_t chunk_size;
 
         if (fchunk->base.size & CHUNK_FLAG_INUSE)
-          loom_panic ("heap corruption detected");
+          heap_panic ();
 
         chunk_size = fchunk->base.size & CHUNK_FLAG_MASK;
 
@@ -342,7 +344,7 @@ loom_free (void *p)
     loom_bool_t inuse, differ = 1;
 
     if (ARENA_MAGIC_OF (arena) != arena->magic)
-      loom_panic ("heap corruption detected");
+      heap_panic ();
 
     arena_start = (loom_address_t) arena + MIN_ALLOC;
     arena_end = (loom_address_t) arena + arena->length;
@@ -355,7 +357,7 @@ loom_free (void *p)
     // Chunk should be allocated. If not, we got
     // a bad pointer or there is heap corruption.
     if (!(chunk->size & CHUNK_FLAG_INUSE))
-      loom_panic ("heap corruption detected");
+      heap_panic ();
 
     fchunk = (free_chunk_t *) chunk;
     fchunk->base.size &= ~CHUNK_FLAG_INUSE;
@@ -375,12 +377,12 @@ loom_free (void *p)
 
         if (prev_size < MIN_ALLOC || loom_sub (address, prev_size, &address)
             || address < arena_start)
-          loom_panic ("heap corruption detected");
+          heap_panic ();
 
         bchunk = (free_chunk_t *) address;
         if (bchunk->base.size & CHUNK_FLAG_INUSE
             || (bchunk->base.size & CHUNK_FLAG_MASK) != prev_size)
-          loom_panic ("heap corruption detected");
+          heap_panic ();
 
         size = fchunk->base.size & CHUNK_FLAG_MASK;
 
@@ -423,14 +425,14 @@ loom_free (void *p)
 
         if (newsize < MIN_ALLOC || loom_add (size, newsize, &size)
             || loom_add (chunk_end, newsize, &chunk_end))
-          loom_panic ("heap corruption detected");
+          heap_panic ();
 
         fchunk->base.size = size | flags;
       }
 
+    // Either heap corruption or some logic error.
     if (chunk_end != arena_end && !inuse)
-      // Either heap corruption or some logic error.
-      loom_panic ("heap corruption detected");
+      heap_panic ();
 
     update_next (arena, &fchunk->base, differ);
 
@@ -464,7 +466,7 @@ loom_mm_iterate (int (*hook) (loom_address_t p, loom_usize_t n,
 
     if (ARENA_MAGIC_OF (arena) != arena->magic
         || loom_add (address, arena->length, &arena_end))
-      loom_panic ("heap corruption detected");
+      heap_panic ();
 
     address += MIN_ALLOC;
 
@@ -480,7 +482,7 @@ loom_mm_iterate (int (*hook) (loom_address_t p, loom_usize_t n,
         if (chunk_size < MIN_ALLOC || (chunk_size & CHUNK_SIZE_MINUS_1)
             || loom_add (address, chunk_size, &address) || address > arena_end
             || (!first && prev_size != chunk->prev_size))
-          loom_panic ("heap corruption detected");
+          heap_panic ();
 
         retval = hook (address - chunk_size, chunk_size,
                        !(chunk->size & CHUNK_FLAG_INUSE), data);
@@ -493,7 +495,7 @@ loom_mm_iterate (int (*hook) (loom_address_t p, loom_usize_t n,
       }
 
     if (address != arena_end)
-      loom_panic ("heap corruption detected");
+      heap_panic ();
   }
 
   return 0;
