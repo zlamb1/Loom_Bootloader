@@ -54,8 +54,8 @@ compile_assert (MIN_ALLOC >= sizeof (arena_t),
 compile_assert (CHUNK_SIZE >= _Alignof (chunk_t),
                 "chunk_t alignment must be less than or equal to CHUNK_SIZE.");
 
-compile_assert (MIN_ALLOC >= sizeof (chunk_t),
-                "chunk_t must fit within MIN_ALLOC.");
+compile_assert (CHUNK_SIZE >= sizeof (chunk_t),
+                "chunk_t must fit within CHUNK_SIZE.");
 
 compile_assert (
     CHUNK_SIZE >= _Alignof (free_chunk_t),
@@ -102,7 +102,7 @@ loom_mm_add_region (loom_usize_t address, loom_usize_t length)
       loom_mm_add_region (modend, (address + length) - modend);
     }
 
-  if (exit || length < CHUNK_SIZE * 4)
+  if (exit || length < CHUNK_SIZE * 2 + MIN_ALLOC)
     return;
 
   free_chunk_t *fchunk = (free_chunk_t *) (address + MIN_ALLOC);
