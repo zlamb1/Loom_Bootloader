@@ -114,10 +114,7 @@ section_iterate (loom_usize_t shidx, loom_elf32_shdr_t *shdr, void *data)
       section->size = shdr->size;
       section->next = ctx->mod->sections;
 
-      if (shdr->type == LOOM_SHT_NOBITS)
-        section->p = loom_zalloc (shdr->size);
-      else
-        section->p = loom_malloc (shdr->size);
+      section->p = loom_memalign (shdr->size, shdr->addralign);
 
       if (!section->p)
         {
@@ -125,7 +122,9 @@ section_iterate (loom_usize_t shidx, loom_elf32_shdr_t *shdr, void *data)
           return -1;
         }
 
-      if (shdr->type != LOOM_SHT_NOBITS)
+      if (shdr->type == LOOM_SHT_NOBITS)
+        loom_memset (section->p, 0, shdr->size);
+      else
         loom_memcpy (section->p,
                      (void *) ((loom_address_t) ctx->ehdr + shdr->offset),
                      shdr->size);

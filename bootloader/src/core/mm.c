@@ -315,9 +315,7 @@ loom_zalloc (loom_usize_t size)
   if (!p)
     return p;
 
-  char *c = p;
-  for (loom_usize_t i = 0; i < size; ++i)
-    c[i] = 0;
+  loom_memset (p, 0, size);
 
   return p;
 }

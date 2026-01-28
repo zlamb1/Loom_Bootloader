@@ -10,6 +10,7 @@ void EXPORT (loom_memcpy) (void *restrict dst, const void *restrict src,
 void EXPORT (loom_memmove) (void *dst, const void *src, loom_usize_t count);
 int EXPORT (loom_memcmp) (const void *lhs, const void *rhs,
                           loom_usize_t count);
+void EXPORT (loom_memset) (void *dst, int v, loom_usize_t n);
 
 loom_usize_t EXPORT (loom_strlen) (const char *s);
 int EXPORT (loom_strcmp) (const char *s1, const char *s2);

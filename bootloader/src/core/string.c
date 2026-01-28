@@ -32,6 +32,19 @@ loom_memmove (void *dst, const void *src, loom_usize_t count)
       d[i] = s[i];
 }
 
+void
+loom_memset (void *dst, int v, loom_usize_t n)
+{
+  unsigned char *d = dst;
+  unsigned char vc = (unsigned char) v;
+
+  if (!dst)
+    loom_panic ("memset");
+
+  while (n--)
+    *d++ = vc;
+}
+
 loom_usize_t
 loom_strlen (const char *s)
 {
