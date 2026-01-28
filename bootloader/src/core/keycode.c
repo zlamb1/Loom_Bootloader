@@ -62,7 +62,7 @@ loom_keycode_to_char (int mods, int keycode)
 {
   int buf = 0;
 
-  if (loom_keycode_alpha (keycode) || loom_keycode_numeric (keycode)
+  if (loom_keycode_isalpha (keycode) || loom_keycode_isnumeric (keycode)
       || keycode == LOOM_KEY_TILDE || keycode == LOOM_KEY_MINUS
       || keycode == LOOM_KEY_EQUAL || keycode == LOOM_KEY_LEFTBRACE
       || keycode == LOOM_KEY_RIGHTBRACE || keycode == LOOM_KEY_BACKSLASH
@@ -73,7 +73,7 @@ loom_keycode_to_char (int mods, int keycode)
       if (mods & LOOM_INPUT_MOD_LEFTSHIFT || mods & LOOM_INPUT_MOD_RIGHTSHIFT)
         buf = (buf + 1) % 2;
 
-      if (loom_keycode_alpha (keycode) && mods & LOOM_INPUT_MOD_CAPSLOCK)
+      if (loom_keycode_isalpha (keycode) && mods & LOOM_INPUT_MOD_CAPSLOCK)
         buf = (buf + 1) % 2;
     }
 

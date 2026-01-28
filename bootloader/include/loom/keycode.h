@@ -120,13 +120,13 @@
 #define LOOM_KEY_NPENTER    115
 
 static UNUSED int
-loom_keycode_alpha (int keycode)
+loom_keycode_isalpha (int keycode)
 {
   return keycode >= LOOM_KEY_A && keycode <= LOOM_KEY_Z;
 }
 
 static UNUSED int
-loom_keycode_numeric (int keycode)
+loom_keycode_isnumeric (int keycode)
 {
   return keycode >= LOOM_KEY_0 && keycode <= LOOM_KEY_9;
 }
