@@ -70,15 +70,13 @@ shell_exec_command (shell_t *shell)
       if (argc == argvc)
         {
           char **newargv;
-          loom_usize_t oldargvc = argvc;
 
           if (!argvc)
             argvc = 1;
           else
             argvc *= 2;
 
-          newargv = loom_realloc (argv, oldargvc * sizeof (char *),
-                                  argvc * sizeof (char *));
+          newargv = loom_realloc (argv, argvc * sizeof (char *));
           if (!newargv)
             {
               loom_free (argv);

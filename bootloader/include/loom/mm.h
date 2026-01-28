@@ -4,22 +4,17 @@
 #include "compiler.h"
 #include "types.h"
 
-typedef struct loom_reserved_memory_t
-{
-  struct loom_reserved_memory_t *next;
-} loom_reserved_memory_t;
-
 void loom_mm_add_region (loom_usize_t address, loom_usize_t length);
-
-loom_usize_t loom_mm_bytes_free (void);
-loom_usize_t loom_mm_bytes_allocated (void);
 
 void *EXPORT (loom_malloc) (loom_usize_t size);
 void *EXPORT (loom_zalloc) (loom_usize_t size);
 void *EXPORT (loom_calloc) (loom_usize_t n, loom_usize_t size);
-void *EXPORT (loom_realloc) (void *p, loom_usize_t oldsize,
-                             loom_usize_t newsize);
+void *EXPORT (loom_realloc) (void *p, loom_usize_t newsize);
 
 void EXPORT (loom_free) (void *p);
+
+int EXPORT (loom_mm_iterate) (int (*hook) (loom_address_t p, loom_usize_t n,
+                                           loom_bool_t isfree, void *data),
+                              void *data);
 
 #endif

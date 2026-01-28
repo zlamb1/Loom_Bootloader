@@ -3,6 +3,7 @@
 #include "loom/console.h"
 #include "loom/kernel_loader.h"
 #include "loom/list.h"
+#include "loom/math.h"
 #include "loom/mm.h"
 #include "loom/module.h"
 #include "loom/print.h"
@@ -172,20 +173,40 @@ clear_task (UNUSED loom_command_t *cmd, UNUSED loom_usize_t argc,
   return 0;
 }
 
+typedef struct
+{
+  loom_bool_t isfree;
+  loom_usize_t c;
+} mm_iterate_context_t;
+
+static int
+mm_iterate_hook (UNUSED loom_address_t p, loom_usize_t n, loom_bool_t isfree,
+                 void *data)
+{
+  mm_iterate_context_t *ctx = data;
+
+  if (isfree == ctx->isfree && loom_add (ctx->c, n, &ctx->c))
+    {
+      ctx->c = LOOM_USIZE_MAX;
+      return 1;
+    }
+
+  return 0;
+}
+
 static int
 memory_task (UNUSED loom_command_t *cmd, loom_usize_t argc, char *argv[])
 {
-  int free = 1;
+  mm_iterate_context_t ctx = { .c = 0, .isfree = 1 };
 
   if (argc > 1
       && (!loom_strcmp (argv[1], "0") || !loom_strcmp (argv[1], "a")
           || !loom_strcmp (argv[1], "allocated")))
-    free = 0;
+    ctx.isfree = 0;
 
-  if (free)
-    loom_printf ("%lu bytes free\n", loom_mm_bytes_free ());
-  else
-    loom_printf ("%lu bytes allocated\n", loom_mm_bytes_allocated ());
+  loom_mm_iterate (mm_iterate_hook, &ctx);
+  loom_printf ("%lu bytes %s\n", (unsigned long) ctx.c,
+               ctx.isfree ? "free" : "allocated");
 
   return 0;
 }
