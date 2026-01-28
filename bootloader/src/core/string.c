@@ -9,7 +9,7 @@ loom_memcpy (void *restrict dst, const void *restrict src, loom_usize_t count)
   const char *s = src;
 
   if (!d || !s)
-    loom_panic ("loom_memcpy");
+    loom_panic ("memcpy");
 
   for (loom_usize_t i = 0; i < count; ++i)
     *d++ = *s++;
@@ -22,7 +22,7 @@ loom_memmove (void *dst, const void *src, loom_usize_t count)
   const char *s = src;
 
   if (!d || !s)
-    loom_panic ("loom_memmove");
+    loom_panic ("memmove");
 
   if ((loom_address_t) s < (loom_address_t) d)
     while (count--)
@@ -35,6 +35,9 @@ loom_memmove (void *dst, const void *src, loom_usize_t count)
 loom_usize_t
 loom_strlen (const char *s)
 {
+  if (!s)
+    loom_panic ("strlen");
+
   loom_usize_t len = 0;
   for (; s[len]; ++len)
     ;
@@ -45,6 +48,10 @@ int
 loom_strcmp (const char *s1, const char *s2)
 {
   unsigned char c1, c2;
+
+  if (!s1 || !s2)
+    loom_panic ("strcmp");
+
 read:
   c1 = (unsigned char) (*s1++);
   c2 = (unsigned char) (*s2++);
@@ -61,6 +68,9 @@ read:
 void
 loom_strlower (char *s)
 {
+  if (!s)
+    loom_panic ("strlower");
+
   while (s[0])
     {
       if (s[0] >= 'A' && s[0] <= 'Z')
@@ -91,7 +101,7 @@ loom_strtoi (char *s, int *out)
   char ch;
 
   if (!s[0])
-    return LOOM_ERR_BAD_ARG;
+    loom_panic ("strtoi");
 
   while ((ch = s[0]))
     {
@@ -161,6 +171,9 @@ loom_memcmp (const void *lhs, const void *rhs, loom_usize_t count)
   const unsigned char *l = lhs;
   const unsigned char *r = rhs;
 
+  if (!lhs || !rhs)
+    loom_panic ("memcmp");
+
   while (count--)
     {
       if (*l != *r)
@@ -177,6 +190,10 @@ loom_strdup (const char *s)
 {
   loom_usize_t len = loom_strlen (s);
   char *dups;
+
+  if (!s)
+    loom_panic ("strdup");
+
   if (len == LOOM_USIZE_MAX || !(dups = loom_malloc (len + 1)))
     return NULL;
   loom_memcpy (dups, s, len);
