@@ -1,9 +1,9 @@
-#include "crypto/crypto.h"
-#include "loom/crypto/sha1.h"
 #ifndef LOOM_MODULE_H
 #define LOOM_MODULE_H 1
 
+#include "crypto/crypto.h"
 #include "loom/compiler.h"
+#include "loom/crypto/sha1.h"
 #include "loom/types.h"
 
 #ifdef LOOM_MODULE
