@@ -99,13 +99,10 @@ section_iterate (loom_usize_t shidx, loom_elf32_shdr_t *shdr, void *data)
       if (!shdr->size)
         return 0;
 
-      if (shdr->addralign > 8)
-        {
-          loom_error (LOOM_ERR_BAD_ELF_SHDR,
-                      "section alignment %lu not supported",
-                      (unsigned long) shdr->addralign);
-          return -1;
-        }
+      if ((shdr->addralign & (shdr->addralign - 1)) != 0)
+        LOOM_ERROR (LOOM_ERR_BAD_MODULE,
+                    "section alignment %lu is not a power of 2",
+                    (ulong) shdr->addralign);
 
       section = loom_malloc (sizeof (*section));
       if (!section)

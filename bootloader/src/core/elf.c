@@ -104,11 +104,6 @@ loom_elf32_shdr_validate (loom_address_t addr, loom_usize_t size,
   if (shdr->type != LOOM_SHT_NOBITS && shdr->offset + shdr->size > size)
     LOOM_ERROR (LOOM_ERR_BAD_ELF_SHDR, "section overflows ELF");
 
-  if ((shdr->addralign & (shdr->addralign - 1)) != 0)
-    LOOM_ERROR (LOOM_ERR_BAD_ELF_SHDR,
-                "section alignment %lu is not a power of 2",
-                (ulong) shdr->addralign);
-
   return 0;
 }
 
