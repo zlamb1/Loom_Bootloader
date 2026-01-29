@@ -33,6 +33,7 @@ typedef struct
   loom_module_t *mod;
   loom_module_section_t **sections;
   symtab_t *symtab;
+  strtab_t *shstrtab;
 } section_iterate_context_t;
 
 typedef struct
@@ -112,9 +113,31 @@ section_iterate (loom_usize_t shidx, loom_elf32_shdr_t *shdr, void *data)
 
       section->shidx = shidx;
       section->size = shdr->size;
-      section->next = ctx->mod->sections;
+
+#ifdef LOOM_DEBUG
+      if (ctx->shstrtab->strs)
+        {
+          strtab_t *shstrtab = ctx->shstrtab;
+          loom_usize_t len;
+
+          if (shdr->name >= shstrtab->size)
+            {
+              loom_error (LOOM_ERR_BAD_MODULE,
+                          "invalid section name index in string table");
+              return -1;
+            }
+
+          len = loom_strlen (shstrtab->strs + shdr->name);
+          if (len >= LOOM_MODULE_SECTION_NAME_LEN)
+            len = LOOM_MODULE_SECTION_NAME_LEN - 1;
+
+          loom_memcpy (section->name, shstrtab->strs + shdr->name, len);
+          section->name[len] = '\0';
+        }
+#endif
 
       section->p = loom_memalign (shdr->size, shdr->addralign);
+      section->next = ctx->mod->sections;
 
       if (!section->p)
         {
@@ -226,9 +249,28 @@ loom_module_load (void *p, loom_usize_t size)
   loom_module_section_t **sections = NULL;
 
   symtab_t symtab = { 0 };
+  strtab_t shstrtab = { 0 };
 
   if (loom_elf32_ehdr_load (p, size, &ehdr))
     return -1;
+
+  if (ehdr->shstridx != LOOM_SHN_UNDEF)
+    {
+      loom_elf32_shdr_t *shdr = loom_elf32_shdr_get (ehdr, ehdr->shstridx);
+
+      if (!shdr)
+        {
+          loom_error (LOOM_ERR_BAD_MODULE,
+                      "invalid section header string table index");
+          return -1;
+        }
+
+      if (loom_elf32_strtab_validate (ehdr, size, shdr))
+        return -1;
+
+      shstrtab.size = shdr->size;
+      shstrtab.strs = (const char *) p + shdr->offset;
+    }
 
   mod = loom_malloc (sizeof (*mod));
   sections = loom_zalloc (ehdr->shents * sizeof (*sections));
@@ -237,6 +279,10 @@ loom_module_load (void *p, loom_usize_t size)
     goto error;
 
   mod->sections = NULL;
+
+#ifdef LOOM_DEBUG
+  loom_sha1_hash (size, p, mod->hash);
+#endif
 
   {
     symtab.shidx = LOOM_SHN_UNDEF;
@@ -247,6 +293,7 @@ loom_module_load (void *p, loom_usize_t size)
       .mod = mod,
       .size = size,
       .symtab = &symtab,
+      .shstrtab = &shstrtab,
     };
 
     if (loom_elf32_shdr_iterate (ehdr, section_iterate, &ctx))

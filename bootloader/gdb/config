@@ -1,6 +1,16 @@
 target remote localhost:1234
 
+set confirm off
+source gdb/mod.py
+
 layout src
 
 b loom_main
-c 
+
+b loom_module_add
+commands
+    loom_gdb_module_load module
+    c
+end
+
+c

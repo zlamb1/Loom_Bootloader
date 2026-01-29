@@ -1,3 +1,5 @@
+#include "crypto/crypto.h"
+#include "loom/crypto/sha1.h"
 #ifndef LOOM_MODULE_H
 #define LOOM_MODULE_H 1
 
@@ -25,6 +27,10 @@ typedef struct
 typedef struct loom_module_section_t
 {
   loom_usize_t shidx, size;
+#ifdef LOOM_DEBUG
+#define LOOM_MODULE_SECTION_NAME_LEN 32
+  char name[LOOM_MODULE_SECTION_NAME_LEN];
+#endif
   void *p;
   struct loom_module_section_t *next;
 } loom_module_section_t;
@@ -35,6 +41,9 @@ typedef void (*loom_module_deinit_t) (void);
 typedef struct loom_module_t
 {
   const char *name;
+#ifdef LOOM_DEBUG
+  loom_digest_t hash[LOOM_SHA1_DIGEST_SIZE];
+#endif
   loom_module_init_t init;
   loom_module_deinit_t deinit;
   loom_module_section_t *sections;

@@ -4,6 +4,8 @@ CROSS_CC ?= $(TARGET)-elf-gcc
 CROSS_OBJCOPY ?= $(TARGET)-elf-objcopy
 CROSS_NM ?= $(TARGET)-elf-nm
 
+DEBUG ?= 1
+
 ASMFLAGS ?= -gdwarf
 
 # Required NASM flags.
@@ -17,6 +19,10 @@ CFLAGS ?= -g -Os -std=gnu11 -ffreestanding -fstack-protector-strong -Wall -Wextr
 INC = -I$(INCDIR)
 CFLAGS += -c -fno-strict-aliasing -fno-omit-frame-pointer \
 	      -mno-red-zone -MMD $(INC)
+
+ifeq ($(DEBUG),1)
+CFLAGS += -DLOOM_DEBUG
+endif
 
 ifeq ($(TARGET),i686)
 CFLAGS += -DLOOM_LITTLE_ENDIAN

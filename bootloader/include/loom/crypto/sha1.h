@@ -5,7 +5,9 @@
 #include "loom/crypto/crypto.h"
 #include "loom/types.h"
 
+#define LOOM_SHA1_DIGEST_SIZE 20
+
 void EXPORT (loom_sha1_hash) (loom_usize_t length, const char *buf,
-                              loom_digest_t digest[20]);
+                              loom_digest_t digest[LOOM_SHA1_DIGEST_SIZE]);
 
 #endif

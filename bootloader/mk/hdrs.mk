@@ -1,6 +1,8 @@
 INCDIR := include
 
-HDRS := arch.h \
+HDRS := crypto/crypto.h \
+		crypto/sha1.h \
+		arch.h \
 		command.h \
         console.h \
 		disk.h \
