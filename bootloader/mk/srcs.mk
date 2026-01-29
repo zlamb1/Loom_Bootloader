@@ -1,4 +1,5 @@
-SRCS := commands/core.c \
+SRCS := crypto/sha1.c \
+		commands/core.c \
 		arith.c \
 		command.c \
 	    console.c \

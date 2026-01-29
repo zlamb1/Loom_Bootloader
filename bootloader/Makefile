@@ -24,7 +24,7 @@ all: $(MODULE_TABLE_BIN) build
 
 ifeq ($(BUILD_TYPE),podman)
 
-build: $(BIN)
+build: $(BIN) $(MODSYMS)
 
 corebuild: $(MARKER)
 	$(RUN) make build
