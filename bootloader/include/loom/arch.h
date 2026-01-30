@@ -21,6 +21,4 @@ void EXPORT (loom_arch_irq_restore) (int);
 
 void NORETURN EXPORT (loom_arch_reboot) (void);
 
-void EXPORT (loom_boot_linux) (loom_uint32_t);
-
 #endif

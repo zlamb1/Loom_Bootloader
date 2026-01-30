@@ -3,7 +3,7 @@ BITS 16
 SECTION .stage2.tables EXEC
 
 GLOBAL _save_real_idt
-GLOBAL _enter_rmode
+GLOBAL loom_enter_rmode
 GLOBAL _enter_pmode
 
 GLOBAL loom_boot_linux
@@ -55,7 +55,7 @@ _save_real_idt:
 
 BITS 32
 
-_enter_rmode:
+loom_enter_rmode:
     cli
     jmp 0x18:.flush
 
@@ -120,23 +120,3 @@ BITS 32
     movzx eax, ax
 
     jmp eax
-
-loom_boot_linux:
-    cli
-    call _enter_rmode
-BITS 16
-    mov eax, [esp+4]
-    mov WORD [farjmp.off], 0
-    mov WORD [farjmp.seg], ax
-    add WORD [farjmp.seg], 0x20
-    mov ds, ax
-    mov ss, ax
-    mov es, ax
-    mov fs, ax
-    mov gs, ax
-    mov sp, 0xE000
-    jmp far [cs:farjmp]
-
-farjmp: 
-    .off: DW 0
-    .seg: DW 0

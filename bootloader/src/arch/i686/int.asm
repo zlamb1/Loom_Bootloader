@@ -4,7 +4,7 @@ SECTION .stage2.int EXEC
 
 GLOBAL loom_bios_int
 
-EXTERN _enter_rmode
+EXTERN loom_enter_rmode
 EXTERN _enter_pmode
 
 ALIGN 4
@@ -53,7 +53,7 @@ loom_bios_int:
     mov esi, DWORD [eax+16]
     mov edi, DWORD [eax+20]
 
-    call _enter_rmode
+    call loom_enter_rmode
 
 BITS 16
             DB 0xB8

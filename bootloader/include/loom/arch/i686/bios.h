@@ -17,6 +17,7 @@ typedef struct
   loom_uint16_t es;
 } PACKED loom_bios_args_t;
 
+void EXPORT (loom_enter_rmode) (void);
 void EXPORT (loom_bios_int) (loom_uint8_t intno, loom_bios_args_t *args);
 
 void loom_bios_disk_probe (void);

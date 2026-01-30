@@ -4,10 +4,10 @@ SECTION .stage2.reboot EXEC
 
 GLOBAL loom_arch_reboot
 
-EXTERN _enter_rmode
+EXTERN loom_enter_rmode
 
 loom_arch_reboot:
-    call _enter_rmode
+    call loom_enter_rmode
 
 BITS 16
     ; request cold reboot
