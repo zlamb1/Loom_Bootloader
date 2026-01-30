@@ -108,13 +108,6 @@ linux_task (UNUSED loom_command_t *cmd, UNUSED loom_usize_t argc,
       goto out;
     }
 
-  cmdline = loom_malloc (5);
-
-  if (!cmdline)
-    goto out;
-
-  loom_memcpy (cmdline, "auto", 5);
-
   setup_sects = setup_header->setup_sects;
   if (!setup_sects)
     setup_sects = 4;
@@ -127,33 +120,46 @@ linux_task (UNUSED loom_command_t *cmd, UNUSED loom_usize_t argc,
   setup_header->ramdisk_image = 0;
   setup_header->ramdisk_size = 0;
   setup_header->heap_end_ptr = 0;
-  setup_header->cmd_line_ptr = (loom_uint32_t) cmdline;
   setup_header->setup_data = 0;
 
   min_addr = setup_header->code32_start + kernel_size;
 
+#define CMDLINE_SIZE 5
   if (min_addr < setup_header->pref_address)
     {
-      loom_uint32_t gap_max_addr;
-
       if (setup_header->pref_address > LOOM_UINT32_MAX)
         {
           try_high = 0;
-          gap_max_addr = LOOM_UINT32_MAX;
+          max_addr = LOOM_UINT32_MAX;
         }
       else
-        gap_max_addr = (loom_uint32_t) setup_header->pref_address;
+        max_addr = (loom_uint32_t) setup_header->pref_address;
 
-      // ... DO ALLOCATIONS
-      (void) gap_max_addr;
-      (void) max_addr;
-      (void) try_high;
+      cmdline = loom_memalign_range (CMDLINE_SIZE, 0, min_addr, max_addr);
+
+      if (cmdline)
+        try_high = 0;
+      else if (!try_high)
+        goto out;
     }
 
-  if (setup_header->pref_address < LOOM_UINT32_MAX
-      && loom_add (setup_header->pref_address, setup_header->init_size,
-                   &min_addr))
-    max_addr = (loom_uint32_t) setup_header->pref_address;
+  if (try_high)
+    {
+      if (loom_add ((loom_uint32_t) setup_header->pref_address,
+                    setup_header->init_size, &min_addr))
+        goto out;
+
+      max_addr = LOOM_UINT32_MAX;
+
+      cmdline = loom_memalign_range (CMDLINE_SIZE, 0, min_addr, max_addr);
+
+      if (!cmdline)
+        goto out;
+    }
+
+  loom_memcpy (cmdline, "auto", CMDLINE_SIZE);
+
+  setup_header->cmd_line_ptr = (loom_uint32_t) cmdline;
 
   linux_loader.kernel = kbuf;
 
