@@ -1,6 +1,9 @@
 #include "loom/command.h"
+#include "loom/disk.h"
 #include "loom/error.h"
+#include "loom/mm.h"
 #include "loom/module.h"
+#include "loom/string.h"
 
 LOOM_MOD (linux)
 
@@ -55,41 +58,61 @@ static int
 linux_task (UNUSED loom_command_t *cmd, UNUSED loom_usize_t argc,
             UNUSED char *argv[])
 {
-  loom_error (LOOM_ERR_BAD_ARG, "unimplemented");
-  return -1;
+  loom_module_header_t hdr;
+  loom_disk_t *disk;
+  loom_usize_t offset, kernel_size;
+  loom_uint32_t setup_sects;
 
-  /*loom_memcpy (&hdr, (void *) loom_modbase, sizeof (hdr));
+  setup_header_t *setup_header;
+  char *kbuf = NULL;
+
+  int retval = 0;
+
+  loom_memcpy (&hdr, (void *) loom_modbase, sizeof (hdr));
 
   offset = (loom_usize_t) &stage3e - (loom_usize_t) &stage1s;
   offset += hdr.size;
 
+  kernel_size = hdr.kernel_size;
+
+  if (!kernel_size)
+    {
+      loom_error (LOOM_ERR_BAD_ARG, "no kernel appended");
+      return -1;
+    }
+
   kbuf = loom_malloc (kernel_size);
+
   if (!kbuf)
-    loom_panic ("Out of memory.");
+    return -1;
 
   disk = loom_disks;
+
   if (!disk)
-    loom_panic ("No disk.");
+    {
+      loom_error (LOOM_ERR_IO, "no disk found");
+      retval = -1;
+      goto out;
+    }
 
   if (loom_disk_read (disk, offset, kernel_size, kbuf))
     {
-      loom_printf ("Failed to read disk.\n");
-      return;
+      retval = -1;
+      goto out;
     }
 
   setup_header = (setup_header_t *) (kbuf + SETUP_HEADER_OFFSET);
 
   if (loom_memcmp (setup_header->header, "HdrS", 4))
     {
-      loom_printf ("invalid Linux setup_header\n");
-      return;
+      loom_error (LOOM_ERR_BAD_ARG, "invalid Linux header");
+      retval = -1;
+      goto out;
     }
 
   setup_sects = setup_header->setup_sects;
   if (!setup_sects)
     setup_sects = 4;
-
-  loom_uint32_t seg = 0x8000;
 
   setup_header->vid_mode = 0xFFFF;
   setup_header->type_of_loader = 0xFF;
@@ -100,14 +123,20 @@ linux_task (UNUSED loom_command_t *cmd, UNUSED loom_usize_t argc,
   setup_header->cmd_line_ptr = 0x90000;
   setup_header->setup_data = 0;
 
-  loom_memcpy ((void *) (seg * 0x10), kbuf, (setup_sects + 1) * 512);
+  /*loom_memcpy ((void *) (seg * 0x10), kbuf, (setup_sects + 1) * 512);
 
   loom_memcpy ((void *) (0x90000), "auto quiet console=tty0", 24);
 
   loom_memmove ((void *) 0x100000, kbuf + kernel32_offset,
                 kernel_size - kernel32_offset);
 
-  loom_boot_linux (seg);*/
+  loom_boot_linux (seg);
+  */
+
+out:
+  loom_free (kbuf);
+
+  return retval;
 }
 
 int linux_task (loom_command_t *cmd, loom_usize_t argc, char *argv[]);
