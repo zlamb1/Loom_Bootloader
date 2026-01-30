@@ -36,7 +36,8 @@ typedef struct arena_t
 typedef struct
 {
 #define CHUNK_FLAG_INUSE (1U << 0)
-#define CHUNK_FLAG_MASK  (~7UL)
+#define CHUNK_FLAG_MASK  (7UL)
+#define CHUNK_SIZE_MASK  (~7UL)
   loom_usize_t prev_size;
   loom_usize_t size;
 } chunk_t;
@@ -128,7 +129,7 @@ static void
 chunk_update_next (arena_t *arena, chunk_t *chunk, loom_bool_t differ)
 {
   chunk_t *nchunk;
-  loom_usize_t chunk_size = chunk->size & CHUNK_FLAG_MASK;
+  loom_usize_t chunk_size = chunk->size & CHUNK_SIZE_MASK;
 
   loom_address_t address = (loom_address_t) chunk,
                  arena_end = (loom_address_t) arena + arena->length;
@@ -214,12 +215,12 @@ free_chunk_split (arena_t *arena, free_chunk_t *fchunk, loom_usize_t offset,
   if (!size || size & CHUNK_SIZE_MINUS_1)
     loom_panic ("free_chunk_split: invalid size %lu", (unsigned long) size);
 
-  flags = fchunk->base.size & ~CHUNK_FLAG_MASK;
+  flags = fchunk->base.size & CHUNK_FLAG_MASK;
 
   if (flags & CHUNK_FLAG_INUSE)
     loom_panic ("free_chunk_split: invalid chunk with in use flag");
 
-  chunk_size = fchunk->base.size & CHUNK_FLAG_MASK;
+  chunk_size = fchunk->base.size & CHUNK_SIZE_MASK;
 
   if (offset >= chunk_size)
     loom_panic ("free_chunk_split: offset %lu >= chunk size %lu",
@@ -295,7 +296,7 @@ loom_malloc (loom_usize_t size)
         if (fchunk->base.size & CHUNK_FLAG_INUSE)
           heap_panic ();
 
-        chunk_size = fchunk->base.size & CHUNK_FLAG_MASK;
+        chunk_size = fchunk->base.size & CHUNK_SIZE_MASK;
 
         if (chunk_size >= size)
           return free_chunk_split (arena, fchunk, 0, size);
@@ -356,7 +357,7 @@ loom_realloc (void *p, loom_usize_t n)
 
   // Note: Some garbage might get copied if the old allocation contained an end
   // chunk that couldn't fit a free chunk. Shouldn't matter.
-  oldsize = (chunk->size & CHUNK_FLAG_MASK) - CHUNK_SIZE;
+  oldsize = (chunk->size & CHUNK_SIZE_MASK) - CHUNK_SIZE;
   copy = n > oldsize ? oldsize : n;
 
   loom_memcpy (new, p, copy);
@@ -414,7 +415,7 @@ loom_memalign_range (loom_usize_t size, loom_usize_t align,
     while (fchunk)
       {
         loom_address_t start = (loom_address_t) fchunk, end;
-        loom_usize_t chunk_size = fchunk->base.size & CHUNK_FLAG_MASK;
+        loom_usize_t chunk_size = fchunk->base.size & CHUNK_SIZE_MASK;
 
         if (loom_add (start, chunk_size, &end)
             || fchunk->base.size & CHUNK_FLAG_INUSE)
@@ -430,8 +431,8 @@ loom_memalign_range (loom_usize_t size, loom_usize_t align,
           {
             loom_usize_t offset;
 
-            if (start - (loom_address_t) fchunk < MIN_ALLOC
-                || loom_sub (start, (loom_address_t) fchunk, &offset)
+            if (loom_sub (start, (loom_address_t) fchunk, &offset)
+                || offset < MIN_ALLOC
                 || loom_sub (offset, CHUNK_SIZE, &offset))
               {
                 if (loom_add (start, align, &start))
@@ -497,7 +498,7 @@ loom_free (void *p)
     while (!inuse)
       {
         free_chunk_t *bchunk;
-        loom_usize_t prev_size = fchunk->base.prev_size & CHUNK_FLAG_MASK,
+        loom_usize_t prev_size = fchunk->base.prev_size & CHUNK_SIZE_MASK,
                      size;
 
         if (prev_size < MIN_ALLOC || loom_sub (address, prev_size, &address)
@@ -506,15 +507,15 @@ loom_free (void *p)
 
         bchunk = (free_chunk_t *) address;
         if (bchunk->base.size & CHUNK_FLAG_INUSE
-            || (bchunk->base.size & CHUNK_FLAG_MASK) != prev_size)
+            || (bchunk->base.size & CHUNK_SIZE_MASK) != prev_size)
           heap_panic ();
 
-        size = fchunk->base.size & CHUNK_FLAG_MASK;
+        size = fchunk->base.size & CHUNK_SIZE_MASK;
 
         free_chunk_unlink (arena, fchunk);
 
         // Grow back chunk.
-        loom_usize_t flags = bchunk->base.size & ~CHUNK_FLAG_MASK;
+        loom_usize_t flags = bchunk->base.size & CHUNK_SIZE_MASK;
         bchunk->base.size = (prev_size + size) | flags;
 
         fchunk = bchunk;
@@ -522,7 +523,7 @@ loom_free (void *p)
       }
 
     chunk_end
-        = (loom_address_t) fchunk + (fchunk->base.size & CHUNK_FLAG_MASK);
+        = (loom_address_t) fchunk + (fchunk->base.size & CHUNK_SIZE_MASK);
 
     inuse = 0;
 
@@ -530,7 +531,7 @@ loom_free (void *p)
     while (chunk_end < arena_end)
       {
         free_chunk_t *nchunk;
-        loom_usize_t size = fchunk->base.size & CHUNK_FLAG_MASK;
+        loom_usize_t size = fchunk->base.size & CHUNK_SIZE_MASK;
 
         chunk = (chunk_t *) chunk_end;
         if (chunk->size & CHUNK_FLAG_INUSE)
@@ -545,8 +546,8 @@ loom_free (void *p)
 
         free_chunk_unlink (arena, nchunk);
 
-        loom_usize_t flags = fchunk->base.size & ~CHUNK_FLAG_MASK,
-                     newsize = nchunk->base.size & CHUNK_FLAG_MASK;
+        loom_usize_t flags = fchunk->base.size & CHUNK_FLAG_MASK,
+                     newsize = nchunk->base.size & CHUNK_SIZE_MASK;
 
         if (newsize < MIN_ALLOC || loom_add (size, newsize, &size)
             || loom_add (chunk_end, newsize, &chunk_end))
@@ -602,7 +603,7 @@ loom_mm_iterate (int (*hook) (loom_address_t p, loom_usize_t n,
         loom_usize_t chunk_size;
         chunk = (chunk_t *) address;
 
-        chunk_size = chunk->size & CHUNK_FLAG_MASK;
+        chunk_size = chunk->size & CHUNK_SIZE_MASK;
 
         if (chunk_size < MIN_ALLOC || (chunk_size & CHUNK_SIZE_MINUS_1)
             || loom_add (address, chunk_size, &address) || address > arena_end
