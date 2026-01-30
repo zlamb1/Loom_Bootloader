@@ -56,7 +56,7 @@ typedef struct
   loom_uint32_t kernel_info_offset;
 } PACKED setup_header_t;
 
-static loom_kernel_loader_t linux_loader = {};
+static loom_kernel_loader_t linux_loader = { 0 };
 
 static int
 linux_task (UNUSED loom_command_t *cmd, UNUSED loom_usize_t argc,

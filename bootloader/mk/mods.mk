@@ -27,7 +27,9 @@ ifndef MODSRCS
 $$(error Module sources not defined for $$(MODNAME))
 endif
 
-OBJS := $$(foreach SRC,$$(MODSRCS),$(MODOUTDIR)/$$(basename $$(SRC)).o)
+OBJS := $$(foreach SRC,$$(MODSRCS),$(MODOUTDIR)/$$(basename $$(SRC)).c.o) \
+		$$(foreach SRC,$$(MODASM),$(MODOUTDIR)/$$(basename $$(SRC)).asm.o)
+
 MODOBJS += $$(OBJS)
 
 MODSYMS += $(MODOUTDIR)/$$(MODNAME).syms
@@ -35,9 +37,13 @@ MODSYMS += $(MODOUTDIR)/$$(MODNAME).syms
 MODBIN = $(MODOUTDIR)/$$(MODNAME).mod
 MODBINS += $$(MODBIN)
 
-$$(OBJS): $(MODOUTDIR)/%.o: %.c
+$$(filter %.c.o, $$(OBJS)): $(MODOUTDIR)/%.c.o: %.c
 	@mkdir -p $$(dir $$@)
 	$(CROSS_CC) -DLOOM_MODULE $(CFLAGS) $$< -o $$@
+
+$$(filter %.asm.o, $$(OBJS)): $(MODOUTDIR)/%.asm.o: %.asm
+	@mkdir -p $$(dir $$@)
+	$(NASM) $(ASMFLAGS) -MD $$(basename $$@).d $$< -o $$@
 
 $$(MODBIN): $$(OBJS)
 	$(CROSS_CC) -r $$^ -o $$@
