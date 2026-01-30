@@ -105,7 +105,7 @@ linux_task (UNUSED loom_command_t *cmd, UNUSED loom_usize_t argc,
 
   if (loom_memcmp (setup_header->header, "HdrS", 4))
     {
-      loom_error (LOOM_ERR_BAD_ARG, "invalid Linux header");
+      loom_error (LOOM_ERR_BAD_ARG, "invalid kernel header");
       retval = -1;
       goto out;
     }

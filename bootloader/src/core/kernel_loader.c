@@ -6,11 +6,30 @@ static loom_kernel_loader_t *kernel_loader;
 void
 loom_kernel_loader_add (loom_kernel_loader_t *new_kernel_loader)
 {
-  if (kernel_loader)
+  loom_kernel_loader_remove (1);
+  kernel_loader = new_kernel_loader;
+}
+
+int
+loom_kernel_loader_remove (loom_bool_t free)
+{
+  if (!kernel_loader)
+    return -1;
+
+  if (free)
     {
+      if (kernel_loader->kernel)
+        {
+          loom_free (kernel_loader->kernel);
+          kernel_loader->kernel = NULL;
+        }
+
       if (kernel_loader->flags & LOOM_KERNEL_LOADER_FLAG_INITRD
           && kernel_loader->initrd)
-        loom_free (kernel_loader->initrd);
+        {
+          loom_free (kernel_loader->initrd);
+          kernel_loader->initrd = NULL;
+        }
 
       if (kernel_loader->flags & LOOM_KERNEL_LOADER_FLAG_MODULES)
         {
@@ -23,22 +42,14 @@ loom_kernel_loader_add (loom_kernel_loader_t *new_kernel_loader)
               loom_free (kernel_module);
               kernel_module = tmp;
             }
+
+          kernel_loader->modules = NULL;
         }
     }
 
-  kernel_loader = new_kernel_loader;
-}
+  kernel_loader = NULL;
 
-int
-loom_kernel_loader_remove (loom_kernel_loader_t *_kernel_loader)
-{
-  if (kernel_loader == _kernel_loader)
-    {
-      loom_kernel_loader_add (NULL);
-      return 0;
-    }
-
-  return -1;
+  return 0;
 }
 
 int
