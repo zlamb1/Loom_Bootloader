@@ -454,6 +454,9 @@ loom_free (void *p)
 {
   loom_address_t address = (loom_address_t) p;
 
+  if (p == NULL)
+    return;
+
   if (loom_sub (address, CHUNK_SIZE, &address) || address & CHUNK_SIZE_MINUS_1
       || address > LOOM_ADDRESS_MAX - MIN_ALLOC)
     loom_panic ("free: invalid pointer %p", p);
