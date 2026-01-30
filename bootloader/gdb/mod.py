@@ -4,7 +4,7 @@ class LoadModule(gdb.Command):
     def __init__(self):
         super().__init__("loom_gdb_module_load", gdb.COMMAND_USER)
         self.tab = None
-        self.syms = 'build/mods.syms'
+        self.syms = 'build/mods/mods.sym.lst'
 
     def invoke(self, arg, tty):
         mod = gdb.parse_and_eval(arg)

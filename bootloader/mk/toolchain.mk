@@ -15,10 +15,11 @@ CFLAGS ?= -g -Os -std=gnu11 -ffreestanding -fstack-protector-strong -Wall -Wextr
 		  -Wundef -Wshadow -Wpointer-arith -Wcast-align -Wconversion -Wformat \
 		  -Wuninitialized -Werror
 
+INCDIR := include
+
 # Required C flags.
-INC = -I$(INCDIR)
 CFLAGS += -c -fno-strict-aliasing -fno-omit-frame-pointer \
-	      -mno-red-zone -MMD $(INC)
+	      -mno-red-zone -MMD -I$(INCDIR)
 
 ifeq ($(DEBUG),1)
 CFLAGS += -DLOOM_DEBUG

@@ -3,7 +3,7 @@ BUILD_TYPE ?= podman
 
 include mk/container.mk
 include mk/toolchain.mk
-include mk/build.mk
+include mk/mods.mk
 include mk/hdrs.mk
 include mk/srcs.mk
 
@@ -24,7 +24,7 @@ all: $(MODULE_TABLE_BIN) build
 
 ifeq ($(BUILD_TYPE),podman)
 
-build: $(BIN) $(MODSYMS)
+build: $(BIN) $(MODSYMLST)
 
 corebuild: $(MARKER)
 	$(RUN) make build
@@ -42,9 +42,9 @@ compile-commands:
 endif
 
 $(BIN): corebuild $(MODULE_TABLE_BIN)
-	$(MODULE_TABLE_BIN) -i $(CORE) -o $(BIN) $(MOBJS)
+	$(MODULE_TABLE_BIN) -i $(CORE) -o $(BIN) $(MODBINS)
 
-$(CORE): $(ELF) $(MOBJS)
+$(CORE): $(ELF) $(MODBINS)
 	$(CROSS_OBJCOPY) -O binary $< $@
 
 $(ELF): $(OBJS) $(LNKSCRPT)
@@ -76,4 +76,3 @@ clean::
 	rm -f $(ELF) $(CORE) $(BIN) $(DEPS) $(OBJS)
 
 -include $(DEPS)
--include $(MDEPS)
