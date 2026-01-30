@@ -400,8 +400,8 @@ loom_memalign_range (loom_usize_t size, loom_usize_t align,
       return NULL;
     }
 
-  if (align <= CHUNK_SIZE)
-    return loom_malloc (size);
+  if (align < CHUNK_SIZE)
+    align = CHUNK_SIZE;
 
   LOOM_LIST_ITERATE (arenas, arena)
   {
