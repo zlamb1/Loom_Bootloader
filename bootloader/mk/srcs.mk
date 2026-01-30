@@ -19,8 +19,7 @@ SRCS := crypto/sha1.c \
 		shell.c \
 		sp.c \
 		string.c \
-		symbol.c \
-		linux.c
+		symbol.c
 
 SRCS := $(foreach src,$(SRCS),src/core/$(src))
 

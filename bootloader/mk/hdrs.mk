@@ -1,5 +1,3 @@
-INCDIR := include
-
 HDRS := crypto/crypto.h \
 		crypto/sha1.h \
 		arch.h \

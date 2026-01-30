@@ -1,7 +1,8 @@
 #include "loom/command.h"
 #include "loom/error.h"
+#include "loom/module.h"
 
-// LOOM_MOD (linux)
+LOOM_MOD (linux)
 
 extern char stage1s;
 extern char stage3e;
@@ -109,17 +110,13 @@ linux_task (UNUSED loom_command_t *cmd, UNUSED loom_usize_t argc,
   loom_boot_linux (seg);*/
 }
 
+int linux_task (loom_command_t *cmd, loom_usize_t argc, char *argv[]);
+
 static loom_command_t linux_command = {
   .name = "linux",
   .task = linux_task,
 };
 
-/*LOOM_MOD_INIT () { loom_command_register (&linux_command); }
+LOOM_MOD_INIT () { loom_command_register (&linux_command); }
 
-LOOM_MOD_DEINIT () { loom_command_unregister (&linux_command); }*/
-
-void
-loom_mod_init (void)
-{
-  loom_command_register (&linux_command);
-}
+LOOM_MOD_DEINIT () { loom_command_unregister (&linux_command); }
