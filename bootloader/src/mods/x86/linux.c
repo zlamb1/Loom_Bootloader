@@ -1,6 +1,7 @@
 #include "loom/command.h"
 #include "loom/disk.h"
 #include "loom/error.h"
+#include "loom/kernel_loader.h"
 #include "loom/mm.h"
 #include "loom/module.h"
 #include "loom/string.h"
@@ -54,6 +55,8 @@ typedef struct
   loom_uint32_t kernel_info_offset;
 } PACKED setup_header_t;
 
+static loom_kernel_loader_t linux_loader = {};
+
 static int
 linux_task (UNUSED loom_command_t *cmd, UNUSED loom_usize_t argc,
             UNUSED char *argv[])
@@ -64,9 +67,7 @@ linux_task (UNUSED loom_command_t *cmd, UNUSED loom_usize_t argc,
   loom_uint32_t setup_sects;
 
   setup_header_t *setup_header;
-  char *kbuf = NULL;
-
-  int retval = 0;
+  char *kbuf = NULL, *cmdline = NULL;
 
   loom_memcpy (&hdr, (void *) loom_modbase, sizeof (hdr));
 
@@ -91,24 +92,26 @@ linux_task (UNUSED loom_command_t *cmd, UNUSED loom_usize_t argc,
   if (!disk)
     {
       loom_error (LOOM_ERR_IO, "no disk found");
-      retval = -1;
       goto out;
     }
 
   if (loom_disk_read (disk, offset, kernel_size, kbuf))
-    {
-      retval = -1;
-      goto out;
-    }
+    goto out;
 
   setup_header = (setup_header_t *) (kbuf + SETUP_HEADER_OFFSET);
 
   if (loom_memcmp (setup_header->header, "HdrS", 4))
     {
       loom_error (LOOM_ERR_BAD_ARG, "invalid kernel header");
-      retval = -1;
       goto out;
     }
+
+  cmdline = loom_malloc (5);
+
+  if (!cmdline)
+    goto out;
+
+  loom_memcpy (cmdline, "auto", 5);
 
   setup_sects = setup_header->setup_sects;
   if (!setup_sects)
@@ -119,8 +122,8 @@ linux_task (UNUSED loom_command_t *cmd, UNUSED loom_usize_t argc,
   setup_header->loadflags |= 0x80;
   setup_header->ramdisk_image = 0;
   setup_header->ramdisk_size = 0;
-  setup_header->heap_end_ptr = 0xDE00;
-  setup_header->cmd_line_ptr = 0x90000;
+  setup_header->heap_end_ptr = 0;
+  setup_header->cmd_line_ptr = (loom_uint32_t) cmdline;
   setup_header->setup_data = 0;
 
   /*loom_memcpy ((void *) (seg * 0x10), kbuf, (setup_sects + 1) * 512);
@@ -133,10 +136,16 @@ linux_task (UNUSED loom_command_t *cmd, UNUSED loom_usize_t argc,
   loom_boot_linux (seg);
   */
 
+  linux_loader.kernel = kbuf;
+
+  loom_kernel_loader_add (&linux_loader);
+
+  return 0;
+
 out:
   loom_free (kbuf);
-
-  return retval;
+  loom_free (cmdline);
+  return -1;
 }
 
 int linux_task (loom_command_t *cmd, loom_usize_t argc, char *argv[]);
