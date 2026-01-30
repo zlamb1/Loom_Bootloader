@@ -432,8 +432,8 @@ loom_memalign_range (loom_usize_t size, loom_usize_t align,
             loom_usize_t offset;
 
             if (loom_sub (start, (loom_address_t) fchunk, &offset)
-                || offset - CHUNK_SIZE == CHUNK_SIZE
-                || loom_sub (offset, CHUNK_SIZE, &offset))
+                || loom_sub (offset, CHUNK_SIZE, &offset)
+                || offset == CHUNK_SIZE)
               {
                 if (loom_add (start, align, &start))
                   break;
