@@ -1,5 +1,6 @@
 #include <stddef.h>
 
+#include "loom/console.h"
 #include "loom/error.h"
 #include "loom/list.h"
 #include "loom/math.h"
@@ -515,7 +516,7 @@ loom_free (void *p)
         free_chunk_unlink (arena, fchunk);
 
         // Grow back chunk.
-        loom_usize_t flags = bchunk->base.size & CHUNK_SIZE_MASK;
+        loom_usize_t flags = bchunk->base.size & CHUNK_FLAG_MASK;
         bchunk->base.size = (prev_size + size) | flags;
 
         fchunk = bchunk;

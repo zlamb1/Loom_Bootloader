@@ -17,6 +17,7 @@ typedef struct loom_kernel_loader_t
 #define LOOM_KERNEL_LOADER_FLAG_MODULES (1 << 0)
 #define LOOM_KERNEL_LOADER_FLAG_INITRD  (1 << 1)
   unsigned int flags;
+  loom_usize_t kernel_size;
   void *kernel;
   void *initrd;
   loom_kernel_module_t *modules;

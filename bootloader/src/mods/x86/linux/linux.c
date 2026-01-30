@@ -58,6 +58,27 @@ typedef struct
 
 static loom_kernel_loader_t linux_loader = { 0 };
 
+static void
+linux_boot (loom_kernel_loader_t *kernel_loader)
+{
+  extern char *linux_relocator;
+  extern char *linux_relocator_end;
+
+#define SCRATCH 0x60000
+
+  setup_header_t *setup_header
+      = (setup_header_t *) ((char *) kernel_loader->kernel
+                            + SETUP_HEADER_OFFSET);
+
+  loom_memcpy ((void *) SCRATCH, linux_relocator,
+               (loom_usize_t) (linux_relocator_end - linux_relocator));
+
+  ((void (*) (loom_uint32_t dst, loom_uint32_t src,
+              loom_uint32_t size)) SCRATCH) (
+      setup_header->code32_start, (loom_uint32_t) kernel_loader->kernel,
+      kernel_loader->kernel_size);
+}
+
 static int
 linux_task (UNUSED loom_command_t *cmd, UNUSED loom_usize_t argc,
             UNUSED char *argv[])
@@ -161,6 +182,9 @@ linux_task (UNUSED loom_command_t *cmd, UNUSED loom_usize_t argc,
 
   setup_header->cmd_line_ptr = (loom_uint32_t) cmdline;
 
+  linux_loader.boot = linux_boot;
+  linux_loader.flags = 0;
+  linux_loader.kernel_size = kernel_size;
   linux_loader.kernel = kbuf;
 
   loom_kernel_loader_add (&linux_loader);
