@@ -2,6 +2,7 @@
 #include "loom/disk.h"
 #include "loom/error.h"
 #include "loom/kernel_loader.h"
+#include "loom/math.h"
 #include "loom/mm.h"
 #include "loom/module.h"
 #include "loom/string.h"
@@ -64,7 +65,8 @@ linux_task (UNUSED loom_command_t *cmd, UNUSED loom_usize_t argc,
   loom_module_header_t hdr;
   loom_disk_t *disk;
   loom_usize_t offset, kernel_size;
-  loom_uint32_t setup_sects;
+  loom_uint32_t setup_sects, min_addr = 0, max_addr = LOOM_UINT32_MAX;
+  loom_bool_t try_high = 1;
 
   setup_header_t *setup_header;
   char *kbuf = NULL, *cmdline = NULL;
@@ -117,6 +119,8 @@ linux_task (UNUSED loom_command_t *cmd, UNUSED loom_usize_t argc,
   if (!setup_sects)
     setup_sects = 4;
 
+  offset = (setup_sects + 1) * 512;
+
   setup_header->vid_mode = 0xFFFF;
   setup_header->type_of_loader = 0xFF;
   setup_header->loadflags |= 0x80;
@@ -126,15 +130,30 @@ linux_task (UNUSED loom_command_t *cmd, UNUSED loom_usize_t argc,
   setup_header->cmd_line_ptr = (loom_uint32_t) cmdline;
   setup_header->setup_data = 0;
 
-  /*loom_memcpy ((void *) (seg * 0x10), kbuf, (setup_sects + 1) * 512);
+  min_addr = setup_header->code32_start + kernel_size;
 
-  loom_memcpy ((void *) (0x90000), "auto quiet console=tty0", 24);
+  if (min_addr < setup_header->pref_address)
+    {
+      loom_uint32_t gap_max_addr;
 
-  loom_memmove ((void *) 0x100000, kbuf + kernel32_offset,
-                kernel_size - kernel32_offset);
+      if (setup_header->pref_address > LOOM_UINT32_MAX)
+        {
+          try_high = 0;
+          gap_max_addr = LOOM_UINT32_MAX;
+        }
+      else
+        gap_max_addr = (loom_uint32_t) setup_header->pref_address;
 
-  loom_boot_linux (seg);
-  */
+      // ... DO ALLOCATIONS
+      (void) gap_max_addr;
+      (void) max_addr;
+      (void) try_high;
+    }
+
+  if (setup_header->pref_address < LOOM_UINT32_MAX
+      && loom_add (setup_header->pref_address, setup_header->init_size,
+                   &min_addr))
+    max_addr = (loom_uint32_t) setup_header->pref_address;
 
   linux_loader.kernel = kbuf;
 
