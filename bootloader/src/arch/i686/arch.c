@@ -36,6 +36,8 @@ mmap_mm_hook (loom_uint64_t address, loom_uint64_t length,
 void
 loom_arch_init (void)
 {
+  // Note: Save BIOS PIC mask state before any BIOS interrupt calls.
+  loom_pic_bios_save_masks ();
   loom_vga_con_register ();
   loom_arch_mmap_iterate (mmap_mm_hook, NULL);
   loom_bios_disk_probe ();
@@ -111,7 +113,7 @@ int
 loom_arch_irq_save (void)
 {
   int flags;
-  __asm__ volatile ("pushf; pop %0" : "=r"(flags)::"memory");
+  __asm__ volatile ("pushf; pop %0; cli" : "=r"(flags)::"memory");
   return flags;
 }
 

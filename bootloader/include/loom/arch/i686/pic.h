@@ -11,4 +11,9 @@ void EXPORT (loom_pic_eoi) (loom_uint8_t irq);
 void EXPORT (loom_pic_disable) (void);
 void EXPORT (loom_pic_register_isr) (loom_uint8_t irq, void *isr);
 
+void loom_pic_bios_save_masks (void);
+
+void loom_pic_bios_reset (void);
+void loom_pic_bios_restore (void);
+
 #endif

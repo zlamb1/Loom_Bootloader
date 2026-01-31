@@ -1,8 +1,8 @@
 #include "loom/command.h"
 #include "loom/disk.h"
+#include "loom/endian.h"
 #include "loom/error.h"
 #include "loom/kernel_loader.h"
-#include "loom/math.h"
 #include "loom/mm.h"
 #include "loom/module.h"
 #include "loom/string.h"
@@ -61,22 +61,35 @@ static loom_kernel_loader_t linux_loader = { 0 };
 static void
 linux_boot (loom_kernel_loader_t *kernel_loader)
 {
-  extern char *linux_relocator;
-  extern char *linux_relocator_end;
+  extern char linux_relocator;
+  extern char linux_relocator_end;
+
+  (void) linux_loader;
 
 #define SCRATCH 0x60000
+#define SEG     0x8000
+
+  char *kernel = kernel_loader->kernel;
+  loom_usize_t off, setup_sects;
 
   setup_header_t *setup_header
       = (setup_header_t *) ((char *) kernel_loader->kernel
                             + SETUP_HEADER_OFFSET);
 
-  loom_memcpy ((void *) SCRATCH, linux_relocator,
-               (loom_usize_t) (linux_relocator_end - linux_relocator));
+  setup_sects = setup_header->setup_sects;
+  if (!setup_sects)
+    setup_sects = 4;
 
-  ((void (*) (loom_uint32_t dst, loom_uint32_t src,
-              loom_uint32_t size)) SCRATCH) (
-      setup_header->code32_start, (loom_uint32_t) kernel_loader->kernel,
-      kernel_loader->kernel_size);
+  off = (setup_sects + 1) * 512;
+  loom_memcpy ((void *) (SEG * 0x10), kernel, off);
+
+  loom_memcpy ((void *) SCRATCH, &linux_relocator,
+               (loom_usize_t) (&linux_relocator_end - &linux_relocator));
+
+  ((void (*) (loom_uint32_t dst, loom_uint32_t src, loom_uint32_t size,
+              loom_uint16_t seg)) SCRATCH) (
+      setup_header->code32_start, (loom_uint32_t) kernel_loader->kernel + off,
+      kernel_loader->kernel_size - off, SEG);
 }
 
 static int
@@ -86,18 +99,23 @@ linux_task (UNUSED loom_command_t *cmd, UNUSED loom_usize_t argc,
   loom_module_header_t hdr;
   loom_disk_t *disk;
   loom_usize_t offset, kernel_size;
-  loom_uint32_t setup_sects, min_addr = 0, max_addr = LOOM_UINT32_MAX;
-  loom_bool_t try_high = 1;
+  loom_uint32_t setup_sects;
 
   setup_header_t *setup_header;
   char *kbuf = NULL, *cmdline = NULL;
+
+  (void) offset;
+  (void) setup_sects;
+  (void) setup_header;
+
+  (void) linux_boot;
 
   loom_memcpy (&hdr, (void *) loom_modbase, sizeof (hdr));
 
   offset = (loom_usize_t) &stage3e - (loom_usize_t) &stage1s;
   offset += hdr.size;
 
-  kernel_size = hdr.kernel_size;
+  kernel_size = loom_le32toh (hdr.kernel_size);
 
   if (!kernel_size)
     {
@@ -142,45 +160,6 @@ linux_task (UNUSED loom_command_t *cmd, UNUSED loom_usize_t argc,
   setup_header->ramdisk_size = 0;
   setup_header->heap_end_ptr = 0;
   setup_header->setup_data = 0;
-
-  min_addr = setup_header->code32_start + kernel_size;
-
-#define CMDLINE_SIZE 5
-  if (min_addr < setup_header->pref_address)
-    {
-      if (setup_header->pref_address > LOOM_UINT32_MAX)
-        {
-          try_high = 0;
-          max_addr = LOOM_UINT32_MAX;
-        }
-      else
-        max_addr = (loom_uint32_t) setup_header->pref_address;
-
-      cmdline = loom_memalign_range (CMDLINE_SIZE, 0, min_addr, max_addr);
-
-      if (cmdline)
-        try_high = 0;
-      else if (!try_high)
-        goto out;
-    }
-
-  if (try_high)
-    {
-      if (loom_add ((loom_uint32_t) setup_header->pref_address,
-                    setup_header->init_size, &min_addr))
-        goto out;
-
-      max_addr = LOOM_UINT32_MAX;
-
-      cmdline = loom_memalign_range (CMDLINE_SIZE, 0, min_addr, max_addr);
-
-      if (!cmdline)
-        goto out;
-    }
-
-  loom_memcpy (cmdline, "auto", CMDLINE_SIZE);
-
-  setup_header->cmd_line_ptr = (loom_uint32_t) cmdline;
 
   linux_loader.boot = linux_boot;
   linux_loader.flags = 0;

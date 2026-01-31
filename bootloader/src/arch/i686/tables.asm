@@ -95,7 +95,16 @@ BITS 16
     ; It must be addressable in real mode.
 
     pop eax
-    jmp ax
+    mov WORD [farjmp.off], ax
+    shr eax, 4
+    and ax, -4096
+    mov WORD [farjmp.seg], ax
+
+    jmp far [farjmp]
+
+farjmp:
+    .off: DW 0
+    .seg: DW 0
 
 _enter_pmode:
     cli

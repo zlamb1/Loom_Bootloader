@@ -7,6 +7,9 @@ GLOBAL loom_bios_int
 EXTERN loom_enter_rmode
 EXTERN _enter_pmode
 
+EXTERN loom_pic_bios_reset
+EXTERN loom_pic_bios_restore
+
 ALIGN 4
 
 _stack: DD 0
@@ -15,7 +18,7 @@ _idtr: DQ 0
        DQ 0
 
 ; This should not be called after reconfiguring any hardware
-; like the PIC, PIT, etc...
+; the BIOS needs without resetting it to an the default state.
 
 loom_bios_int:
     push ebp
@@ -24,9 +27,15 @@ loom_bios_int:
     push ebx
     push esi
     push edi
+    
+    ; Disable interrupts before configuring 
+    ; IDT and PIC to BIOS defaults.
+    cli
 
-    ; save protected mode IDTR
+    ; Save protected mode IDTR.
     sidt [_idtr]
+
+    call loom_pic_bios_reset
 
     mov DWORD [_stack], esp
 
@@ -118,6 +127,8 @@ BITS 32
 
     ; restore protected mode IDTR
     lidt [_idtr]
+
+    call loom_pic_bios_restore
 
     pop edi
     pop esi

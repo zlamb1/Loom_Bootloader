@@ -6,20 +6,19 @@ GLOBAL linux_relocator
 GLOBAL linux_relocator_end
 
 EXTERN loom_enter_rmode
+EXTERN loom_memmove
 
 linux_relocator:
     cli
-    call loom_enter_rmode
+    add esp, 4
+    mov eax, loom_memmove
+    call eax
+    mov eax, loom_enter_rmode
+    call eax
+
 BITS 16
     mov bp, sp
-    mov eax, [bp+4]
-
-    sub sp, 8
-    mov bp, sp
-
-    mov WORD [bp], 0
-    mov WORD [bp+4], ax
-    add WORD [bp+4], 0x20
+    mov ax, WORD [bp+12]
 
     mov ds, ax
     mov ss, ax
@@ -28,5 +27,12 @@ BITS 16
     mov gs, ax
     mov sp, 0xE000
 
-    jmp far [cs:bp]
+    add ax, 0x20
+    push ax
+    push 0
+
+    mov bp, sp
+    add sp, 4
+
+    jmp far [bp]
 linux_relocator_end:

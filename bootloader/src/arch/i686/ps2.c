@@ -112,7 +112,10 @@ loom_ps2_read (loom_input_source_t *src, loom_input_event_t *evt)
   tail = ps2_keyboard->tail;
 
   if (head == tail)
-    return 0;
+    {
+      loom_arch_irq_restore (flags);
+      return 0;
+    }
 
   sc = (loom_uint8_t) ps2_keyboard->buf[head];
   press = (sc & 0x80) == 0;
