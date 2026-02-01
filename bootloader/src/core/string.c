@@ -32,6 +32,26 @@ loom_memmove (void *dst, const void *src, loom_usize_t count)
       d[i] = s[i];
 }
 
+int
+loom_memcmp (const void *lhs, const void *rhs, loom_usize_t count)
+{
+  const unsigned char *l = lhs;
+  const unsigned char *r = rhs;
+
+  if (!lhs || !rhs)
+    loom_panic ("memcmp");
+
+  while (count--)
+    {
+      if (*l != *r)
+        return (int) *l - (int) *r;
+      ++l;
+      ++r;
+    }
+
+  return 0;
+}
+
 void
 loom_memset (void *dst, int v, loom_usize_t n)
 {
@@ -176,26 +196,6 @@ loom_strtoi (char *s, int *out)
 
   *out = n;
   return LOOM_ERR_NONE;
-}
-
-int
-loom_memcmp (const void *lhs, const void *rhs, loom_usize_t count)
-{
-  const unsigned char *l = lhs;
-  const unsigned char *r = rhs;
-
-  if (!lhs || !rhs)
-    loom_panic ("memcmp");
-
-  while (count--)
-    {
-      if (*l != *r)
-        return (int) *l - (int) *r;
-      ++l;
-      ++r;
-    }
-
-  return 0;
 }
 
 char *
