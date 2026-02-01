@@ -38,13 +38,10 @@ pic_remap (loom_uint8_t offset1, loom_uint8_t offset2, loom_bool_t save)
   loom_outb (PIC2_CMD, ICW1_ICW4 | ICW1_INIT);
   loom_outb (PIC1_DATA, offset1);
   loom_outb (PIC2_DATA, offset2);
-
   loom_outb (PIC1_DATA, 1 << CASCADE_IRQ);
   loom_outb (PIC2_DATA, CASCADE_IRQ);
-
   loom_outb (PIC1_DATA, ICW4_8086);
   loom_outb (PIC2_DATA, ICW4_8086);
-
   loom_outb (PIC1_DATA, DEFAULT_MASK);
   loom_outb (PIC2_DATA, DEFAULT_MASK);
 

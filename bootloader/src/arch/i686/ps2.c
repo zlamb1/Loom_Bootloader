@@ -8,12 +8,17 @@
 
 #define CAP 512
 
+#define PS2_DATA   0x60
+#define PS2_STATUS 0x64
+#define PS2_CMD    0x65
+
 compile_assert ((CAP & (CAP - 1)) == 0 && CAP != 0,
                 "CAP must be a power of 2.");
 
 typedef struct
 {
   loom_input_source_t interface;
+  loom_uint16_t poll;
   loom_uint8_t lastkey;
   volatile loom_usize_t head, tail;
   volatile char *buf;
@@ -82,7 +87,7 @@ loom_kb_isr (UNUSED loom_uint32_t intno, UNUSED loom_uint32_t error_code)
 {
   if (keyboard.buf)
     {
-      char ch = (char) loom_inb (0x60);
+      char ch = (char) loom_inb (PS2_DATA);
 
       loom_usize_t next_tail = (keyboard.tail + 1) & (CAP - 1);
 
@@ -100,7 +105,7 @@ done:
 static int
 loom_ps2_read (loom_input_source_t *src, loom_input_event_t *evt)
 {
-  loom_ps2_keyboard_t *ps2_keyboard = (loom_ps2_keyboard_t *) src->data;
+  loom_ps2_keyboard_t *ps2 = (loom_ps2_keyboard_t *) src->data;
   loom_usize_t head, tail;
 
   int keycode = 0, press;
@@ -108,33 +113,47 @@ loom_ps2_read (loom_input_source_t *src, loom_input_event_t *evt)
 
   int flags = loom_arch_irq_save ();
 
-  head = ps2_keyboard->head;
-  tail = ps2_keyboard->tail;
+  head = ps2->head;
+  tail = ps2->tail;
 
   if (head == tail)
     {
+      if (++ps2->poll >= 1000)
+        {
+          loom_uint8_t status = loom_inb (PS2_STATUS);
+          ps2->poll = 0;
+
+          if (status & 1)
+            {
+              ps2->buf[ps2->tail] = (char) loom_inb (PS2_DATA);
+              ps2->tail = (ps2->tail + 1) & (CAP - 1);
+            }
+        }
+
       loom_arch_irq_restore (flags);
       return 0;
     }
 
-  sc = (loom_uint8_t) ps2_keyboard->buf[head];
+  ps2->poll = 0;
+
+  sc = (loom_uint8_t) ps2->buf[head];
   press = (sc & 0x80) == 0;
 
   if (sc != 0xE0)
     sc = (loom_uint8_t) (sc & ~0x80);
 
-  ps2_keyboard->head = (head + 1) & (CAP - 1);
+  ps2->head = (head + 1) & (CAP - 1);
 
   loom_arch_irq_restore (flags);
 
-  if (ps2_keyboard->lastkey == 0xE0)
+  if (ps2->lastkey == 0xE0)
     {
       keycode = sc1_e0_to_kc[sc];
-      ps2_keyboard->lastkey = 0;
+      ps2->lastkey = 0;
       goto done;
     }
 
-  ps2_keyboard->lastkey = sc;
+  ps2->lastkey = sc;
 
   if (sc == 0xE0)
     return 0;

@@ -104,11 +104,7 @@ linux_task (UNUSED loom_command_t *cmd, UNUSED loom_usize_t argc,
   setup_header_t *setup_header;
   char *kbuf = NULL, *cmdline = NULL;
 
-  (void) offset;
-  (void) setup_sects;
-  (void) setup_header;
-
-  (void) linux_boot;
+  loom_kernel_loader_remove (1);
 
   loom_memcpy (&hdr, (void *) loom_modbase, sizeof (hdr));
 
