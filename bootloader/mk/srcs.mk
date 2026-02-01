@@ -37,6 +37,7 @@ TGTSRCS := stage1.asm \
 		   int.asm \
 		   isr.asm \
 		   reboot.asm \
+		   mem.asm \
 		   arch.c \
 		   vga.c \
 		   pic.c \
