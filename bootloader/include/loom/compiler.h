@@ -5,6 +5,7 @@
 #define loom_assume_aligned __builtin_assume_aligned
 #define loom_alignof        _Alignof
 
+#define LOOM_ALIAS(NAME)      __attribute__ ((alias (#NAME)))
 #define LOOM_ALIGNED(N)       __attribute__ ((aligned (N)))
 #define LOOM_EXPORT(NAME)     NAME
 #define LOOM_EXPORT_VAR(NAME) NAME
@@ -15,5 +16,6 @@
 #define LOOM_SECTION(NAME)    __attribute ((section (#NAME)))
 #define LOOM_UNUSED           __attribute__ ((unused))
 #define LOOM_USED             __attribute__ ((used))
+#define LOOM_WEAK             __attribute__ ((weak))
 
 #endif
