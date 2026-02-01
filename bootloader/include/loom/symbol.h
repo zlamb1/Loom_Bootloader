@@ -1,7 +1,7 @@
 #ifndef LOOM_SYMBOL_H
 #define LOOM_SYMBOL_H 1
 
-#include "compiler.h"
+#include "loom/compiler.h"
 #include "loom/types.h"
 
 typedef struct
@@ -23,10 +23,10 @@ extern loom_symtab_t loom_symtab;
 // This function's source is generated at compile time by gensym.sh.
 void loom_register_export_symbols (void);
 
-int EXPORT (loom_symbol_register) (const char *name, loom_bool_t isfunc,
-                                   void *p);
+int LOOM_EXPORT (loom_symbol_register) (const char *name, loom_bool_t isfunc,
+                                        void *p);
 
-loom_symbol_t *EXPORT (loom_symbol_find) (void *p);
-loom_symbol_t *EXPORT (loom_symbol_lookup) (const char *name);
+loom_symbol_t *LOOM_EXPORT (loom_symbol_find) (void *p);
+loom_symbol_t *LOOM_EXPORT (loom_symbol_lookup) (const char *name);
 
 #endif

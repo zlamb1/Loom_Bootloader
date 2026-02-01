@@ -9,13 +9,13 @@ typedef struct
   loom_uint8_t reserved;
   loom_uint8_t flags;
   loom_uint16_t offset_hi;
-} PACKED idt_entry_t;
+} LOOM_PACKED idt_entry_t;
 
 typedef struct
 {
   loom_uint16_t size;
   loom_uint32_t offset;
-} PACKED idtr_t;
+} LOOM_PACKED idtr_t;
 
 idt_entry_t idt[SIZE];
 idtr_t idtr;

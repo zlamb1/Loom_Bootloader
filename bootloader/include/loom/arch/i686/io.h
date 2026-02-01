@@ -4,7 +4,7 @@
 #include "loom/compiler.h"
 #include "loom/types.h"
 
-void EXPORT (loom_outb) (loom_uint16_t port, loom_uint8_t val);
-loom_uint8_t EXPORT (loom_inb) (loom_uint16_t port);
+void LOOM_EXPORT (loom_outb) (loom_uint16_t port, loom_uint8_t val);
+loom_uint8_t LOOM_EXPORT (loom_inb) (loom_uint16_t port);
 
 #endif

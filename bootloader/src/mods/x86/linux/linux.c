@@ -54,7 +54,7 @@ typedef struct
   loom_uint32_t init_size;
   loom_uint32_t handover_offset;
   loom_uint32_t kernel_info_offset;
-} PACKED setup_header_t;
+} LOOM_PACKED setup_header_t;
 
 static loom_kernel_loader_t linux_loader = { 0 };
 
@@ -93,8 +93,8 @@ linux_boot (loom_kernel_loader_t *kernel_loader)
 }
 
 static int
-linux_task (UNUSED loom_command_t *cmd, UNUSED loom_usize_t argc,
-            UNUSED char *argv[])
+linux_task (LOOM_UNUSED loom_command_t *cmd, LOOM_UNUSED loom_usize_t argc,
+            LOOM_UNUSED char *argv[])
 {
   loom_module_header_t hdr;
   loom_disk_t *disk;

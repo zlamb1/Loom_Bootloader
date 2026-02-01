@@ -1,7 +1,7 @@
 #ifndef LOOM_ENDIAN_H
 #define LOOM_ENDIAN_H 1
 
-#include "types.h"
+#include "loom/types.h"
 
 #if defined(LOOM_LITTLE_ENDIAN) && defined(LOOM_BIG_ENDIAN)
 #error "Either little or big endian support must be enabled. Not both."

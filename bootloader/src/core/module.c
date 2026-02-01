@@ -187,8 +187,8 @@ symbol_validate (const char *name, loom_elf32_sym_t *sym, loom_uint8_t type,
 
 static int
 rel_iterate (loom_elf32_rel_t *rel, loom_usize_t symtabidx,
-             UNUSED loom_elf32_shdr_t *symtab, loom_usize_t targetidx,
-             UNUSED loom_elf32_shdr_t *target, void *data)
+             LOOM_UNUSED loom_elf32_shdr_t *symtab, loom_usize_t targetidx,
+             LOOM_UNUSED loom_elf32_shdr_t *target, void *data)
 {
   loom_usize_t symidx;
   loom_address_t addr;

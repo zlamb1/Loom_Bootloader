@@ -83,7 +83,8 @@ static int sc1_e0_to_kc[128] = {
 static loom_ps2_keyboard_t keyboard = { 0 };
 
 static void
-loom_kb_isr (UNUSED loom_uint32_t intno, UNUSED loom_uint32_t error_code)
+loom_kb_isr (LOOM_UNUSED loom_uint32_t intno,
+             LOOM_UNUSED loom_uint32_t error_code)
 {
   if (keyboard.buf)
     {

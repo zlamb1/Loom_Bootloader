@@ -1,8 +1,8 @@
 #ifndef LOOM_MMAP_H
 #define LOOM_MMAP_H 1
 
-#include "compiler.h"
-#include "types.h"
+#include "loom/compiler.h"
+#include "loom/types.h"
 
 typedef enum
 {
@@ -28,7 +28,7 @@ typedef struct
 
 extern loom_mmap_t loom_mmap;
 
-static UNUSED const char *
+static LOOM_UNUSED const char *
 loom_memory_type_str (loom_memory_type_t type)
 {
   if (type == LOOM_MEMORY_TYPE_FREE)
@@ -45,8 +45,8 @@ loom_memory_type_str (loom_memory_type_t type)
 
 void loom_mmap_init (void);
 
-int EXPORT (loom_mmap_iterate) (int (*hook) (loom_mmap_entry_t *entry,
-                                             void *data),
-                                void *data);
+int LOOM_EXPORT (loom_mmap_iterate) (int (*hook) (loom_mmap_entry_t *entry,
+                                                  void *data),
+                                     void *data);
 
 #endif

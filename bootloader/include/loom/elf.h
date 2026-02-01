@@ -39,7 +39,7 @@ typedef struct
   loom_uint16_t shentsize;
   loom_uint16_t shents;
   loom_uint16_t shstridx;
-} PACKED loom_elf32_ehdr_t;
+} LOOM_PACKED loom_elf32_ehdr_t;
 
 typedef struct
 {
@@ -61,7 +61,7 @@ typedef struct
 #define LOOM_PF_R 4
   loom_uint32_t flags;
   loom_uint32_t align;
-} PACKED ALIGNED (1) loom_elf32_phdr_t;
+} LOOM_PACKED LOOM_ALIGNED (1) loom_elf32_phdr_t;
 
 typedef struct
 {
@@ -86,7 +86,7 @@ typedef struct
   loom_uint32_t info;
   loom_uint32_t addralign;
   loom_uint32_t entsize;
-} PACKED ALIGNED (1) loom_elf32_shdr_t;
+} LOOM_PACKED LOOM_ALIGNED (1) loom_elf32_shdr_t;
 
 typedef struct
 {
@@ -106,7 +106,7 @@ typedef struct
   loom_uint8_t info;
   loom_uint8_t other;
   loom_uint16_t shidx;
-} PACKED ALIGNED (1) loom_elf32_sym_t;
+} LOOM_PACKED LOOM_ALIGNED (1) loom_elf32_sym_t;
 
 typedef struct
 {
@@ -114,26 +114,27 @@ typedef struct
 #define LOOM_ELF32_R_SYM(i)  ((i) >> 8)
 #define LOOM_ELF32_R_TYPE(i) ((loom_uint8_t) (i))
   loom_uint32_t info;
-} PACKED ALIGNED (1) loom_elf32_rel_t;
+} LOOM_PACKED LOOM_ALIGNED (1) loom_elf32_rel_t;
 
-int EXPORT (loom_elf32_ehdr_load) (void *p, loom_usize_t size,
-                                   loom_elf32_ehdr_t **ehdr);
+int LOOM_EXPORT (loom_elf32_ehdr_load) (void *p, loom_usize_t size,
+                                        loom_elf32_ehdr_t **ehdr);
 
-int EXPORT (loom_elf32_shdr_validate) (loom_address_t addr, loom_usize_t size,
-                                       loom_elf32_shdr_t *shdr);
+int LOOM_EXPORT (loom_elf32_shdr_validate) (loom_address_t addr,
+                                            loom_usize_t size,
+                                            loom_elf32_shdr_t *shdr);
 
-int EXPORT (loom_elf32_strtab_validate) (loom_elf32_ehdr_t *ehdr,
-                                         loom_usize_t size,
-                                         loom_elf32_shdr_t *shdr);
+int LOOM_EXPORT (loom_elf32_strtab_validate) (loom_elf32_ehdr_t *ehdr,
+                                              loom_usize_t size,
+                                              loom_elf32_shdr_t *shdr);
 
-loom_elf32_shdr_t *EXPORT (loom_elf32_shdr_get) (loom_elf32_ehdr_t *ehdr,
-                                                 loom_usize_t shidx);
+loom_elf32_shdr_t *LOOM_EXPORT (loom_elf32_shdr_get) (loom_elf32_ehdr_t *ehdr,
+                                                      loom_usize_t shidx);
 
-int EXPORT (loom_elf32_shdr_iterate) (
+int LOOM_EXPORT (loom_elf32_shdr_iterate) (
     loom_elf32_ehdr_t *ehdr,
     int (*hook) (loom_usize_t, loom_elf32_shdr_t *, void *), void *data);
 
-int EXPORT (loom_elf32_rel_iterate) (
+int LOOM_EXPORT (loom_elf32_rel_iterate) (
     loom_elf32_ehdr_t *ehdr,
     int (*hook) (loom_elf32_rel_t *rel, loom_usize_t symtabidx,
                  loom_elf32_shdr_t *symtab, loom_usize_t targetidx,

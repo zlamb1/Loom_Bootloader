@@ -6,8 +6,9 @@
 loom_mmap_t loom_mmap;
 
 static void
-mmap_count_hook (UNUSED loom_uint64_t address, UNUSED loom_uint64_t length,
-                 UNUSED loom_memory_type_t type, void *data)
+mmap_count_hook (LOOM_UNUSED loom_uint64_t address,
+                 LOOM_UNUSED loom_uint64_t length,
+                 LOOM_UNUSED loom_memory_type_t type, void *data)
 {
   loom_usize_t *count = data;
   (*count)++;
@@ -15,7 +16,7 @@ mmap_count_hook (UNUSED loom_uint64_t address, UNUSED loom_uint64_t length,
 
 static void
 mmap_fill_hook (loom_uint64_t address, loom_uint64_t length,
-                loom_memory_type_t type, UNUSED void *data)
+                loom_memory_type_t type, LOOM_UNUSED void *data)
 {
   loom_usize_t count = *(loom_usize_t *) data;
 

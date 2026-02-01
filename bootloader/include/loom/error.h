@@ -1,8 +1,8 @@
 #ifndef LOOM_ERROR_H
 #define LOOM_ERROR_H 1
 
-#include "compiler.h"
-#include "types.h"
+#include "loom/compiler.h"
+#include "loom/types.h"
 
 #define LOOM_ERR_NONE           0
 #define LOOM_ERR_BAD_ARG        1
@@ -30,12 +30,14 @@ typedef loom_uint8_t loom_error_t;
 
 extern loom_error_t loom_errno;
 
-void PRINTF (2, 3) EXPORT (loom_error) (loom_error_t, const char *fmt, ...);
-const char *EXPORT (loom_error_get) (void);
-void EXPORT (loom_error_clear) (void);
+void LOOM_PRINTF (2, 3)
+    LOOM_EXPORT (loom_error) (loom_error_t, const char *fmt, ...);
+const char *LOOM_EXPORT (loom_error_get) (void);
+void LOOM_EXPORT (loom_error_clear) (void);
 
-const char *EXPORT (loom_strerror) (loom_error_t);
+const char *LOOM_EXPORT (loom_strerror) (loom_error_t);
 
-void NORETURN PRINTF (1, 2) EXPORT (loom_panic) (const char *fmt, ...);
+void LOOM_NORETURN LOOM_PRINTF (1, 2)
+    LOOM_EXPORT (loom_panic) (const char *fmt, ...);
 
 #endif

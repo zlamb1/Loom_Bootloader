@@ -18,7 +18,7 @@ typedef struct
   loom_uint32_t spt; // sectors per track
   loom_uint64_t sectors;
   loom_uint16_t bps; // bytes per sector
-} PACKED bios_disk_params_t;
+} LOOM_PACKED bios_disk_params_t;
 
 typedef struct
 {
@@ -28,7 +28,7 @@ typedef struct
   loom_uint16_t offset;
   loom_uint16_t segment;
   loom_uint64_t start_block;
-} PACKED bios_disk_read_t;
+} LOOM_PACKED bios_disk_read_t;
 
 static loom_error_t
 bios_disk_read (struct loom_disk_t *disk, loom_usize_t block,

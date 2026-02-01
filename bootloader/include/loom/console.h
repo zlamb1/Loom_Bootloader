@@ -1,8 +1,8 @@
-#include "loom/list.h"
 #ifndef LOOM_CONSOLE_H
 #define LOOM_CONSOLE_H 1
 
-#include "error.h"
+#include "loom/error.h"
+#include "loom/list.h"
 
 #define LOOM_CONSOLE_COLOR_BLACK        0
 #define LOOM_CONSOLE_COLOR_BLUE         1
@@ -59,8 +59,8 @@ void loom_wbufs_append (loom_usize_t cap, loom_write_buffer_t wbufs[],
                         loom_write_buffer_t wbuf);
 loom_usize_t loom_wbufs_char_len (loom_write_buffer_t wbufs[]);
 
-void EXPORT (loom_console_register) (loom_console_t *console);
-void EXPORT (loom_console_clear) (void);
+void LOOM_EXPORT (loom_console_register) (loom_console_t *console);
+void LOOM_EXPORT (loom_console_clear) (void);
 
 void loom_console_write (loom_usize_t len, const char *buf);
 void loom_console_write_str (const char *s);

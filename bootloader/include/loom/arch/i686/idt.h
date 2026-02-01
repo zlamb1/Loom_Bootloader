@@ -7,8 +7,8 @@
 void loom_idt_init (void);
 void loom_idtr_load (void);
 
-void EXPORT (loom_isr_vector_map) (loom_uint8_t entry, void *isr);
-void EXPORT (loom_idt_vector_map) (loom_uint8_t entry, void *isr);
-void EXPORT (loom_idt_vector_unmap) (loom_uint8_t entry);
+void LOOM_EXPORT (loom_isr_vector_map) (loom_uint8_t entry, void *isr);
+void LOOM_EXPORT (loom_idt_vector_map) (loom_uint8_t entry, void *isr);
+void LOOM_EXPORT (loom_idt_vector_unmap) (loom_uint8_t entry);
 
 #endif

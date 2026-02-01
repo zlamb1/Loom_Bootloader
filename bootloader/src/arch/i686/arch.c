@@ -10,13 +10,13 @@ typedef struct
   loom_uint64_t address;
   loom_uint64_t length;
   loom_uint32_t type;
-} PACKED e820_t;
+} LOOM_PACKED e820_t;
 
 void loom_vga_con_register (void);
 
 void
 mmap_mm_hook (loom_uint64_t address, loom_uint64_t length,
-              loom_memory_type_t type, UNUSED void *data)
+              loom_memory_type_t type, LOOM_UNUSED void *data)
 {
   if (address >= 0xffffffff || address >= LOOM_USIZE_MAX
       || type != LOOM_MEMORY_TYPE_FREE)

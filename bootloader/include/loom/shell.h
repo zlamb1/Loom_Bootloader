@@ -1,8 +1,8 @@
 #ifndef LOOM_SHELL_H
 #define LOOM_SHELL_H 1
 
-#include "compiler.h"
+#include "loom/compiler.h"
 
-void EXPORT (loom_shell_exec) (void);
+void LOOM_EXPORT (loom_shell_exec) (void);
 
 #endif

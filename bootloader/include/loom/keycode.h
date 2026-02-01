@@ -1,7 +1,7 @@
 #ifndef _LOOM_KEYCODE_H
 #define _LOOM_KEYCODE_H 1
 
-#include "compiler.h"
+#include "loom/compiler.h"
 
 #define LOOM_KEY_A          1
 #define LOOM_KEY_B          2
@@ -119,18 +119,18 @@
 #define LOOM_KEY_NPPERIOD   114
 #define LOOM_KEY_NPENTER    115
 
-static UNUSED int
+static LOOM_UNUSED int
 loom_keycode_isalpha (int keycode)
 {
   return keycode >= LOOM_KEY_A && keycode <= LOOM_KEY_Z;
 }
 
-static UNUSED int
+static LOOM_UNUSED int
 loom_keycode_isnumeric (int keycode)
 {
   return keycode >= LOOM_KEY_0 && keycode <= LOOM_KEY_9;
 }
 
-char EXPORT (loom_keycode_to_char) (int mods, int keycode);
+char LOOM_EXPORT (loom_keycode_to_char) (int mods, int keycode);
 
 #endif

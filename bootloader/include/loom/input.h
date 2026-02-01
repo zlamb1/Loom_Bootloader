@@ -1,7 +1,7 @@
 #ifndef LOOM_INPUT_H
 #define LOOM_INPUT_H 1
 
-#include "compiler.h"
+#include "loom/compiler.h"
 
 typedef struct
 {
@@ -24,9 +24,9 @@ typedef struct loom_input_source_t
 
 extern loom_input_source_t *loom_input_sources;
 
-void EXPORT (loom_input_source_register) (loom_input_source_t *src);
+void LOOM_EXPORT (loom_input_source_register) (loom_input_source_t *src);
 
-int EXPORT (loom_input_source_read) (loom_input_source_t *src,
-                                     loom_input_event_t *evt);
+int LOOM_EXPORT (loom_input_source_read) (loom_input_source_t *src,
+                                          loom_input_event_t *evt);
 
 #endif

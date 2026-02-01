@@ -16,7 +16,7 @@ typedef struct
 } color_map_t;
 
 static int
-rmmod_task (UNUSED loom_command_t *cmd, loom_usize_t argc, char *argv[])
+rmmod_task (LOOM_UNUSED loom_command_t *cmd, loom_usize_t argc, char *argv[])
 {
   if (argc <= 1)
     {
@@ -34,23 +34,23 @@ rmmod_task (UNUSED loom_command_t *cmd, loom_usize_t argc, char *argv[])
 }
 
 static int
-lsmod_task (UNUSED loom_command_t *cmd, UNUSED loom_usize_t argc,
-            UNUSED char *argv[])
+lsmod_task (LOOM_UNUSED loom_command_t *cmd, LOOM_UNUSED loom_usize_t argc,
+            LOOM_UNUSED char *argv[])
 {
   LOOM_LIST_ITERATE (loom_modules, mod) { loom_printf ("%s\n", mod->name); }
   return 0;
 }
 
 static int
-reboot_task (UNUSED loom_command_t *cmd, UNUSED loom_usize_t argc,
-             UNUSED char *argv[])
+reboot_task (LOOM_UNUSED loom_command_t *cmd, LOOM_UNUSED loom_usize_t argc,
+             LOOM_UNUSED char *argv[])
 {
   loom_arch_reboot ();
   return 0;
 }
 
 static int
-mmap_print_hook (loom_mmap_entry_t *entry, UNUSED void *data)
+mmap_print_hook (loom_mmap_entry_t *entry, LOOM_UNUSED void *data)
 {
   loom_printf ("%-#12llx%-#12llx%-12s\n", entry->address, entry->length,
                loom_memory_type_str (entry->type));
@@ -58,8 +58,8 @@ mmap_print_hook (loom_mmap_entry_t *entry, UNUSED void *data)
 }
 
 static int
-mmap_task (UNUSED loom_command_t *cmd, UNUSED loom_usize_t argc,
-           UNUSED char *argv[])
+mmap_task (LOOM_UNUSED loom_command_t *cmd, LOOM_UNUSED loom_usize_t argc,
+           LOOM_UNUSED char *argv[])
 {
   LOOM_LIST_ITERATE (loom_consoles, console)
   {
@@ -128,7 +128,7 @@ parse_console_color (char *arg, loom_console_color_t *color)
 }
 
 static int
-fg_task (UNUSED loom_command_t *cmd, loom_usize_t argc, char *argv[])
+fg_task (LOOM_UNUSED loom_command_t *cmd, loom_usize_t argc, char *argv[])
 {
   loom_console_color_t color = LOOM_CONSOLE_DEFAULT_FG;
 
@@ -147,7 +147,7 @@ fg_task (UNUSED loom_command_t *cmd, loom_usize_t argc, char *argv[])
 }
 
 static int
-bg_task (UNUSED loom_command_t *cmd, loom_usize_t argc, char *argv[])
+bg_task (LOOM_UNUSED loom_command_t *cmd, loom_usize_t argc, char *argv[])
 {
   loom_console_color_t color = LOOM_CONSOLE_DEFAULT_BG;
 
@@ -166,8 +166,8 @@ bg_task (UNUSED loom_command_t *cmd, loom_usize_t argc, char *argv[])
 }
 
 static int
-clear_task (UNUSED loom_command_t *cmd, UNUSED loom_usize_t argc,
-            UNUSED char *argv[])
+clear_task (LOOM_UNUSED loom_command_t *cmd, LOOM_UNUSED loom_usize_t argc,
+            LOOM_UNUSED char *argv[])
 {
   LOOM_LIST_ITERATE (loom_consoles, console) { console->clear (console); }
   return 0;
@@ -180,8 +180,8 @@ typedef struct
 } mm_iterate_context_t;
 
 static int
-mm_iterate_hook (UNUSED loom_address_t p, loom_usize_t n, loom_bool_t isfree,
-                 void *data)
+mm_iterate_hook (LOOM_UNUSED loom_address_t p, loom_usize_t n,
+                 loom_bool_t isfree, void *data)
 {
   mm_iterate_context_t *ctx = data;
 
@@ -195,7 +195,7 @@ mm_iterate_hook (UNUSED loom_address_t p, loom_usize_t n, loom_bool_t isfree,
 }
 
 static int
-memory_task (UNUSED loom_command_t *cmd, loom_usize_t argc, char *argv[])
+memory_task (LOOM_UNUSED loom_command_t *cmd, loom_usize_t argc, char *argv[])
 {
   mm_iterate_context_t ctx = { .c = 0, .isfree = 1 };
 
@@ -212,8 +212,8 @@ memory_task (UNUSED loom_command_t *cmd, loom_usize_t argc, char *argv[])
 }
 
 static int
-boot_task (UNUSED loom_command_t *cmd, UNUSED loom_usize_t argc,
-           UNUSED char *argv[])
+boot_task (LOOM_UNUSED loom_command_t *cmd, LOOM_UNUSED loom_usize_t argc,
+           LOOM_UNUSED char *argv[])
 {
   loom_kernel_loader_boot ();
   loom_error (LOOM_ERR_BAD_ARG, "no kernel loaded");

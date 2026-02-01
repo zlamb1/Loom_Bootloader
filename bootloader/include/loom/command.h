@@ -1,8 +1,8 @@
 #ifndef LOOM_COMMAND_H
 #define LOOM_COMMAND_H 1
 
-#include "compiler.h"
-#include "types.h"
+#include "loom/compiler.h"
+#include "loom/types.h"
 
 struct loom_command_t;
 
@@ -18,9 +18,9 @@ typedef struct loom_command_t
 
 extern loom_command_t *loom_commands;
 
-void EXPORT (loom_command_register) (loom_command_t *command);
-void EXPORT (loom_command_unregister) (loom_command_t *command);
+void LOOM_EXPORT (loom_command_register) (loom_command_t *command);
+void LOOM_EXPORT (loom_command_unregister) (loom_command_t *command);
 
-loom_command_t *EXPORT (loom_command_find) (const char *name);
+loom_command_t *LOOM_EXPORT (loom_command_find) (const char *name);
 
 #endif

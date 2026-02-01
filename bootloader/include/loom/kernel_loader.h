@@ -1,8 +1,8 @@
-#include "loom/types.h"
 #ifndef LOOM_LOADER_H
 #define LOOM_LOADER_H 1
 
 #include "loom/compiler.h"
+#include "loom/types.h"
 
 typedef struct loom_kernel_module_t
 {
@@ -24,9 +24,10 @@ typedef struct loom_kernel_loader_t
   void *data;
 } loom_kernel_loader_t;
 
-void EXPORT (loom_kernel_loader_add) (loom_kernel_loader_t *kernel_loader);
-int EXPORT (loom_kernel_loader_remove) (loom_bool_t free);
+void
+    LOOM_EXPORT (loom_kernel_loader_add) (loom_kernel_loader_t *kernel_loader);
+int LOOM_EXPORT (loom_kernel_loader_remove) (loom_bool_t free);
 
-int EXPORT (loom_kernel_loader_boot) (void);
+int LOOM_EXPORT (loom_kernel_loader_boot) (void);
 
 #endif

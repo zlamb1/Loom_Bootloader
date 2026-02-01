@@ -1,9 +1,9 @@
 #ifndef LOOM_DISK_H
 #define LOOM_DISK_H 1
 
-#include "compiler.h"
-#include "error.h"
-#include "types.h"
+#include "loom/compiler.h"
+#include "loom/error.h"
+#include "loom/types.h"
 
 typedef struct loom_disk_t
 {
@@ -16,11 +16,12 @@ typedef struct loom_disk_t
   struct loom_disk_t *next;
 } loom_disk_t;
 
-extern loom_disk_t *EXPORT_VAR (loom_disks);
+extern loom_disk_t *LOOM_EXPORT_VAR (loom_disks);
 
-void EXPORT (loom_disk_register) (loom_disk_t *disk);
+void LOOM_EXPORT (loom_disk_register) (loom_disk_t *disk);
 
-loom_error_t EXPORT (loom_disk_read) (loom_disk_t *disk, loom_usize_t offset,
-                                      loom_usize_t count, char *buf);
+loom_error_t LOOM_EXPORT (loom_disk_read) (loom_disk_t *disk,
+                                           loom_usize_t offset,
+                                           loom_usize_t count, char *buf);
 
 #endif

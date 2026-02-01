@@ -5,7 +5,7 @@
 
 uintptr_t __stack_chk_guard = 0xAB9EF4C2;
 
-void NOINLINE
+void LOOM_NOINLINE
 __stack_chk_fail (void)
 {
   volatile int dummy = 1;
