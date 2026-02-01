@@ -5,13 +5,16 @@
 #include "loom/error.h"
 #include "loom/types.h"
 
-void LOOM_EXPORT (loom_memcpy) (void *restrict dst, const void *restrict src,
-                                loom_usize_t count);
-void LOOM_EXPORT (loom_memmove) (void *dst, const void *src,
-                                 loom_usize_t count);
+void LOOM_WEAK LOOM_EXPORT (loom_memcpy) (void *restrict dst,
+                                          const void *restrict src,
+                                          loom_usize_t n);
+
+void LOOM_EXPORT (loom_memmove) (void *dst, const void *src, loom_usize_t n);
+
 int LOOM_EXPORT (loom_memcmp) (const void *lhs, const void *rhs,
-                               loom_usize_t count);
-void LOOM_EXPORT (loom_memset) (void *dst, int v, loom_usize_t n);
+                               loom_usize_t n);
+
+void LOOM_WEAK LOOM_EXPORT (loom_memset) (void *dst, int v, loom_usize_t n);
 
 loom_usize_t LOOM_EXPORT (loom_strlen) (const char *s);
 int LOOM_EXPORT (loom_strcmp) (const char *s1, const char *s2);
