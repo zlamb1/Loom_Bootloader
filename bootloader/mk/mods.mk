@@ -1,7 +1,7 @@
 MODDIR := src/mods
 MODOUTDIR := $(OUTDIR)/mods
 
-MODS ?= mods/hello.mk mods/x86/linux.mk
+MODS ?= mods/hello.mk mods/x86/ps2.mk mods/x86/linux.mk
 MODSYMLST := $(MODOUTDIR)/mods.sym.lst
 MODULE_TABLE_BIN ?= $(OUTDIR)/module-table
 

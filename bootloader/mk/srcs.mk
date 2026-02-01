@@ -43,7 +43,6 @@ TGTSRCS := stage1.asm \
 		   io.c \
 		   idt.c \
 		   exception.c \
-		   ps2.c \
 		   bios.c \
 		   rel.c
 

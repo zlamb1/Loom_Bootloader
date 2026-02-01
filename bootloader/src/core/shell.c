@@ -212,8 +212,6 @@ shell_write_keycode (shell_t *shell, int mods, int keycode)
 void
 loom_shell_exec (void)
 {
-  loom_input_source_t *src = loom_input_sources;
-
   shell_t shell = { 0 };
   shell.buf = loom_malloc (CAP);
 
@@ -228,12 +226,12 @@ loom_shell_exec (void)
     {
       loom_input_event_t evt;
 
-      if (src && loom_input_source_read (src, &evt))
+      if (loom_input_sources_read (&evt))
         {
           if (!evt.press)
             continue;
 
-          shell_write_keycode (&shell, src->mods, evt.keycode);
+          shell_write_keycode (&shell, evt.mods, evt.keycode);
         }
     }
 }

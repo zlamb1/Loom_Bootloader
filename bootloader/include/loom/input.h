@@ -7,6 +7,7 @@ typedef struct
 {
   int press;
   int keycode;
+  int mods;
 } loom_input_event_t;
 
 typedef struct loom_input_source_t
@@ -19,14 +20,18 @@ typedef struct loom_input_source_t
 #define LOOM_INPUT_MOD_CAPSLOCK   (1 << 5)
   int mods;
   void *data;
-  struct loom_input_source_t *next;
+  struct loom_input_source_t *prev, *next;
 } loom_input_source_t;
 
 extern loom_input_source_t *loom_input_sources;
 
 void LOOM_EXPORT (loom_input_source_register) (loom_input_source_t *src);
 
+void LOOM_EXPORT (loom_input_source_unregister) (loom_input_source_t *src);
+
 int LOOM_EXPORT (loom_input_source_read) (loom_input_source_t *src,
                                           loom_input_event_t *evt);
+
+int loom_input_sources_read (loom_input_event_t *evt);
 
 #endif

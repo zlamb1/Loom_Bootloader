@@ -26,9 +26,7 @@ HDRS += arch/i686/bios.h \
 		arch/i686/idt.h \
 		arch/i686/io.h \
 		arch/i686/isr.h \
-		arch/i686/pic.h \
-		arch/i686/ps2.h
-
+		arch/i686/pic.h
 endif
 
 HDRS := $(foreach hdr,$(HDRS),$(INCDIR)/loom/$(hdr))
