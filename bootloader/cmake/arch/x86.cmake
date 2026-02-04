@@ -1,5 +1,3 @@
-set(LOOM_ARCH x86)
-
 set(LOOM_ARCH_HDR_DIR "${LOOM_INCLUDE_DIR}/loom/arch/i686")
 set(LOOM_ARCH_SRC_DIR "${LOOM_SRC_DIR}/arch/i686")
 set(LOOM_LINKER_SCRIPT "${LOOM_ARCH_SRC_DIR}/loom.ld")

@@ -34,7 +34,7 @@ loom_exception_handler (loom_uint32_t intno, loom_uint32_t error_code)
   (void) error_code;
   volatile int dummy;
 
-  __asm__ volatile ("mov $1, %0" : "=m"(dummy)::"memory");
+  __asm__ volatile ("movl $1, %0" : "=m"(dummy)::"memory");
 
   const char *exc_message
       = intno < (sizeof (exc_messages) / sizeof (*exc_messages))

@@ -13,7 +13,8 @@ target_compile_definitions(${LOOM_CORE_ELF} PRIVATE LOOM_ARCH=${LOOM_ARCH})
 target_compile_definitions(${LOOM_CORE_ELF} PRIVATE "${LOOM_ENDIAN_DEFINITION}")
 target_compile_options(${LOOM_CORE_ELF} PRIVATE $<$<COMPILE_LANGUAGE:C>:${LOOM_C_FLAGS}>)
 target_include_directories(${LOOM_CORE_ELF} PRIVATE ${LOOM_INCLUDE_DIRS})
-target_link_options(${LOOM_CORE_ELF} PRIVATE "-nostdlib")
+target_link_options(${LOOM_CORE_ELF} PRIVATE ${LOOM_LINK_FLAGS})
+target_link_options(${LOOM_CORE_ELF} PRIVATE LINKER:--build-id=none)
 
 if (DEFINED LOOM_LINKER_SCRIPT)
     target_link_options(

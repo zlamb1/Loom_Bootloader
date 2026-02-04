@@ -101,7 +101,7 @@ loom_vga_set_bg (loom_console_t *con, loom_uint8_t bg)
     return LOOM_ERR_BAD_ARG;
 
   loom_vga_console *vga_con = (loom_vga_console *) con->data;
-  vga_con->attribs = (vga_con->attribs & 0xF) | (bg << 4);
+  vga_con->attribs = (loom_uint8_t) ((vga_con->attribs & 0xF) | (bg << 4));
 
   return LOOM_ERR_NONE;
 }
@@ -111,7 +111,7 @@ loom_vga_clear (loom_console_t *con)
 {
   loom_vga_console *vga_con = (loom_vga_console *) con->data;
   loom_uint16_t char_and_attribs
-      = (loom_uint16_t) ' ' | ((loom_uint16_t) vga_con->attribs << 8);
+      = (loom_uint16_t) ' ' | ((loom_uint16_t) (vga_con->attribs << 8));
 
   for (loom_usize_t i = 0; i < ROWS * COLS; ++i)
     VMEM[i] = char_and_attribs;
@@ -172,7 +172,7 @@ loom_vga_write_all (struct loom_console_t *con, loom_write_buffer_t wbufs[])
 {
   loom_vga_console *vga_con = (loom_vga_console *) con->data;
   loom_usize_t index = vga_con->y * COLS + vga_con->x;
-  loom_uint16_t attribs = (loom_uint16_t) vga_con->attribs << 8;
+  loom_uint16_t attribs = (loom_uint16_t) (vga_con->attribs << 8);
   loom_write_buffer_t wbuf;
 
   if (vga_con->x >= COLS || vga_con->y >= ROWS)
