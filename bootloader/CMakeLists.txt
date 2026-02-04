@@ -114,7 +114,7 @@ elseif("${LOOM_ENDIANNESS}" STREQUAL "BIG")
 elseif(NOT DEFINED LOOM_ENDIANNESS)
     message(FATAL_ERROR "Architecture ${LOOM_ARCH}'s tc file must defined LOOM_ENDIANNESS.")
 else()
-    message(FATAL_ERROR "Architecture ${LOOM_ARCH}'s tc file must set LOOM_ENDIANNESS to either little or big.")
+    message(FATAL_ERROR "Architecture ${LOOM_ARCH}'s tc file must set LOOM_ENDIANNESS to either LITTLE or BIG.")
 endif()
 
 if ("${LOOM_ARCH}" STREQUAL "x86")

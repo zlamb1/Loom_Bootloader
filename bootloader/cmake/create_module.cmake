@@ -13,7 +13,7 @@ function(create_module NAME)
 
     add_library(${MODULE_OBJS} OBJECT ${SRCS})
 
-    message(STATUS "Creating Module : '${NAME}''")
+    message(STATUS "Creating Module : '${NAME}'")
 
     target_compile_definitions(${MODULE_OBJS} PRIVATE LOOM_MODULE ${LOOM_ENDIAN_DEFINITION})
     target_compile_options(${MODULE_OBJS} PRIVATE $<$<COMPILE_LANGUAGE:C>:${LOOM_C_FLAGS}>)

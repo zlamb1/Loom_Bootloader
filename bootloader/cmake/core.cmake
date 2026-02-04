@@ -7,6 +7,8 @@ add_executable(
     ${LOOM_SRCS}
 )
 
+set_target_properties(${LOOM_CORE_ELF} PROPERTIES OUTPUT_NAME core-elf)
+
 add_dependencies(${LOOM_CORE_ELF} loom_gensyms)
 
 target_compile_definitions(${LOOM_CORE_ELF} PRIVATE LOOM_ARCH=${LOOM_ARCH})
@@ -24,7 +26,7 @@ endif()
 
 add_custom_command(
     OUTPUT ${LOOM_CORE_BIN}
-    COMMAND ${CMAKE_OBJCOPY} -O binary ${LOOM_CORE_ELF} ${LOOM_CORE_BIN}
+    COMMAND ${CMAKE_OBJCOPY} -O binary $<TARGET_FILE:${LOOM_CORE_ELF}> ${LOOM_CORE_BIN}
     DEPENDS ${LOOM_CORE_ELF}
 )
 
