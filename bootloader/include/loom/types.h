@@ -2,9 +2,9 @@
 #define LOOM_TYPES_H
 
 #include <limits.h>
-
 #include <stddef.h>
-#include <stdint.h>
+
+#include "loom_stdint.h"
 
 typedef uint8_t loom_uint8_t;
 typedef uint16_t loom_uint16_t;

@@ -1,7 +1,6 @@
-#include <stdint.h>
-
-#include "loom/error.h"
 #include "loom/sp.h"
+#include "loom/error.h"
+#include "loom/types.h"
 
 uintptr_t __stack_chk_guard = 0xAB9EF4C2;
 

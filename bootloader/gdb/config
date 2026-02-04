@@ -3,8 +3,6 @@ target remote localhost:1234
 set confirm off
 set pagination off
 
-source gdb/mod.py
-
 layout src
 
 b loom_main

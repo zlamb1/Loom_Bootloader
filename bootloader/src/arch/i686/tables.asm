@@ -61,7 +61,7 @@ loom_enter_rmode:
 
 BITS 16
 
-.flush
+.flush:
     mov ax, 0x20
     mov ds, ax
     mov ss, ax
@@ -78,7 +78,7 @@ BITS 16
 
     jmp 0:.real
 
-.real
+.real:
     xor ax, ax
     mov ds, ax
     mov ss, ax

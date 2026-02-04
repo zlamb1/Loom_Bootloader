@@ -5,14 +5,14 @@ loom_partition_scheme_t *loom_partition_schemes = NULL;
 loom_partition_t *loom_partitions = NULL;
 
 void
-loom_register_partition_scheme (loom_partition_scheme_t *partition_scheme)
+loom_partition_scheme_register (loom_partition_scheme_t *partition_scheme)
 {
   partition_scheme->next = loom_partition_schemes;
   loom_partition_schemes = partition_scheme;
 }
 
 void
-loom_register_partition (loom_partition_t *partition)
+loom_partition_register (loom_partition_t *partition)
 {
   partition->next = loom_partitions;
   loom_partitions = partition;

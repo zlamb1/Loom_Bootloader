@@ -1,2 +1,0 @@
-MODNAME := ps2
-MODSRCS := $(MODDIR)/x86/ps2.c

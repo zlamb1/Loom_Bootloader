@@ -123,15 +123,23 @@ _load_mods:
     call _load_sectors
 
     ; verify magic
-    mov eax, DWORD [stage3e]
+    mov eax, stage3e
+    shr eax, 4
+    mov es, ax
+    mov ebx, stage3e
+    and bx, 15
+    mov eax, DWORD [es:bx]
     cmp eax, 0x70D61E9C
     je .next
     mov si, magic_fail
     jmp .fail
 
-.next
+.next:
     ; get module header size
-    mov eax, DWORD [stage3e+12]
+    mov eax, DWORD [es:bx+12]
+
+    xor bx, bx
+    mov es, bx
 
     ; align up to sector size
     add eax, 511
