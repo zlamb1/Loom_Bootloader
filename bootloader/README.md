@@ -6,21 +6,24 @@ Loom Bootloader is a modular bootloader, written in assembly and C, designed pri
 - x86 (BIOS)
 
 ## Build Dependencies
-- make
+- cmake
 - cc
-- podman
-- cut
-- realpath
+- nasm
+- i686-elf-gcc
+- i686-elf-objcopy
+
+## Build Instructions
+- cmake -S . -B build
+- cd build
+- make *---OR---* ninja
 
 ## Testing Dependencies
+- POSIX shell
 - qemu-system-i386
 - qemu-system-x86_64
 - GDB
 - Python
 
-## Commands
-- make: Builds the bootloader.
-- make dbg: Runs the bootloader in QEMU and attaches GDB.
-- make qemu: Runs the bootloader in QEMU.
-- make compile-commands: Builds the bootloader and produces compile-commands.json.
-- make clean: Deletes intermediate files.
+## Run Instructions
+- To run the bootloader in QEMU, execute run in the **build directory**.
+- To debug via GDB, execute dbg in the **build directory**.

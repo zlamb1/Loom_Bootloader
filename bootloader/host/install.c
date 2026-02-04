@@ -11,7 +11,9 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#define LOOM_NOSTDINT
 #include "loom/module.h"
+#include "loom/types.h"
 
 typedef struct
 {
@@ -210,7 +212,7 @@ main (int argc, char *argv[])
   if (newbinfd < 0)
     error ();
 
-  table_size = nargmods;
+  table_size = (uint32_t) nargmods;
   table_bytes = (size_t) (table_size + 1) * sizeof (*table);
 
   // Add one entry for the null terminator.
@@ -258,7 +260,7 @@ main (int argc, char *argv[])
       read_all (modfd, mods.data + mods.len, modlen);
 
       mods.len += modlen;
-      table[modindex++] = htole32 (modlen);
+      table[modindex++] = htole32 ((uint32_t) modlen);
 
       close (modfd);
       modfd = -1;
@@ -266,10 +268,11 @@ main (int argc, char *argv[])
 
   hdr.magic = htole32 (LOOM_MODULE_HEADER_MAGIC);
   hdr.taboff = htole32 (sizeof (hdr));
-  hdr.modoff = htole32 (sizeof (hdr) + table_bytes);
-  hdr.size = htole32 (sizeof (hdr) + table_bytes + mods.len);
-  hdr.kernel_size = htole32 (kernel_size);
-  hdr.initrdsize = htole32 (initrdsize);
+  hdr.modoff = htole32 (sizeof (hdr) + (uint32_t) table_bytes);
+  hdr.size = htole32 ((uint32_t) sizeof (hdr) + (uint32_t) table_bytes
+                      + (uint32_t) mods.len);
+  hdr.kernel_size = htole32 ((uint32_t) kernel_size);
+  hdr.initrdsize = htole32 ((uint32_t) initrdsize);
 
   bindata = malloc (binsize);
   if (!bindata)
