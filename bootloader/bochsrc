@@ -1,0 +1,5 @@
+display_library: sdl2
+megs: 512
+ata0: enabled=1
+ata0-slave: type=disk, path="build/loom.img", heads=1, spt=1
+boot: disk
