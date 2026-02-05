@@ -1,5 +1,6 @@
 #include "loom/main.h"
 #include "loom/arch.h"
+#include "loom/assert.h"
 #include "loom/commands/core.h"
 #include "loom/module.h"
 #include "loom/shell.h"
@@ -13,6 +14,7 @@ loom_main (void)
   loom_register_export_symbols ();
   loom_init_core_cmds ();
   loom_core_modules_load ();
+  loom_assert (0);
   loom_shell_exec ();
   for (;;)
     ;

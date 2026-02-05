@@ -11,7 +11,7 @@ set_target_properties(${LOOM_CORE_ELF} PROPERTIES OUTPUT_NAME core-elf)
 
 add_dependencies(${LOOM_CORE_ELF} loom_gensyms)
 
-target_compile_definitions(${LOOM_CORE_ELF} PRIVATE LOOM_ARCH=${LOOM_ARCH})
+target_compile_definitions(${LOOM_CORE_ELF} PRIVATE LOOM_ARCH=${LOOM_ARCH} LOOM_HOST_OS=${LOOM_HOST_OS})
 target_compile_definitions(${LOOM_CORE_ELF} PRIVATE "${LOOM_ENDIAN_DEFINITION}")
 target_compile_options(${LOOM_CORE_ELF} PRIVATE $<$<COMPILE_LANGUAGE:C>:${LOOM_C_FLAGS}>)
 target_include_directories(${LOOM_CORE_ELF} PRIVATE ${LOOM_INCLUDE_DIRS})

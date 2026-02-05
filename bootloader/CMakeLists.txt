@@ -10,6 +10,8 @@ include(ExternalProject)
 set(CMAKE_DIR "${CMAKE_CURRENT_LIST_DIR}/cmake")
 set(X86_GCC_TC "${CMAKE_DIR}/tc/x86-gcc.cmake")
 
+include(${CMAKE_DIR}/os.cmake)
+
 if (NOT DEFINED CMAKE_TOOLCHAIN_FILE)
     set(CMAKE_TOOLCHAIN_FILE "${X86_GCC_TC}")
 endif()
@@ -54,6 +56,7 @@ set(
     ${LOOM_CORE_HDR_DIR}/crypto/crypto.h
     ${LOOM_CORE_HDR_DIR}/crypto/sha1.h
     ${LOOM_CORE_HDR_DIR}/arch.h
+    ${LOOM_CORE_HDR_DIR}/assert.h
     ${LOOM_CORE_HDR_DIR}/command.h
     ${LOOM_CORE_HDR_DIR}/compiler.h
     ${LOOM_CORE_HDR_DIR}/console.h
@@ -84,6 +87,7 @@ set(
     ${LOOM_CORE_SRC_DIR}/commands/core.c
     ${LOOM_CORE_SRC_DIR}/crypto/sha1.c
     ${LOOM_CORE_SRC_DIR}/arith.c
+    ${LOOM_CORE_SRC_DIR}/assert.c
     ${LOOM_CORE_SRC_DIR}/command.c
     ${LOOM_CORE_SRC_DIR}/console.c
     ${LOOM_CORE_SRC_DIR}/disk.c
