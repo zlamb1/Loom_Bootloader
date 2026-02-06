@@ -1,6 +1,5 @@
 #include <stddef.h>
 
-#include "loom/console.h"
 #include "loom/error.h"
 #include "loom/list.h"
 #include "loom/math.h"

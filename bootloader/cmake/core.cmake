@@ -1,5 +1,5 @@
 set(LOOM_CORE_ELF "core_elf")
-set(LOOM_CORE_ELF_ABS "${CMAKE_BINARY_DIR}/${LOOM_CORE_ELF}")
+set(LOOM_CORE_ELF_ABS "$<TARGET_FILE:${LOOM_CORE_ELF}>")
 set(LOOM_CORE_BIN "${CMAKE_BINARY_DIR}/core-bin")
 
 add_executable(

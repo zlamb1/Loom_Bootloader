@@ -165,12 +165,9 @@ file(WRITE ${RUN_SCRIPT}
 
 file(CHMOD ${RUN_SCRIPT} FILE_PERMISSIONS ${SCRIPT_PERMS})
 
-file(WRITE ${DBG_SCRIPT}
-    "make -C ${CMAKE_BINARY_DIR}\n"
-    "${DBG_QEMU} ${QEMU_COMMON} -s -S &\n"
-    "TOPDIR=$(realpath ..)\n"
-    "MODDIR=$(realpath modules)\n"
-    "gdb -q ${LOOM_CORE_ELF_ABS} -ex \"source $TOPDIR/gdb/mod.py\" -ex \"set \\$moddir = \\\"\${MODDIR}\\\"\" -x ${GDB_SCRIPT}\n"
+file(GENERATE OUTPUT ${DBG_SCRIPT} CONTENT 
+"make -C ${CMAKE_BINARY_DIR}\n\
+${DBG_QEMU} ${QEMU_COMMON} -s -S &\n\
+gdb -q ${LOOM_CORE_ELF_ABS} -ex \"source ${CMAKE_CURRENT_LIST_DIR}/gdb/mod.py\" -ex \"set \\$moddir = \\\"${LOOM_MOD_BIN_DIR}\\\"\" -x ${GDB_SCRIPT}\n"
+FILE_PERMISSIONS ${SCRIPT_PERMS}
 )
-
-file(CHMOD ${DBG_SCRIPT} FILE_PERMISSIONS ${SCRIPT_PERMS})
