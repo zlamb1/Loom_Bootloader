@@ -1,8 +1,8 @@
-#include "loom/assert.h"
-#include "loom/compiler.h"
 #ifndef LOOM_CONSOLE_H
 #define LOOM_CONSOLE_H 1
 
+#include "loom/assert.h"
+#include "loom/compiler.h"
 #include "loom/error.h"
 #include "loom/list.h"
 
