@@ -19,9 +19,9 @@ typedef struct
 static void
 shell_print_prompt (void)
 {
-  loom_console_set_fg (LOOM_CONSOLE_COLOR_LIGHT_CYAN);
+  loom_consoles_set_fg (LOOM_CONSOLE_COLOR_LIGHT_CYAN);
   loom_printf (PROMPT);
-  loom_console_set_fg (LOOM_CONSOLE_DEFAULT_FG);
+  loom_consoles_set_fg (LOOM_CONSOLE_DEFAULT_FG);
 }
 
 static char *
@@ -99,10 +99,10 @@ shell_exec_command (shell_t *shell)
       if (command->task (command, argc, argv))
         {
           loom_printf ("%s: ", argv[0]);
-          loom_console_save_fg ();
-          loom_console_set_fg (LOOM_CONSOLE_COLOR_LIGHT_RED);
+          loom_consoles_save_fg ();
+          loom_consoles_set_fg (LOOM_CONSOLE_COLOR_LIGHT_RED);
           loom_printf ("error: ");
-          loom_console_restore_fg ();
+          loom_consoles_restore_fg ();
           loom_printf ("%s\n", loom_error_get ());
           loom_error_clear ();
         }
@@ -139,7 +139,7 @@ shell_write_keycode (shell_t *shell, int mods, int keycode)
         loom_write_buffer_t wbufs[]
             = { { .len = 1, .splats = shell->len - shell->cursor, .s = "\b" },
                 { 0 } };
-        loom_console_write_all (wbufs);
+        loom_consoles_write_all (wbufs);
       }
 
       shell->buf[shell->len] = 0;
@@ -201,7 +201,7 @@ shell_write_keycode (shell_t *shell, int mods, int keycode)
             buf[++shell->len] = 0;
 
             loom_printf ("%c%s", ch, buf + shell->cursor);
-            loom_console_write_all (wbufs);
+            loom_consoles_write_all (wbufs);
           }
 
         break;

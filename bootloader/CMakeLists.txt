@@ -96,6 +96,7 @@ set(
     ${LOOM_CORE_SRC_DIR}/input.c
     ${LOOM_CORE_SRC_DIR}/kernel_loader.c
     ${LOOM_CORE_SRC_DIR}/keycode.c
+    ${LOOM_CORE_SRC_DIR}/list.c
     ${LOOM_CORE_SRC_DIR}/main.c
     ${LOOM_CORE_SRC_DIR}/mm.c
     ${LOOM_CORE_SRC_DIR}/mmap.c

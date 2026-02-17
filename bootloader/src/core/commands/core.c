@@ -1,4 +1,5 @@
 #include "loom/arch.h"
+#include "loom/assert.h"
 #include "loom/command.h"
 #include "loom/console.h"
 #include "loom/kernel_loader.h"
@@ -61,17 +62,11 @@ static int
 mmap_task (LOOM_UNUSED loom_command_t *cmd, LOOM_UNUSED loom_usize_t argc,
            LOOM_UNUSED char *argv[])
 {
-  LOOM_LIST_ITERATE (loom_consoles, console)
-  {
-    console->set_fg (console, LOOM_CONSOLE_COLOR_YELLOW);
-  }
+  loom_consoles_set_fg (LOOM_CONSOLE_COLOR_YELLOW);
 
   loom_printf ("%-12s%-12s%-12s\n", "ADDRESS", "LENGTH", "TYPE");
 
-  LOOM_LIST_ITERATE (loom_consoles, console)
-  {
-    console->set_fg (console, LOOM_CONSOLE_DEFAULT_FG);
-  }
+  loom_consoles_set_fg (LOOM_CONSOLE_DEFAULT_FG);
 
   if (loom_mmap.count)
     loom_mmap_iterate (mmap_print_hook, NULL);
@@ -130,6 +125,7 @@ parse_console_color (char *arg, loom_console_color_t *color)
 static int
 fg_task (LOOM_UNUSED loom_command_t *cmd, loom_usize_t argc, char *argv[])
 {
+  loom_console_t *console;
   loom_console_color_t color = LOOM_CONSOLE_DEFAULT_FG;
 
   if (argc > 1 && !parse_console_color (argv[1], &color))
@@ -138,8 +134,9 @@ fg_task (LOOM_UNUSED loom_command_t *cmd, loom_usize_t argc, char *argv[])
       return -1;
     }
 
-  LOOM_LIST_ITERATE (loom_consoles, console)
+  loom_list_for_each_entry (&loom_consoles, console, LOOM_CONSOLE_T_NODE_NAME)
   {
+    loom_assert (console->set_fg != NULL);
     console->set_fg (console, color);
   }
 
@@ -149,6 +146,7 @@ fg_task (LOOM_UNUSED loom_command_t *cmd, loom_usize_t argc, char *argv[])
 static int
 bg_task (LOOM_UNUSED loom_command_t *cmd, loom_usize_t argc, char *argv[])
 {
+  loom_console_t *console;
   loom_console_color_t color = LOOM_CONSOLE_DEFAULT_BG;
 
   if (argc > 1 && !parse_console_color (argv[1], &color))
@@ -157,8 +155,9 @@ bg_task (LOOM_UNUSED loom_command_t *cmd, loom_usize_t argc, char *argv[])
       return -1;
     }
 
-  LOOM_LIST_ITERATE (loom_consoles, console)
+  loom_list_for_each_entry (&loom_consoles, console, LOOM_CONSOLE_T_NODE_NAME)
   {
+    loom_assert (console->set_bg != NULL);
     console->set_bg (console, color);
   }
 
@@ -169,7 +168,7 @@ static int
 clear_task (LOOM_UNUSED loom_command_t *cmd, LOOM_UNUSED loom_usize_t argc,
             LOOM_UNUSED char *argv[])
 {
-  LOOM_LIST_ITERATE (loom_consoles, console) { console->clear (console); }
+  loom_consoles_clear ();
   return 0;
 }
 

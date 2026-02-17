@@ -1,3 +1,5 @@
+#include "loom/assert.h"
+#include "loom/compiler.h"
 #ifndef LOOM_CONSOLE_H
 #define LOOM_CONSOLE_H 1
 
@@ -48,10 +50,12 @@ typedef struct loom_console_t
 
   void *data;
   loom_console_color_t save;
-  struct loom_console_t *next;
+
+#define LOOM_CONSOLE_T_NODE_NAME node
+  loom_list_t LOOM_CONSOLE_T_NODE_NAME;
 } loom_console_t;
 
-extern loom_console_t *loom_consoles;
+extern loom_list_t loom_consoles;
 
 void loom_wbufs_prepend (loom_usize_t cap, loom_write_buffer_t wbufs[],
                          loom_write_buffer_t wbuf);
@@ -60,56 +64,80 @@ void loom_wbufs_append (loom_usize_t cap, loom_write_buffer_t wbufs[],
 loom_usize_t loom_wbufs_char_len (loom_write_buffer_t wbufs[]);
 
 void LOOM_EXPORT (loom_console_register) (loom_console_t *console);
-void LOOM_EXPORT (loom_console_clear) (void);
 
-void loom_console_write (loom_usize_t len, const char *buf);
-void loom_console_write_str (const char *s);
-void loom_console_write_all (loom_write_buffer_t wbufs[]);
+void LOOM_EXPORT (loom_consoles_clear) (void);
+void loom_consoles_write (loom_usize_t len, const char *buf);
+void loom_consoles_write_str (const char *s);
+void loom_consoles_write_all (loom_write_buffer_t wbufs[]);
 
 static inline void
-loom_console_set_fg (loom_console_color_t fg)
+loom_consoles_set_fg (loom_console_color_t fg)
 {
-  LOOM_LIST_ITERATE (loom_consoles, console) { console->set_fg (console, fg); }
+  loom_console_t *console;
+
+  loom_list_for_each_entry (&loom_consoles, console, node)
+  {
+    loom_assert (console->set_fg != NULL);
+    console->set_fg (console, fg);
+  }
 }
 
 static inline void
-loom_console_save_fg (void)
+loom_consoles_save_fg (void)
 {
-  LOOM_LIST_ITERATE (loom_consoles, console)
+  loom_console_t *console;
+
+  loom_list_for_each_entry (&loom_consoles, console, node)
   {
+    loom_assert (console->get_fg != NULL);
     console->save = console->get_fg (console);
   }
 }
 
 static inline void
-loom_console_restore_fg (void)
+loom_consoles_restore_fg (void)
 {
-  LOOM_LIST_ITERATE (loom_consoles, console)
+  loom_console_t *console;
+
+  loom_list_for_each_entry (&loom_consoles, console, node)
   {
+    loom_assert (console->set_fg != NULL);
     console->set_fg (console, console->save);
   }
 }
 
 static inline void
-loom_console_set_bg (loom_console_color_t bg)
+loom_consoles_set_bg (loom_console_color_t bg)
 {
-  LOOM_LIST_ITERATE (loom_consoles, console) { console->set_bg (console, bg); }
+  loom_console_t *console;
+
+  loom_list_for_each_entry (&loom_consoles, console, node)
+  {
+    loom_assert (console->set_bg != NULL);
+    console->set_bg (console, bg);
+  }
 }
 
 static inline void
-loom_console_save_bg (void)
+loom_consoles_save_bg (void)
 {
-  LOOM_LIST_ITERATE (loom_consoles, console)
+  loom_console_t *console;
+
+  loom_list_for_each_entry (&loom_consoles, console, node)
   {
+    loom_assert (console->get_bg != NULL);
     console->save = console->get_bg (console);
   }
 }
 
 static inline void
-loom_console_restore_bg (void)
+loom_consoles_restore_bg (void)
 {
-  LOOM_LIST_ITERATE (loom_consoles, console)
+  loom_console_t *console;
+
+  loom_list_for_each_entry (&loom_consoles, console, node)
   {
+    loom_assert (console->set_bg != NULL);
     console->set_bg (console, console->save);
   }
 }

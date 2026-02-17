@@ -5,6 +5,19 @@
 #define loom_assume_aligned __builtin_assume_aligned
 #define loom_alignof        _Alignof
 
+#define _loom_container_of(ptr, type, member)                                 \
+  ({                                                                          \
+    const typeof (((type *) 0)->member) *_tmpptr = (ptr);                     \
+    (type *) __builtin_assume_aligned (                                       \
+        (char *) _tmpptr - offsetof (type, member), loom_alignof (type));     \
+  })
+
+#define loom_container_of(ptr, type, member)                                  \
+  _Generic ((ptr),                                                            \
+      const typeof (*(ptr)) *: (const type *) _loom_container_of (ptr, type,  \
+                                                                  member),    \
+      default: _loom_container_of (ptr, type, member))
+
 #define LOOM_ALIAS(NAME)      __attribute__ ((alias (#NAME)))
 #define LOOM_ALIGNED(N)       __attribute__ ((aligned (N)))
 #define LOOM_EXPORT(NAME)     NAME

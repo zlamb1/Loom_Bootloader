@@ -2,6 +2,7 @@
 #define LOOM_INPUT_H 1
 
 #include "loom/compiler.h"
+#include "loom/list.h"
 
 typedef struct
 {
@@ -20,16 +21,17 @@ typedef struct loom_input_source_t
 #define LOOM_INPUT_MOD_CAPSLOCK   (1 << 5)
   int mods;
   void *data;
-  struct loom_input_source_t *prev, *next;
+  loom_list_t node;
 } loom_input_source_t;
 
-extern loom_input_source_t *loom_input_sources;
+extern loom_list_t loom_input_sources;
 
-void LOOM_EXPORT (loom_input_source_register) (loom_input_source_t *src);
+void LOOM_EXPORT (loom_input_source_register) (loom_input_source_t *input_src);
 
-void LOOM_EXPORT (loom_input_source_unregister) (loom_input_source_t *src);
+void LOOM_EXPORT (loom_input_source_unregister) (
+    loom_input_source_t *input_src);
 
-int LOOM_EXPORT (loom_input_source_read) (loom_input_source_t *src,
+int LOOM_EXPORT (loom_input_source_read) (loom_input_source_t *input_src,
                                           loom_input_event_t *evt);
 
 int loom_input_sources_read (loom_input_event_t *evt);

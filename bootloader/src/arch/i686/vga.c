@@ -208,7 +208,6 @@ static loom_vga_console vga_con = {
         .clear = loom_vga_clear,
         .write_all = loom_vga_write_all,
         .data = &vga_con,
-        .next = NULL,
     },
 };
 

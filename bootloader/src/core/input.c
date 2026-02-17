@@ -1,47 +1,33 @@
 #include "loom/input.h"
-#include "loom/error.h"
+#include "loom/assert.h"
 #include "loom/keycode.h"
 #include "loom/list.h"
 #include "loom/types.h"
 
-loom_input_source_t *loom_input_sources;
+loom_list_t loom_input_sources = LOOM_LIST_HEAD (loom_input_sources);
 
 void
-loom_input_source_register (loom_input_source_t *src)
+loom_input_source_register (loom_input_source_t *input_src)
 {
-  src->prev = NULL;
-  src->next = loom_input_sources;
-
-  if (loom_input_sources)
-    loom_input_sources->prev = src;
-
-  loom_input_sources = src;
+  loom_assert (input_src != NULL);
+  loom_list_prepend (&loom_input_sources, &input_src->node);
 }
 
 void
-loom_input_source_unregister (loom_input_source_t *src)
+loom_input_source_unregister (loom_input_source_t *input_src)
 {
-  if (src->prev)
-    src->prev = src->next;
-  else
-    {
-      if (loom_input_sources != src)
-        loom_panic ("loom_input_source_unregister");
-
-      loom_input_sources = src->next;
-    }
-
-  if (src->next)
-    src->next->prev = src->prev;
+  loom_assert (input_src != NULL);
+  loom_list_remove (&input_src->node);
 }
 
 int
-loom_input_source_read (loom_input_source_t *src, loom_input_event_t *evt)
+loom_input_source_read (loom_input_source_t *input_src,
+                        loom_input_event_t *evt)
 {
-  if (!src)
+  if (!input_src)
     return 0;
 
-  if (src->read (src, evt))
+  if (input_src->read (input_src, evt))
     {
       int mask;
 
@@ -57,10 +43,10 @@ loom_input_source_read (loom_input_source_t *src, loom_input_event_t *evt)
         {
           if (evt->press)
             {
-              if (src->mods & LOOM_INPUT_MOD_CAPSLOCK)
-                src->mods &= ~LOOM_INPUT_MOD_CAPSLOCK;
+              if (input_src->mods & LOOM_INPUT_MOD_CAPSLOCK)
+                input_src->mods &= ~LOOM_INPUT_MOD_CAPSLOCK;
               else
-                src->mods |= LOOM_INPUT_MOD_CAPSLOCK;
+                input_src->mods |= LOOM_INPUT_MOD_CAPSLOCK;
             }
 
           goto out;
@@ -69,12 +55,12 @@ loom_input_source_read (loom_input_source_t *src, loom_input_event_t *evt)
         goto out;
 
       if (evt->press)
-        src->mods |= mask;
+        input_src->mods |= mask;
       else
-        src->mods &= ~mask;
+        input_src->mods &= ~mask;
 
     out:
-      evt->mods = src->mods;
+      evt->mods = input_src->mods;
 
       return 1;
     }
@@ -85,10 +71,12 @@ loom_input_source_read (loom_input_source_t *src, loom_input_event_t *evt)
 int
 loom_input_sources_read (loom_input_event_t *evt)
 {
-  LOOM_LIST_ITERATE (loom_input_sources, src)
+  loom_input_source_t *input_src;
+
+  loom_list_for_each_entry (&loom_input_sources, input_src, node)
   {
     int retval;
-    if ((retval = loom_input_source_read (src, evt)))
+    if ((retval = loom_input_source_read (input_src, evt)))
       return retval;
   }
 

@@ -1,21 +1,15 @@
 #include "loom/partition.h"
+#include "loom/assert.h"
+#include "loom/list.h"
 #include "loom/math.h"
 
-loom_partition_scheme_t *loom_partition_schemes = NULL;
-loom_partition_t *loom_partitions = NULL;
+loom_list_t loom_partition_schemes = LOOM_LIST_HEAD (loom_partition_schemes);
 
 void
 loom_partition_scheme_register (loom_partition_scheme_t *partition_scheme)
 {
-  partition_scheme->next = loom_partition_schemes;
-  loom_partition_schemes = partition_scheme;
-}
-
-void
-loom_partition_register (loom_partition_t *partition)
-{
-  partition->next = loom_partitions;
-  loom_partitions = partition;
+  loom_assert (partition_scheme != NULL);
+  loom_list_prepend (&loom_partition_schemes, &partition_scheme->node);
 }
 
 loom_error_t
@@ -39,7 +33,7 @@ loom_partition_read (loom_partition_t *p, loom_usize_t offset,
     return LOOM_ERR_OVERFLOW;
 
   block += curp->start;
-  disk = curp->disk_dev;
+  disk = curp->disk;
 
   if (!disk->bpb)
     return LOOM_ERR_BAD_BLOCK_SIZE;

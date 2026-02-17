@@ -15,7 +15,7 @@ loom_panic (const char *fmt, ...)
     for (;;)
       ;
 
-  loom_console_clear ();
+  loom_consoles_clear ();
 
   loom_printf ("!!!PANIC!!!\n");
   va_start (args, fmt);

@@ -1,9 +1,10 @@
 #include "loom/console.h"
+#include "loom/assert.h"
 #include "loom/list.h"
 #include "loom/math.h"
 #include "loom/string.h"
 
-loom_console_t *loom_consoles = NULL;
+loom_list_t loom_consoles = LOOM_LIST_HEAD (loom_consoles);
 
 void
 loom_wbufs_prepend (loom_usize_t cap, loom_write_buffer_t wbufs[],
@@ -75,25 +76,38 @@ loom_wbufs_char_len (loom_write_buffer_t wbufs[])
 void
 loom_console_register (loom_console_t *console)
 {
+  loom_assert (console != NULL);
+  loom_assert (console->set_fg != NULL);
+  loom_assert (console->set_bg != NULL);
+  loom_assert (console->clear != NULL);
+
   console->set_fg (console, LOOM_CONSOLE_DEFAULT_FG);
   console->set_bg (console, LOOM_CONSOLE_DEFAULT_BG);
   console->clear (console);
 
-  console->next = loom_consoles;
-  loom_consoles = console;
+  loom_list_prepend (&loom_consoles, &console->node);
 }
 
 void
-loom_console_clear (void)
+loom_consoles_clear (void)
 {
-  LOOM_LIST_ITERATE (loom_consoles, console) { console->clear (console); }
-}
+  loom_console_t *console;
 
-void
-loom_console_write (loom_usize_t len, const char *buf)
-{
-  LOOM_LIST_ITERATE (loom_consoles, console)
+  loom_list_for_each_entry (&loom_consoles, console, node)
   {
+    loom_assert (console->clear != NULL);
+    console->clear (console);
+  }
+}
+
+void
+loom_consoles_write (loom_usize_t len, const char *buf)
+{
+  loom_console_t *console;
+
+  loom_list_for_each_entry (&loom_consoles, console, node)
+  {
+    loom_assert (console->write_all != NULL);
     console->write_all (console, (loom_write_buffer_t[]) {
                                      { .len = len, .splats = 1, .s = buf },
                                      { 0 },
@@ -102,12 +116,15 @@ loom_console_write (loom_usize_t len, const char *buf)
 }
 
 void
-loom_console_write_str (const char *s)
+loom_consoles_write_str (const char *s)
 {
   loom_usize_t len = loom_strlen (s);
 
-  LOOM_LIST_ITERATE (loom_consoles, console)
+  loom_console_t *console;
+
+  loom_list_for_each_entry (&loom_consoles, console, node)
   {
+    loom_assert (console->write_all != NULL);
     console->write_all (console, (loom_write_buffer_t[]) {
                                      { .len = len, .splats = 1, .s = s },
                                      { 0 },
@@ -116,10 +133,13 @@ loom_console_write_str (const char *s)
 }
 
 void
-loom_console_write_all (loom_write_buffer_t wbufs[])
+loom_consoles_write_all (loom_write_buffer_t wbufs[])
 {
-  LOOM_LIST_ITERATE (loom_consoles, console)
+  loom_console_t *console;
+
+  loom_list_for_each_entry (&loom_consoles, console, node)
   {
+    loom_assert (console->write_all != NULL);
     console->write_all (console, wbufs);
   }
 }

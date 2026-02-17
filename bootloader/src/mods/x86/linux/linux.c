@@ -3,6 +3,7 @@
 #include "loom/endian.h"
 #include "loom/error.h"
 #include "loom/kernel_loader.h"
+#include "loom/list.h"
 #include "loom/mm.h"
 #include "loom/module.h"
 #include "loom/string.h"
@@ -124,13 +125,13 @@ linux_task (LOOM_UNUSED loom_command_t *cmd, LOOM_UNUSED loom_usize_t argc,
   if (!kbuf)
     return -1;
 
-  disk = loom_disks;
-
-  if (!disk)
+  if (loom_list_is_empty (&loom_disks))
     {
-      loom_error (LOOM_ERR_IO, "no disk found");
+      loom_error (LOOM_ERR_IO, "no disks found");
       goto out;
     }
+
+  disk = loom_container_of (loom_disks.next, loom_disk_t, node);
 
   if (loom_disk_read (disk, offset, kernel_size, kbuf))
     goto out;

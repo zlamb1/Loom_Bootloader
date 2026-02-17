@@ -688,7 +688,7 @@ loom_snprintf (char *s, loom_usize_t n, const char *fmt, ...)
 static void
 console_write_all (loom_write_buffer_t wbufs[], LOOM_UNUSED void *data)
 {
-  loom_console_write_all (wbufs);
+  loom_consoles_write_all (wbufs);
 }
 
 loom_usize_t

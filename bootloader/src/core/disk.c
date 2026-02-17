@@ -1,16 +1,17 @@
 #include "loom/disk.h"
+#include "loom/assert.h"
+#include "loom/list.h"
 #include "loom/math.h"
 #include "loom/mm.h"
-#include "loom/partition.h"
 #include "loom/string.h"
 
-loom_disk_t *loom_disks = NULL;
+loom_list_t loom_disks = LOOM_LIST_HEAD (loom_disks);
 
 void
 loom_disk_register (loom_disk_t *disk)
 {
-  disk->next = loom_disks;
-  loom_disks = disk;
+  loom_assert (disk != NULL);
+  loom_list_prepend (&loom_disks, &disk->node);
 }
 
 loom_error_t
