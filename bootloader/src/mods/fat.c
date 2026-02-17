@@ -57,7 +57,7 @@ typedef struct
   char res1[480];
 #define FAT_FSINFO_SIG2 0x61417272
   loom_uint32_t sig2;
-  loom_uint32_t clusters_hint;
+  loom_uint32_t free_count_hint;
   loom_uint32_t free_cluster_hint;
   char res2[12];
 #define FAT_FSINFO_SIG3 0xAA550000
@@ -67,22 +67,25 @@ typedef struct
 typedef struct
 {
   char filename[11];
-#define FAT_FILE_ATTRIB_RDONLY    0x1
-#define FAT_FILE_ATTRIB_HIDDEN    0x2
-#define FAT_FILE_ATTRIB_SYSTEM    0x4
-#define FAT_FILE_ATTRIB_VOLUME_ID 0x8
-#define FAT_FILE_ATTRIB_DIR       0x10
-#define FAT_FILE_ATTRIB_ARCHIVE   0x20
+#define FAT_FILE_ATTR_READ_ONLY 0x1
+#define FAT_FILE_ATTR_HIDDEN    0x2
+#define FAT_FILE_ATTR_SYSTEM    0x4
+#define FAT_FILE_ATTR_VOLUME_ID 0x8
+#define FAT_FILE_ATTR_DIR       0x10
+#define FAT_FILE_ATTR_ARCHIVE   0x20
+#define FAT_FILE_ATTR_LFN                                                     \
+  (FAT_FILE_ATTR_READ_ONLY | FAT_FILE_ATTR_HIDDEN | FAT_FILE_ATTR_SYSTEM      \
+   | FAT_FILE_ATTR_VOLUME_ID)
   loom_uint8_t attribs;
   char res1;
   loom_uint8_t ctime_subsec;
-#define FAT_FILE_TIME_HOUR(X) ((X) & 0b11111)
-#define FAT_FILE_TIME_MIN(X)  ((X) & 0b11111100000)
-#define FAT_FILE_TIME_SEC(X)  (((X) & 0b1111100000000000) * 2)
+#define FAT_FILE_TIME_SEC(X)  (((X) & 0b11111) * 2)
+#define FAT_FILE_TIME_MIN(X)  (((X) & 0b11111100000) >> 5)
+#define FAT_FILE_TIME_HOUR(X) (((X) & 0b1111100000000000) >> 11)
   loom_uint16_t ctime;
-#define FAT_FILE_DATE_YEAR(X)  ((X) & 0b1111111)
-#define FAT_FILE_DATE_MONTH(X) ((X) & 0b11110000000)
-#define FAT_FILE_DATE_DAY(X)   ((X) & 0b1111100000000000)
+#define FAT_FILE_DATE_DAY(X)   ((X) & 0b11111)
+#define FAT_FILE_DATE_MONTH(X) (((X) & 0b111100000) >> 5)
+#define FAT_FILE_DATE_YEAR(X)  ((((X) & 0b1111111000000000) >> 9) + 1980)
   loom_uint16_t cdate;
   loom_uint16_t adate;
   loom_uint16_t cluster_hi;
