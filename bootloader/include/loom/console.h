@@ -51,8 +51,7 @@ typedef struct loom_console_t
   void *data;
   loom_console_color_t save;
 
-#define LOOM_CONSOLE_T_NODE_NAME node
-  loom_list_t LOOM_CONSOLE_T_NODE_NAME;
+  loom_list_t node;
 } loom_console_t;
 
 extern loom_list_t loom_consoles;

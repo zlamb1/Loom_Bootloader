@@ -38,7 +38,13 @@ static int
 lsmod_task (LOOM_UNUSED loom_command_t *cmd, LOOM_UNUSED loom_usize_t argc,
             LOOM_UNUSED char *argv[])
 {
-  LOOM_LIST_ITERATE (loom_modules, mod) { loom_printf ("%s\n", mod->name); }
+  loom_module_t *module;
+
+  loom_list_for_each_entry (&loom_modules, module, node)
+  {
+    loom_printf ("%s\n", module->name);
+  }
+
   return 0;
 }
 
@@ -134,7 +140,7 @@ fg_task (LOOM_UNUSED loom_command_t *cmd, loom_usize_t argc, char *argv[])
       return -1;
     }
 
-  loom_list_for_each_entry (&loom_consoles, console, LOOM_CONSOLE_T_NODE_NAME)
+  loom_list_for_each_entry (&loom_consoles, console, node)
   {
     loom_assert (console->set_fg != NULL);
     console->set_fg (console, color);
@@ -155,7 +161,7 @@ bg_task (LOOM_UNUSED loom_command_t *cmd, loom_usize_t argc, char *argv[])
       return -1;
     }
 
-  loom_list_for_each_entry (&loom_consoles, console, LOOM_CONSOLE_T_NODE_NAME)
+  loom_list_for_each_entry (&loom_consoles, console, node)
   {
     loom_assert (console->set_bg != NULL);
     console->set_bg (console, color);

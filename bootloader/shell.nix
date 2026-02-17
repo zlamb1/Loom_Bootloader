@@ -6,6 +6,7 @@ pkgs.mkShell {
     nativeBuildInputs = with pkgs.buildPackages; [
         cmake
         nasm
+        gdb
         cross.buildPackages.binutils
         cross.buildPackages.gcc
     ];

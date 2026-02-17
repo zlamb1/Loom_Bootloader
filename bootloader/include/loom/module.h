@@ -2,8 +2,7 @@
 #define LOOM_MODULE_H 1
 
 #include "loom/compiler.h"
-#include "loom/crypto/crypto.h"
-#include "loom/crypto/sha1.h"
+#include "loom/list.h"
 #include "loom/types.h"
 
 #ifdef LOOM_MODULE
@@ -41,19 +40,16 @@ typedef void (*loom_module_deinit_t) (void);
 typedef struct loom_module_t
 {
   const char *name;
-#ifdef LOOM_DEBUG
-  loom_digest_t hash[LOOM_SHA1_DIGEST_SIZE];
-#endif
   loom_module_init_t init;
   loom_module_deinit_t deinit;
   loom_module_section_t *sections;
-  struct loom_module_t *prev, *next;
+  loom_list_t node;
 } loom_module_t;
 
 extern loom_address_t LOOM_EXPORT_VAR (loom_modbase);
 extern loom_address_t LOOM_EXPORT_VAR (loom_modend);
 
-extern loom_module_t *LOOM_EXPORT_VAR (loom_modules);
+extern loom_list_t LOOM_EXPORT_VAR (loom_modules);
 
 loom_address_t loom_modend_get (void);
 void loom_core_modules_load (void);

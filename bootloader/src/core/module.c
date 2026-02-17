@@ -43,7 +43,7 @@ typedef struct
   symtab_t *symtab;
 } rel_iterate_context_t;
 
-loom_module_t *loom_modules;
+loom_list_t loom_modules = LOOM_LIST_HEAD (loom_modules);
 
 static int
 section_iterate (loom_usize_t shidx, loom_elf32_shdr_t *shdr, void *data)
@@ -277,10 +277,6 @@ loom_module_load (void *p, loom_usize_t size)
 
   mod->sections = NULL;
 
-#ifdef LOOM_DEBUG
-  loom_sha1_hash (size, p, mod->hash);
-#endif
-
   {
     symtab.shidx = LOOM_SHN_UNDEF;
 
@@ -427,9 +423,6 @@ loom_module_load (void *p, loom_usize_t size)
   else
     mod->deinit = NULL;
 
-  mod->prev = NULL;
-  mod->next = NULL;
-
   loom_free (sections);
 
   loom_module_add (mod);
@@ -438,8 +431,10 @@ loom_module_load (void *p, loom_usize_t size)
 
 error:
   loom_free (sections);
+
   if (mod)
     loom_module_unload (mod);
+
   return -1;
 }
 
@@ -514,13 +509,7 @@ loom_core_modules_load (void)
 void
 loom_module_add (loom_module_t *module)
 {
-  module->prev = NULL;
-  module->next = loom_modules;
-
-  if (loom_modules)
-    loom_modules->prev = module;
-
-  loom_modules = module;
+  loom_list_prepend (&loom_modules, &module->node);
 
   if (module->init)
     module->init ();
@@ -529,23 +518,18 @@ loom_module_add (loom_module_t *module)
 loom_bool_t
 loom_module_remove (const char *name)
 {
-  LOOM_LIST_ITERATE (loom_modules, module)
+  loom_module_t *module;
+
+  loom_list_for_each_entry (&loom_modules, module, node)
   {
     if (!loom_strcmp (name, module->name))
       {
         if (module->deinit)
           module->deinit ();
 
-        if (module->prev)
-          module->prev->next = module->next;
-
-        if (module->next)
-          module->next->prev = module->prev;
-
-        if (module == loom_modules)
-          loom_modules = module->next;
-
+        loom_list_remove (&module->node);
         loom_module_unload (module);
+
         return 1;
       }
   }
