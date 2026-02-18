@@ -21,15 +21,19 @@ loom_input_source_unregister (loom_input_source_t *input_src)
 }
 
 int
-loom_input_source_read (loom_input_source_t *input_src,
+loom_input_source_poll (loom_input_source_t *input_src,
                         loom_input_event_t *evt)
 {
-  if (!input_src)
-    return 0;
+  loom_assert (input_src != NULL);
+  loom_assert (input_src->poll != NULL);
+  loom_assert (evt != NULL);
 
-  if (input_src->read (input_src, evt))
+  if (input_src->poll (input_src, evt))
     {
       int mask;
+
+      if (evt->mods & LOOM_INPUT_MOD_PASSTHROUGH)
+        goto out;
 
       if (evt->keycode == LOOM_KEY_LEFTSHIFT)
         mask = LOOM_INPUT_MOD_LEFTSHIFT;
@@ -60,7 +64,7 @@ loom_input_source_read (loom_input_source_t *input_src,
         input_src->mods &= ~mask;
 
     out:
-      evt->mods = input_src->mods;
+      evt->mods |= input_src->mods;
 
       return 1;
     }
@@ -69,14 +73,14 @@ loom_input_source_read (loom_input_source_t *input_src,
 }
 
 int
-loom_input_sources_read (loom_input_event_t *evt)
+loom_input_sources_poll (loom_input_event_t *evt)
 {
   loom_input_source_t *input_src;
 
   loom_list_for_each_entry (&loom_input_sources, input_src, node)
   {
     int retval;
-    if ((retval = loom_input_source_read (input_src, evt)))
+    if ((retval = loom_input_source_poll (input_src, evt)))
       return retval;
   }
 

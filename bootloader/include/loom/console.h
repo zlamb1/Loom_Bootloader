@@ -63,6 +63,7 @@ void loom_wbufs_append (loom_usize_t cap, loom_write_buffer_t wbufs[],
 loom_usize_t loom_wbufs_char_len (loom_write_buffer_t wbufs[]);
 
 void LOOM_EXPORT (loom_console_register) (loom_console_t *console);
+void LOOM_EXPORT (loom_console_unregister) (loom_console_t *console);
 
 void LOOM_EXPORT (loom_consoles_clear) (void);
 void loom_consoles_write (loom_usize_t len, const char *buf);

@@ -226,7 +226,7 @@ loom_shell_exec (void)
     {
       loom_input_event_t evt;
 
-      if (loom_input_sources_read (&evt))
+      if (loom_input_sources_poll (&evt))
         {
           if (!evt.press)
             continue;

@@ -89,6 +89,13 @@ loom_console_register (loom_console_t *console)
 }
 
 void
+loom_console_unregister (loom_console_t *console)
+{
+  loom_assert (console != NULL);
+  loom_list_remove (&console->node);
+}
+
+void
 loom_consoles_clear (void)
 {
   loom_console_t *console;

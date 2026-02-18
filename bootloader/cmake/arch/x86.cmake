@@ -43,3 +43,4 @@ list(
 
 create_module(linux ${LOOM_MOD_ARCH_SRC_DIR}/linux/boot.asm ${LOOM_MOD_ARCH_SRC_DIR}/linux/linux.c)
 create_module(ps2 ${LOOM_MOD_ARCH_SRC_DIR}/ps2.c)
+create_module(serial ${LOOM_MOD_ARCH_SRC_DIR}/serial.c)

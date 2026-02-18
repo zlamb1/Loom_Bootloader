@@ -86,8 +86,7 @@ static int sc1_e0_to_kc[128] = {
 static loom_ps2_keyboard_t kb = { 0 };
 
 static void
-loom_kb_isr (LOOM_UNUSED loom_uint32_t intno,
-             LOOM_UNUSED loom_uint32_t error_code)
+ps2_isr (LOOM_UNUSED loom_uint32_t intno, LOOM_UNUSED loom_uint32_t error_code)
 {
   if (kb.buf)
     {
@@ -108,7 +107,7 @@ done:
 }
 
 static int
-loom_ps2_read (loom_input_source_t *src, loom_input_event_t *evt)
+ps2_poll (loom_input_source_t *src, loom_input_event_t *evt)
 {
   loom_ps2_keyboard_t *ps2 = (loom_ps2_keyboard_t *) src->data;
   loom_usize_t head, tail;
@@ -171,13 +170,14 @@ done:
 
   evt->press = press;
   evt->keycode = keycode;
+  evt->mods = 0;
 
   return 1;
 }
 
 LOOM_MOD_INIT ()
 {
-  kb.interface.read = loom_ps2_read;
+  kb.interface.poll = ps2_poll;
   kb.interface.data = &kb;
 
   kb.head = 0;
@@ -189,7 +189,7 @@ LOOM_MOD_INIT ()
 
   loom_input_source_register (&kb.interface);
 
-  loom_pic_register_isr (1, loom_kb_isr);
+  loom_pic_register_isr (1, ps2_isr);
   loom_pic_unmask (1);
 }
 
