@@ -31,7 +31,7 @@ function(create_module NAME)
         COMMAND_EXPAND_LISTS
         COMMAND ${CMAKE_C_COMPILER} ${FLAGS} ${LOOM_LINK_FLAGS} -r $<TARGET_OBJECTS:${MODULE_OBJS}> -o ${MODULE_LIB}
         COMMAND ${CMAKE_OBJCOPY} --strip-unneeded ${MODULE_LIB} ${MODULE_BIN}
-        DEPENDS ${MODULE_OBJS}
+        DEPENDS $<TARGET_OBJECTS:${MODULE_OBJS}>
         VERBATIM
     )
 
