@@ -33,10 +33,8 @@ typedef struct
   unsigned int base;
 } format_t;
 
-typedef void (*write_all) (loom_write_buffer_t wbufs[], void *data);
-
 static void
-write (write_all write_fn, void *data, loom_usize_t len, const char *buf)
+write (loom_write_fn write_fn, void *data, loom_usize_t len, const char *buf)
 {
   write_fn (
       (loom_write_buffer_t[]) {
@@ -47,7 +45,7 @@ write (write_all write_fn, void *data, loom_usize_t len, const char *buf)
 }
 
 static void
-flush (write_all write_fn, void *data, const char *fmt, loom_usize_t *run,
+flush (loom_write_fn write_fn, void *data, const char *fmt, loom_usize_t *run,
        loom_usize_t *len)
 {
   loom_usize_t tmprun = *run;
@@ -470,7 +468,7 @@ pad:
 }
 
 static const char *
-print (write_all write_fn, void *data, const char *fmt, loom_usize_t *len,
+print (loom_write_fn write_fn, void *data, const char *fmt, loom_usize_t *len,
        va_list *args, unsigned int flags, unsigned int width, precision_t prec,
        unsigned int length)
 {
@@ -563,7 +561,8 @@ done:
 }
 
 loom_usize_t
-loom_bvprintf (write_all write_fn, void *data, const char *fmt, va_list args)
+loom_bvprintf (loom_write_fn write_fn, void *data, const char *fmt,
+               va_list args)
 {
   loom_usize_t len = 0, run = 0;
   char ch;

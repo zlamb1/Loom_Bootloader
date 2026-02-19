@@ -83,30 +83,32 @@ mmap_task (LOOM_UNUSED loom_command_t *cmd, LOOM_UNUSED loom_usize_t argc,
 }
 
 static loom_bool_t
-parse_console_color (char *arg, loom_console_color_t *color)
+parse_console_color (loom_usize_t argc, char *argv[],
+                     loom_console_color_t *color)
 {
   int c;
+  char *color_arg;
+  loom_bool_t bright = 0;
 
   static color_map_t color_map[] = {
     { "black", LOOM_CONSOLE_COLOR_BLACK },
-    { "blue", LOOM_CONSOLE_COLOR_BLUE },
-    { "green", LOOM_CONSOLE_COLOR_GREEN },
-    { "cyan", LOOM_CONSOLE_COLOR_CYAN },
     { "red", LOOM_CONSOLE_COLOR_RED },
-    { "purple", LOOM_CONSOLE_COLOR_PURPLE },
-    { "brown", LOOM_CONSOLE_COLOR_BROWN },
-    { "light gray", LOOM_CONSOLE_COLOR_LIGHT_GRAY },
-    { "dark gray", LOOM_CONSOLE_COLOR_DARK_GRAY },
-    { "light blue", LOOM_CONSOLE_COLOR_LIGHT_BLUE },
-    { "light green", LOOM_CONSOLE_COLOR_LIGHT_GREEN },
-    { "light cyan", LOOM_CONSOLE_COLOR_LIGHT_CYAN },
-    { "light red", LOOM_CONSOLE_COLOR_LIGHT_RED },
-    { "light purple", LOOM_CONSOLE_COLOR_LIGHT_PURPLE },
+    { "green", LOOM_CONSOLE_COLOR_GREEN },
     { "yellow", LOOM_CONSOLE_COLOR_YELLOW },
+    { "blue", LOOM_CONSOLE_COLOR_BLUE },
+    { "magenta", LOOM_CONSOLE_COLOR_MAGENTA },
+    { "purple", LOOM_CONSOLE_COLOR_MAGENTA },
+    { "cyan", LOOM_CONSOLE_COLOR_CYAN },
     { "white", LOOM_CONSOLE_COLOR_WHITE },
+    { "gray", LOOM_CONSOLE_COLOR_WHITE },
   };
 
-  if (loom_strtoi (arg, &c) == LOOM_ERR_NONE)
+  if (argc < 2)
+    return 0;
+
+  color_arg = argv[1];
+
+  if (loom_strtoi (color_arg, &c) == LOOM_ERR_NONE)
     {
       if (c < 0 || c > LOOM_CONSOLE_COLOR_MAX)
         return 0;
@@ -114,13 +116,24 @@ parse_console_color (char *arg, loom_console_color_t *color)
       return 1;
     }
 
-  loom_strlower (arg);
+  loom_strlower (color_arg);
+
+  if (!loom_strcmp (color_arg, "bright") || !loom_strcmp (color_arg, "light"))
+    {
+      if (argc < 3)
+        return 0;
+
+      bright = 1;
+      color_arg = argv[2];
+      loom_strlower (color_arg);
+    }
 
   for (unsigned int i = 0; i < sizeof (color_map) / sizeof (*color_map); ++i)
     {
-      if (!loom_strcmp (arg, color_map[i].key))
+      if (!loom_strcmp (color_arg, color_map[i].key))
         {
-          *color = color_map[i].color;
+          *color = bright ? LOOM_CONSOLE_COLOR_BRIGHT (color_map[i].color)
+                          : color_map[i].color;
           return 1;
         }
     }
@@ -134,7 +147,7 @@ fg_task (LOOM_UNUSED loom_command_t *cmd, loom_usize_t argc, char *argv[])
   loom_console_t *console;
   loom_console_color_t color = LOOM_CONSOLE_DEFAULT_FG;
 
-  if (argc > 1 && !parse_console_color (argv[1], &color))
+  if (argc > 1 && !parse_console_color (argc, argv, &color))
     {
       loom_error (LOOM_ERR_BAD_ARG, "bad color '%s'", argv[1]);
       return -1;
@@ -155,7 +168,7 @@ bg_task (LOOM_UNUSED loom_command_t *cmd, loom_usize_t argc, char *argv[])
   loom_console_t *console;
   loom_console_color_t color = LOOM_CONSOLE_DEFAULT_BG;
 
-  if (argc > 1 && !parse_console_color (argv[1], &color))
+  if (argc > 1 && !parse_console_color (argc, argv, &color))
     {
       loom_error (LOOM_ERR_BAD_ARG, "bad color '%s'", argv[1]);
       return -1;
