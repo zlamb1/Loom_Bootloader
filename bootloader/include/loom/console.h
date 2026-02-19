@@ -17,7 +17,8 @@
 #define LOOM_CONSOLE_COLOR_MAX       0xF
 #define LOOM_CONSOLE_COLOR_BRIGHT(X) (X + 8)
 
-#define LOOM_CONSOLE_DEFAULT_FG LOOM_CONSOLE_COLOR_WHITE
+#define LOOM_CONSOLE_DEFAULT_FG                                               \
+  LOOM_CONSOLE_COLOR_BRIGHT (LOOM_CONSOLE_COLOR_WHITE)
 #define LOOM_CONSOLE_DEFAULT_BG LOOM_CONSOLE_COLOR_BLACK
 
 typedef loom_uint8_t loom_console_color_t;

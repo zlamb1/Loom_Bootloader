@@ -20,6 +20,31 @@ typedef struct
   loom_console_t interface;
 } loom_vga_console;
 
+static loom_uint8_t console_color_vga_map[8] = {
+  [LOOM_CONSOLE_COLOR_BLACK] = 0x0,  [LOOM_CONSOLE_COLOR_BLUE] = 0x1,
+  [LOOM_CONSOLE_COLOR_GREEN] = 0x2,  [LOOM_CONSOLE_COLOR_CYAN] = 0x3,
+  [LOOM_CONSOLE_COLOR_RED] = 0x4,    [LOOM_CONSOLE_COLOR_MAGENTA] = 0x5,
+  [LOOM_CONSOLE_COLOR_YELLOW] = 0x6, [LOOM_CONSOLE_COLOR_WHITE] = 0x7,
+};
+
+static inline loom_uint16_t
+loom_vga_convert_attribs (loom_uint16_t attribs)
+{
+  loom_uint8_t fg = (loom_uint8_t) attribs;
+  loom_uint8_t bg = (loom_uint8_t) (attribs >> 8);
+
+  if (fg > 0xF)
+    fg = 0;
+
+  if (bg > 0xF)
+    bg = 0;
+
+  fg = fg > 7 ? console_color_vga_map[fg & 7] | 8 : console_color_vga_map[fg];
+  bg = bg > 7 ? console_color_vga_map[bg & 7] | 8 : console_color_vga_map[bg];
+
+  return (loom_uint16_t) (fg | (bg << 4));
+}
+
 static void
 loom_vga_sync_cursor (loom_usize_t x, loom_usize_t y)
 {
@@ -111,7 +136,8 @@ loom_vga_clear (loom_console_t *con)
 {
   loom_vga_console *vga_con = (loom_vga_console *) con->data;
   loom_uint16_t char_and_attribs
-      = (loom_uint16_t) ' ' | ((loom_uint16_t) (vga_con->attribs << 8));
+      = (loom_uint16_t) ' '
+        | (loom_uint16_t) (loom_vga_convert_attribs (vga_con->attribs) << 8);
 
   for (loom_usize_t i = 0; i < ROWS * COLS; ++i)
     VMEM[i] = char_and_attribs;
@@ -172,7 +198,8 @@ loom_vga_write_all (struct loom_console_t *con, loom_write_buffer_t wbufs[])
 {
   loom_vga_console *vga_con = (loom_vga_console *) con->data;
   loom_usize_t index = vga_con->y * COLS + vga_con->x;
-  loom_uint16_t attribs = (loom_uint16_t) (vga_con->attribs << 8);
+  loom_uint16_t attribs
+      = (loom_uint16_t) (loom_vga_convert_attribs (vga_con->attribs) << 8);
   loom_write_buffer_t wbuf;
 
   if (vga_con->x >= COLS || vga_con->y >= ROWS)
