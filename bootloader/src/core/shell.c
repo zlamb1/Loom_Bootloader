@@ -19,7 +19,7 @@ typedef struct
 static void
 shell_print_prompt (void)
 {
-  loom_consoles_set_fg (LOOM_CONSOLE_COLOR_LIGHT_CYAN);
+  loom_consoles_set_fg (LOOM_CONSOLE_COLOR_BRIGHT (LOOM_CONSOLE_COLOR_CYAN));
   loom_printf (PROMPT);
   loom_consoles_set_fg (LOOM_CONSOLE_DEFAULT_FG);
 }
@@ -100,7 +100,8 @@ shell_exec_command (shell_t *shell)
         {
           loom_printf ("%s: ", argv[0]);
           loom_consoles_save_fg ();
-          loom_consoles_set_fg (LOOM_CONSOLE_COLOR_LIGHT_RED);
+          loom_consoles_set_fg (
+              LOOM_CONSOLE_COLOR_BRIGHT (LOOM_CONSOLE_COLOR_RED));
           loom_printf ("error: ");
           loom_consoles_restore_fg ();
           loom_printf ("%s\n", loom_error_get ());

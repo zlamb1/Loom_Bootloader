@@ -4,8 +4,13 @@
 #include <stdarg.h>
 
 #include "loom/compiler.h"
+#include "loom/console.h"
 #include "loom/types.h"
 
+typedef void (*loom_write_fn) (loom_write_buffer_t wbufs[], void *data);
+
+loom_usize_t LOOM_EXPORT (loom_bvprintf) (loom_write_fn write_fn, void *data,
+                                          const char *fmt, va_list args);
 loom_usize_t LOOM_EXPORT (loom_vsnprintf) (char *s, loom_usize_t n,
                                            const char *fmt, va_list args);
 loom_usize_t LOOM_PRINTF (3, 4)

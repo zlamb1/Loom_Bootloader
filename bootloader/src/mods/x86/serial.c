@@ -1,11 +1,14 @@
 #include "loom/arch/i686/io.h"
 #include "loom/arch/i686/pic.h"
 #include "loom/console.h"
+#include "loom/error.h"
 #include "loom/input.h"
 #include "loom/keycode.h"
 #include "loom/mm.h"
 #include "loom/module.h"
+#include "loom/print.h"
 #include "loom/types.h"
+#include <stdarg.h>
 
 #define COM1 0x3F8
 #define COM2 0x2F8
@@ -73,6 +76,26 @@ serial_irq_4 ()
   loom_pic_eoi (4);
 }
 
+static void serial_write_all (loom_console_t *console,
+                              loom_write_buffer_t wbufs[]);
+
+static void
+serial_write_fn (loom_write_buffer_t wbufs[], void *data)
+{
+  serial_write_all (data, wbufs);
+}
+
+static loom_usize_t LOOM_PRINTF (2, 3)
+    serial_printf (serial_console_t *console, const char *fmt, ...)
+{
+  loom_usize_t retval;
+  va_list args;
+  va_start (args, fmt);
+  retval = loom_bvprintf (serial_write_fn, &console->interface, fmt, args);
+  va_end (args);
+  return retval;
+}
+
 static loom_usize_t
 serial_get_x (loom_console_t *console)
 {
@@ -120,28 +143,41 @@ serial_set_y (loom_console_t *console, loom_usize_t y)
 static loom_error_t
 serial_set_fg (loom_console_t *console, loom_uint8_t fg)
 {
-  (void) console;
-  (void) fg;
+  loom_assert (console != NULL);
+  loom_assert (console->data != NULL);
+
+  if (fg > 0xF)
+    return LOOM_ERR_BAD_ARG;
+
+  serial_printf (console->data, "\033[%um", fg > 0x7 ? fg + 82 : fg + 30);
+
   return LOOM_ERR_NONE;
 }
 
 static loom_error_t
 serial_set_bg (loom_console_t *console, loom_uint8_t bg)
 {
-  (void) console;
-  (void) bg;
+  loom_assert (console != NULL);
+  loom_assert (console->data != NULL);
+
+  if (bg > 0xF)
+    return LOOM_ERR_BAD_ARG;
+
+  serial_printf (console->data, "\033[%um", bg > 0x7 ? bg + 92 : bg + 40);
+
   return LOOM_ERR_NONE;
 }
 
 static void
 serial_clear (loom_console_t *console)
 {
-  (void) console;
-  // NO-OP.
+  serial_console_t *serial_console = console->data;
+  serial_console->x = serial_console->y = 0;
+  serial_printf (serial_console, "\033[2J\033[1;1H");
 }
 
 static void
-serial_write (loom_uint16_t port, char ch)
+serial_putchar (loom_uint16_t port, char ch)
 {
   while (!(loom_inb (port + SERIAL_LINE_STATUS_PORT) & 0x20))
     ;
@@ -160,7 +196,7 @@ serial_write_all (loom_console_t *console, loom_write_buffer_t wbufs[])
       wbuf = wbufs[i];
       for (loom_usize_t j = 0; j < wbuf.splats; ++j)
         for (loom_usize_t k = 0; k < wbuf.len; ++k)
-          serial_write (port, wbuf.s[k]);
+          serial_putchar (port, wbuf.s[k]);
     }
 }
 
