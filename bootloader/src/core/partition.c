@@ -1,16 +1,6 @@
 #include "loom/partition.h"
 #include "loom/assert.h"
-#include "loom/list.h"
 #include "loom/math.h"
-
-loom_list_t loom_partition_schemes = LOOM_LIST_HEAD (loom_partition_schemes);
-
-void
-loom_partition_scheme_register (loom_partition_scheme_t *partition_scheme)
-{
-  loom_assert (partition_scheme != NULL);
-  loom_list_prepend (&loom_partition_schemes, &partition_scheme->node);
-}
 
 loom_error_t
 loom_partition_read (loom_partition_t *p, loom_usize_t offset,
@@ -20,6 +10,8 @@ loom_partition_read (loom_partition_t *p, loom_usize_t offset,
   loom_partition_t *curp = p;
 
   loom_usize_t block = 0, block_count, start;
+
+  loom_assert (p != NULL);
 
   while (!curp->root)
     {

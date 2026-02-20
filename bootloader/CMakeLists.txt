@@ -73,6 +73,7 @@ set(
     ${LOOM_CORE_HDR_DIR}/mm.h
     ${LOOM_CORE_HDR_DIR}/mmap.h
     ${LOOM_CORE_HDR_DIR}/module.h
+    ${LOOM_CORE_HDR_DIR}/partition_scheme.h
     ${LOOM_CORE_HDR_DIR}/partition.h
     ${LOOM_CORE_HDR_DIR}/print.h
     ${LOOM_CORE_HDR_DIR}/shell.h
@@ -102,6 +103,7 @@ set(
     ${LOOM_CORE_SRC_DIR}/mmap.c
     ${LOOM_CORE_SRC_DIR}/module.c
     ${LOOM_CORE_SRC_DIR}/panic.c
+    ${LOOM_CORE_SRC_DIR}/partition_scheme.c
     ${LOOM_CORE_SRC_DIR}/partition.c
     ${LOOM_CORE_SRC_DIR}/print.c
     ${LOOM_CORE_SRC_DIR}/shell.c
