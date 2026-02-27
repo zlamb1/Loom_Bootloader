@@ -1,5 +1,5 @@
-#include "loom/arch/i686/io.h"
 #include "loom/console.h"
+#include "loom/platform/x86/io.h"
 
 #define ROWS 25
 #define COLS 80

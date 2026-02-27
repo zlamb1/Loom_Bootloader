@@ -1,8 +1,8 @@
-#include "loom/arch.h"
-#include "loom/arch/i686/bios.h"
-#include "loom/arch/i686/idt.h"
-#include "loom/arch/i686/pic.h"
+#include "loom/platform.h"
 #include "loom/mm.h"
+#include "loom/platform/x86/bios/bios.h"
+#include "loom/platform/x86/idt.h"
+#include "loom/platform/x86/pic.h"
 
 typedef struct
 {
@@ -33,22 +33,22 @@ mmap_mm_hook (loom_uint64_t address, loom_uint64_t length,
 }
 
 void
-loom_arch_init (void)
+loom_platform_init (void)
 {
   // Note: Save BIOS PIC mask state before any BIOS interrupt calls.
   loom_pic_bios_save_masks ();
   loom_vga_con_register ();
-  loom_arch_mmap_iterate (mmap_mm_hook, NULL);
+  loom_platform_mmap_iterate (mmap_mm_hook, NULL);
   loom_bios_disk_probe ();
   loom_pic_remap (0x20, 0x28);
   loom_pic_disable ();
   loom_idt_init ();
   loom_idtr_load ();
-  loom_arch_sti ();
+  loom_sti ();
 }
 
 void
-loom_arch_mmap_iterate (mmap_hook hook, void *data)
+loom_platform_mmap_iterate (mmap_hook hook, void *data)
 {
   loom_bios_args_t args = { 0 };
   volatile e820_t e820;
@@ -96,19 +96,19 @@ loom_arch_mmap_iterate (mmap_hook hook, void *data)
 }
 
 void
-loom_arch_sti (void)
+loom_sti (void)
 {
   __asm__ volatile ("sti" ::: "memory");
 }
 
 void
-loom_arch_cli (void)
+loom_cli (void)
 {
   __asm__ volatile ("cli" ::: "memory");
 }
 
 int
-loom_arch_irq_save (void)
+loom_irq_save (void)
 {
   int flags;
   __asm__ volatile ("pushf; pop %0; cli" : "=r"(flags)::"memory");
@@ -116,8 +116,8 @@ loom_arch_irq_save (void)
 }
 
 void
-loom_arch_irq_restore (int flags)
+loom_irq_restore (int flags)
 {
   if (flags & 0x200)
-    loom_arch_sti ();
+    loom_sti ();
 }

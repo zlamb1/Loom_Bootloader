@@ -55,7 +55,6 @@ set(
     ${LOOM_CORE_HDR_DIR}/commands/core.h
     ${LOOM_CORE_HDR_DIR}/crypto/crypto.h
     ${LOOM_CORE_HDR_DIR}/crypto/sha1.h
-    ${LOOM_CORE_HDR_DIR}/arch.h
     ${LOOM_CORE_HDR_DIR}/assert.h
     ${LOOM_CORE_HDR_DIR}/block_dev.h
     ${LOOM_CORE_HDR_DIR}/command.h
@@ -75,6 +74,7 @@ set(
     ${LOOM_CORE_HDR_DIR}/module.h
     ${LOOM_CORE_HDR_DIR}/partition_scheme.h
     ${LOOM_CORE_HDR_DIR}/partition.h
+    ${LOOM_CORE_HDR_DIR}/platform.h
     ${LOOM_CORE_HDR_DIR}/print.h
     ${LOOM_CORE_HDR_DIR}/shell.h
     ${LOOM_CORE_HDR_DIR}/sp.h
@@ -124,8 +124,16 @@ else()
     message(FATAL_ERROR "Architecture ${LOOM_ARCH}'s tc file must set LOOM_ENDIANNESS to either LITTLE or BIG.")
 endif()
 
+if (NOT DEFINED LOOM_PLATFORM)
+    set(LOOM_PLATFORM "bios")
+endif()
+
 if ("${LOOM_ARCH}" STREQUAL "x86")
-    include("${CMAKE_DIR}/arch/x86.cmake")
+    if ("${LOOM_PLATFORM}" STREQUAL "bios")
+        include("${CMAKE_DIR}/platform/x86-bios.cmake")
+    else()
+        message(FATAL_ERROR "Unsupported platform '${LOOM_PLATFORM}'.")
+    endif()
 else()
     message(FATAL_ERROR "Unsupported architecture.")
 endif()
