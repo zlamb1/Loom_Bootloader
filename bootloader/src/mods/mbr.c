@@ -45,7 +45,7 @@ mbr_partition_scheme_iterate (loom_partition_scheme_t *partition_scheme,
   mbr_t *mbr = loom_malloc (sizeof (mbr_t));
   loom_error_t error;
 
-  compile_assert (sizeof (mbr_t) == MBR_SIZE, "bad size for mbr_t");
+  loom_compile_assert (sizeof (mbr_t) == MBR_SIZE, "bad size for mbr_t");
 
   (void) partition_scheme;
 

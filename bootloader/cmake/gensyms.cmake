@@ -52,5 +52,5 @@ endforeach()
 file(
     APPEND
     ${OUTFILE}
-    "\tcompile_assert(${I} <= LOOM_SYMTAB_SIZE, \"Symbol table full.\");\n}"
+    "\tloom_compile_assert(${I} <= LOOM_SYMTAB_SIZE, \"Symbol table full.\");\n}"
 )

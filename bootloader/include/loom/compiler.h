@@ -1,7 +1,7 @@
 #ifndef LOOM_COMPILER_H
 #define LOOM_COMPILER_H 1
 
-#define compile_assert      _Static_assert
+#define loom_compile_assert _Static_assert
 #define loom_assume_aligned __builtin_assume_aligned
 #define loom_alignof        _Alignof
 

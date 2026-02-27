@@ -13,8 +13,8 @@
 #define PS2_STATUS 0x64
 #define PS2_CMD    0x65
 
-compile_assert ((CAP & (CAP - 1)) == 0 && CAP != 0,
-                "CAP must be a power of 2.");
+loom_compile_assert ((CAP & (CAP - 1)) == 0 && CAP != 0,
+                     "CAP must be a power of 2.");
 
 LOOM_MOD (ps2)
 

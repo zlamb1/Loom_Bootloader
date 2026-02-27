@@ -71,8 +71,8 @@ bios_disk_read (loom_block_dev_t *block_dev, loom_usize_t block,
       args.esi = (loom_address_t) &read_packet;
       args.ds = 0;
 
-      compile_assert (sizeof (bios_disk_read_t) >= 0x10,
-                      "bios_disk_read_t must be at least 16 bytes.");
+      loom_compile_assert (sizeof (bios_disk_read_t) >= 0x10,
+                           "bios_disk_read_t must be at least 16 bytes.");
       read_packet.size = 0x10;
 
       read_packet.blocks = (loom_uint16_t) read;
@@ -148,8 +148,8 @@ loom_bios_disk_probe (void)
       args.esi = (loom_address_t) &params;
       args.ds = 0;
 
-      compile_assert (sizeof (bios_disk_params_t) >= 0x1A,
-                      "bios_disk_params_t must be at least 26 bytes.");
+      loom_compile_assert (sizeof (bios_disk_params_t) >= 0x1A,
+                           "bios_disk_params_t must be at least 26 bytes.");
       params.size = 0x1A;
 
       loom_bios_int (0x13, &args);

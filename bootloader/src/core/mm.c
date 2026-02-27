@@ -48,24 +48,26 @@ typedef struct free_chunk
   struct free_chunk *prev, *next;
 } free_chunk_t;
 
-compile_assert (CHUNK_SIZE >= loom_alignof (arena_t),
-                "arena_t alignment must be less than or equal to CHUNK_SIZE.");
+loom_compile_assert (
+    CHUNK_SIZE >= loom_alignof (arena_t),
+    "arena_t alignment must be less than or equal to CHUNK_SIZE.");
 
-compile_assert (MIN_ALLOC >= sizeof (arena_t),
-                "arena_t must fit within MIN_ALLOC.");
+loom_compile_assert (MIN_ALLOC >= sizeof (arena_t),
+                     "arena_t must fit within MIN_ALLOC.");
 
-compile_assert (CHUNK_SIZE >= loom_alignof (chunk_t),
-                "chunk_t alignment must be less than or equal to CHUNK_SIZE.");
+loom_compile_assert (
+    CHUNK_SIZE >= loom_alignof (chunk_t),
+    "chunk_t alignment must be less than or equal to CHUNK_SIZE.");
 
-compile_assert (CHUNK_SIZE >= sizeof (chunk_t),
-                "chunk_t must fit within CHUNK_SIZE.");
+loom_compile_assert (CHUNK_SIZE >= sizeof (chunk_t),
+                     "chunk_t must fit within CHUNK_SIZE.");
 
-compile_assert (
+loom_compile_assert (
     CHUNK_SIZE >= loom_alignof (free_chunk_t),
     "free_chunk_t alignment must be less than or equal to CHUNK_SIZE.");
 
-compile_assert (MIN_ALLOC >= sizeof (free_chunk_t),
-                "free_chunk_t must fit within MIN_ALLOC.");
+loom_compile_assert (MIN_ALLOC >= sizeof (free_chunk_t),
+                     "free_chunk_t must fit within MIN_ALLOC.");
 
 static arena_t *arenas = NULL;
 

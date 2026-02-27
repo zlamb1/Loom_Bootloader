@@ -53,8 +53,8 @@ loom_arch_mmap_iterate (mmap_hook hook, void *data)
   loom_bios_args_t args = { 0 };
   volatile e820_t e820;
 
-  compile_assert (sizeof (e820_t) >= 20,
-                  "E820 struct must be at least 20 bytes.");
+  loom_compile_assert (sizeof (e820_t) >= 20,
+                       "E820 struct must be at least 20 bytes.");
 
   while (1)
     {
