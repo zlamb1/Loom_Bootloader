@@ -1,4 +1,4 @@
-#include "loom/arch/i686/idt.h"
+#include "loom/platform/x86/idt.h"
 
 #define SIZE 256
 

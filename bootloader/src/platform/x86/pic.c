@@ -1,8 +1,8 @@
-#include "loom/arch/i686/pic.h"
-#include "loom/arch.h"
-#include "loom/arch/i686/idt.h"
-#include "loom/arch/i686/io.h"
+#include "loom/platform/x86/pic.h"
 #include "loom/error.h"
+#include "loom/platform.h"
+#include "loom/platform/x86/idt.h"
+#include "loom/platform/x86/io.h"
 
 #define PIC_EOI 0x20
 
@@ -29,7 +29,7 @@ static loom_uint8_t masks[2] = { DEFAULT_MASK, DEFAULT_MASK }, bios_masks[2];
 static void
 pic_remap (loom_uint8_t offset1, loom_uint8_t offset2, loom_bool_t save)
 {
-  int flags = loom_arch_irq_save ();
+  int flags = loom_irq_save ();
 
   if (offset1 % 8 != 0 || offset2 % 8 != 0)
     loom_panic ("loom_pic_remap: bad offset");
@@ -53,7 +53,7 @@ pic_remap (loom_uint8_t offset1, loom_uint8_t offset2, loom_bool_t save)
       masks[1] = DEFAULT_MASK;
     }
 
-  loom_arch_irq_restore (flags);
+  loom_irq_restore (flags);
 }
 
 void
@@ -150,19 +150,19 @@ loom_pic_bios_save_masks (void)
 void
 loom_pic_bios_reset (void)
 {
-  int flags = loom_arch_irq_save ();
+  int flags = loom_irq_save ();
   pic_remap (BIOS_MASTER_OFFSET, BIOS_SLAVE_OFFSET, 0);
   loom_outb (PIC1_DATA, bios_masks[0]);
   loom_outb (PIC2_DATA, bios_masks[1]);
-  loom_arch_irq_restore (flags);
+  loom_irq_restore (flags);
 }
 
 void
 loom_pic_bios_restore (void)
 {
-  int flags = loom_arch_irq_save ();
+  int flags = loom_irq_save ();
   pic_remap (offsets[0], offsets[1], 0);
   loom_outb (PIC1_DATA, masks[0]);
   loom_outb (PIC2_DATA, masks[1]);
-  loom_arch_irq_restore (flags);
+  loom_irq_restore (flags);
 }

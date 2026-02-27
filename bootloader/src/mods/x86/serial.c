@@ -1,11 +1,11 @@
-#include "loom/arch/i686/io.h"
-#include "loom/arch/i686/pic.h"
 #include "loom/console.h"
 #include "loom/error.h"
 #include "loom/input.h"
 #include "loom/keycode.h"
 #include "loom/mm.h"
 #include "loom/module.h"
+#include "loom/platform/x86/io.h"
+#include "loom/platform/x86/pic.h"
 #include "loom/print.h"
 #include "loom/types.h"
 #include <stdarg.h>

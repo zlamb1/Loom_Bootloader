@@ -1,4 +1,4 @@
-#include "loom/arch/i686/bios.h"
+#include "loom/platform/x86/bios/bios.h"
 #include "loom/assert.h"
 #include "loom/block_dev.h"
 #include "loom/mm.h"

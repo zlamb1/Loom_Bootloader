@@ -1,5 +1,5 @@
-#include "loom/arch/i686/isr.h"
 #include "loom/error.h"
+#include "loom/platform/x86/isr.h"
 
 const char *exc_messages[31] = {
   [0] = "division error",

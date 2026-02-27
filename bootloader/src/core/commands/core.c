@@ -1,4 +1,3 @@
-#include "loom/arch.h"
 #include "loom/assert.h"
 #include "loom/command.h"
 #include "loom/console.h"
@@ -7,6 +6,7 @@
 #include "loom/math.h"
 #include "loom/mm.h"
 #include "loom/module.h"
+#include "loom/platform.h"
 #include "loom/print.h"
 #include "loom/string.h"
 
@@ -52,7 +52,7 @@ static int
 reboot_task (LOOM_UNUSED loom_command_t *cmd, LOOM_UNUSED loom_usize_t argc,
              LOOM_UNUSED char *argv[])
 {
-  loom_arch_reboot ();
+  loom_reboot ();
   return 0;
 }
 

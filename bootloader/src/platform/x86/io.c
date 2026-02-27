@@ -1,4 +1,4 @@
-#include "loom/arch/i686/io.h"
+#include "loom/platform/x86/io.h"
 
 void
 loom_outb (loom_uint16_t port, loom_uint8_t val)

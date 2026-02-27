@@ -1,7 +1,7 @@
 #include "loom/mmap.h"
-#include "loom/arch.h"
 #include "loom/error.h"
 #include "loom/mm.h"
+#include "loom/platform.h"
 
 loom_mmap_t loom_mmap;
 
@@ -32,7 +32,7 @@ void
 loom_mmap_init (void)
 {
   loom_usize_t count = 0;
-  loom_arch_mmap_iterate (mmap_count_hook, &count);
+  loom_platform_mmap_iterate (mmap_count_hook, &count);
 
   if (!count)
     return;
@@ -41,7 +41,7 @@ loom_mmap_init (void)
   if (!loom_mmap.entries)
     return;
 
-  loom_arch_mmap_iterate (mmap_fill_hook, &count);
+  loom_platform_mmap_iterate (mmap_fill_hook, &count);
 }
 
 int

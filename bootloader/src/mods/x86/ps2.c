@@ -1,11 +1,11 @@
-#include "loom/arch.h"
-#include "loom/arch/i686/io.h"
-#include "loom/arch/i686/pic.h"
 #include "loom/compiler.h"
 #include "loom/input.h"
 #include "loom/keycode.h"
 #include "loom/mm.h"
 #include "loom/module.h"
+#include "loom/platform.h"
+#include "loom/platform/x86/io.h"
+#include "loom/platform/x86/pic.h"
 
 #define CAP 512
 
@@ -115,7 +115,7 @@ ps2_poll (loom_input_source_t *src, loom_input_event_t *evt)
   int keycode = 0, press;
   loom_uint8_t sc;
 
-  int flags = loom_arch_irq_save ();
+  int flags = loom_irq_save ();
 
   head = ps2->head;
   tail = ps2->tail;
@@ -134,7 +134,7 @@ ps2_poll (loom_input_source_t *src, loom_input_event_t *evt)
             }
         }
 
-      loom_arch_irq_restore (flags);
+      loom_irq_restore (flags);
       return 0;
     }
 
@@ -148,7 +148,7 @@ ps2_poll (loom_input_source_t *src, loom_input_event_t *evt)
 
   ps2->head = (head + 1) & (CAP - 1);
 
-  loom_arch_irq_restore (flags);
+  loom_irq_restore (flags);
 
   if (ps2->lastkey == 0xE0)
     {
