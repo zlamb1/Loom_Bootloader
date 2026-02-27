@@ -184,6 +184,7 @@ loom_block_dev_probe (loom_block_dev_t *block_dev, loom_bool_t force)
     loom_assert (partition_scheme->iterate != NULL);
     partition_scheme->iterate (partition_scheme, block_dev, partition_hook,
                                &ctx);
+    loom_error_clear ();
     if (ctx.count)
       break;
   }
