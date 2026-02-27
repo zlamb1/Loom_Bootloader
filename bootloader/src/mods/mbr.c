@@ -27,10 +27,9 @@ typedef struct
   loom_uint16_t signature;
 } LOOM_PACKED mbr_t;
 
-static int
-mbr_partition_scheme_iterate (loom_partition_scheme_t *partition_scheme,
-                              loom_block_dev_t *parent,
-                              loom_partition_scheme_hook_t hook);
+static int mbr_partition_scheme_iterate (loom_partition_scheme_t *,
+                                         loom_block_dev_t *,
+                                         loom_partition_scheme_hook_t, void *);
 
 loom_partition_scheme_t mbr_partition_scheme = {
   .iterate = mbr_partition_scheme_iterate,
@@ -39,7 +38,7 @@ loom_partition_scheme_t mbr_partition_scheme = {
 int
 mbr_partition_scheme_iterate (loom_partition_scheme_t *partition_scheme,
                               loom_block_dev_t *parent,
-                              loom_partition_scheme_hook_t hook)
+                              loom_partition_scheme_hook_t hook, void *ctx)
 {
   int retval = -1;
   mbr_t *mbr = loom_malloc (sizeof (mbr_t));
@@ -100,7 +99,7 @@ mbr_partition_scheme_iterate (loom_partition_scheme_t *partition_scheme,
       loom_partition_init (&partition, parent, entry->lba_start,
                            entry->sectors);
 
-      if ((retval = hook (parent, &partition)))
+      if ((retval = hook (parent, &partition, ctx)))
         {
           loom_error_np (LOOM_ERR_HOOK);
           goto out;

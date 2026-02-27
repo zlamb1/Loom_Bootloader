@@ -1,3 +1,4 @@
+#include "loom/list.h"
 #ifndef LOOM_PARTITION_H
 #define LOOM_PARTITION_H 1
 
@@ -33,7 +34,18 @@ loom_partition_init (loom_partition_t *partition, loom_block_dev_t *parent,
   };
 
   loom_block_dev_init (&partition->base, &init);
+  loom_list_add (&parent->children, &partition->base.child_node);
   partition->offset = offset;
+}
+
+static inline void
+loom_partition_deinit (loom_partition_t *partition)
+{
+  loom_assert (partition != NULL);
+  loom_assert (partition->base.parent != NULL);
+
+  loom_list_remove (&partition->base.child_node);
+  loom_list_remove (&partition->base.node);
 }
 
 #endif

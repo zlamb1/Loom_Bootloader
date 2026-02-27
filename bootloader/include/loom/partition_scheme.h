@@ -8,12 +8,12 @@
 struct loom_partition_t;
 
 typedef int (loom_partition_scheme_hook_t) (loom_block_dev_t *,
-                                            struct loom_partition_t *);
+                                            struct loom_partition_t *, void *);
 
 typedef struct loom_partition_scheme_t
 {
   int (*iterate) (struct loom_partition_scheme_t *, loom_block_dev_t *,
-                  loom_partition_scheme_hook_t);
+                  loom_partition_scheme_hook_t, void *);
   void *data;
   loom_list_t node;
 } loom_partition_scheme_t;

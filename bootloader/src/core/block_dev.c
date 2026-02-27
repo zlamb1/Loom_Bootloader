@@ -4,6 +4,8 @@
 #include "loom/list.h"
 #include "loom/math.h"
 #include "loom/mm.h"
+#include "loom/partition.h"
+#include "loom/partition_scheme.h"
 #include "loom/string.h"
 #include "loom/types.h"
 
@@ -136,9 +138,35 @@ done:
   return error;
 }
 
+typedef struct
+{
+  loom_usize_t count;
+} partition_hook_ctx_t;
+
+static int
+partition_hook (loom_block_dev_t *parent, loom_partition_t *partition, void *p)
+{
+  partition_hook_ctx_t *ctx = p;
+  (void) parent;
+
+  ctx->count += 1;
+
+  loom_partition_t *n = loom_malloc (sizeof (*n));
+
+  if (n == NULL)
+    return -1;
+
+  loom_memcpy (n, partition, sizeof (*n));
+  loom_block_dev_register (&n->base);
+
+  return 0;
+}
+
 void
 loom_block_dev_probe (loom_block_dev_t *block_dev, loom_bool_t force)
 {
+  loom_partition_scheme_t *partition_scheme;
+
   loom_assert (block_dev != NULL);
 
   if (force)
@@ -149,5 +177,14 @@ loom_block_dev_probe (loom_block_dev_t *block_dev, loom_bool_t force)
 
   block_dev->flags |= LOOM_BLOCK_DEVICE_FLAG_PROBED;
 
-  // TODO: implement partition/fs probing...
+  partition_hook_ctx_t ctx = { 0 };
+
+  loom_list_for_each_entry (&loom_partition_schemes, partition_scheme, node)
+  {
+    loom_assert (partition_scheme->iterate != NULL);
+    partition_scheme->iterate (partition_scheme, block_dev, partition_hook,
+                               &ctx);
+    if (ctx.count)
+      break;
+  }
 }

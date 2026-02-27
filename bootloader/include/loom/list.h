@@ -41,6 +41,8 @@ typedef struct loom_list_t
                    *prev = VARNAME->prev;                                     \
        VARNAME != _head; (VARNAME = prev, prev = VARNAME->prev))
 
+#define loom_list_add loom_list_prepend
+
 void LOOM_EXPORT (loom_list_prepend) (loom_list_t *head, loom_list_t *node);
 void LOOM_EXPORT (loom_list_append) (loom_list_t *head, loom_list_t *node);
 
