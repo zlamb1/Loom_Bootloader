@@ -42,4 +42,11 @@ const char *LOOM_EXPORT (loom_strerror) (loom_error_t);
 void LOOM_NORETURN LOOM_PRINTF (1, 2)
     LOOM_EXPORT (loom_panic) (const char *fmt, ...);
 
+static inline loom_error_t
+loom_error_np (loom_error_t error)
+{
+  loom_error (error, "%s", loom_strerror (error));
+  return error;
+}
+
 #endif

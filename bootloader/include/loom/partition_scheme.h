@@ -3,7 +3,6 @@
 
 #include "loom/block_dev.h"
 #include "loom/compiler.h"
-#include "loom/error.h"
 #include "loom/list.h"
 
 struct loom_partition_t;
@@ -13,8 +12,8 @@ typedef int (loom_partition_scheme_hook_t) (loom_block_dev_t *,
 
 typedef struct loom_partition_scheme_t
 {
-  loom_error_t (*iterate) (struct loom_partition_scheme_t *,
-                           loom_block_dev_t *, loom_partition_scheme_hook_t);
+  int (*iterate) (struct loom_partition_scheme_t *, loom_block_dev_t *,
+                  loom_partition_scheme_hook_t);
   void *data;
   loom_list_t node;
 } loom_partition_scheme_t;
