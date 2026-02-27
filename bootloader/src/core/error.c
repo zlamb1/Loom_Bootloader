@@ -7,7 +7,7 @@ loom_error_t loom_errno;
 
 static char error_buf[ERROR_BUF_SIZE];
 
-void
+loom_error_t
 loom_error (loom_error_t error, const char *fmt, ...)
 {
   loom_errno = error;
@@ -21,6 +21,8 @@ loom_error (loom_error_t error, const char *fmt, ...)
     }
   else
     error_buf[0] = 0;
+
+  return error;
 }
 
 const char *
@@ -58,6 +60,10 @@ loom_strerror (loom_error_t error)
       return "I/O error";
     case LOOM_ERR_BAD_BLOCK_SIZE:
       return "Bad block size";
+    case LOOM_ERR_BAD_PART_SCHEME:
+      return "Bad partition scheme";
+    case LOOM_ERR_HOOK:
+      return "Bad hook";
     default:
       return "Unknown error";
     }

@@ -13,9 +13,9 @@ typedef struct loom_partition_t
 
 extern loom_list_t loom_partition_schemes;
 
-loom_error_t loom_partition_read (loom_block_dev_t *block_dev,
-                                  loom_usize_t block, loom_usize_t n,
-                                  char *buf);
+loom_error_t LOOM_EXPORT (loom_partition_read) (loom_block_dev_t *block_dev,
+                                                loom_usize_t block,
+                                                loom_usize_t n, char *buf);
 
 static inline void
 loom_partition_init (loom_partition_t *partition, loom_block_dev_t *parent,
