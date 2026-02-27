@@ -307,6 +307,8 @@ loom_malloc (loom_usize_t size)
       }
   }
 
+  loom_error_np (LOOM_ERR_ALLOC);
+
   return NULL;
 }
 
@@ -448,6 +450,8 @@ loom_memalign_range (loom_usize_t size, loom_usize_t align,
         fchunk = fchunk->next;
       }
   }
+
+  loom_error_np (LOOM_ERR_ALLOC);
 
   return NULL;
 }
