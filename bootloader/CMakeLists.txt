@@ -57,10 +57,10 @@ set(
     ${LOOM_CORE_HDR_DIR}/crypto/sha1.h
     ${LOOM_CORE_HDR_DIR}/arch.h
     ${LOOM_CORE_HDR_DIR}/assert.h
+    ${LOOM_CORE_HDR_DIR}/block_dev.h
     ${LOOM_CORE_HDR_DIR}/command.h
     ${LOOM_CORE_HDR_DIR}/compiler.h
     ${LOOM_CORE_HDR_DIR}/console.h
-    ${LOOM_CORE_HDR_DIR}/disk.h
     ${LOOM_CORE_HDR_DIR}/elf.h
     ${LOOM_CORE_HDR_DIR}/endian.h
     ${LOOM_CORE_HDR_DIR}/error.h
@@ -89,9 +89,9 @@ set(
     ${LOOM_CORE_SRC_DIR}/crypto/sha1.c
     ${LOOM_CORE_SRC_DIR}/arith.c
     ${LOOM_CORE_SRC_DIR}/assert.c
+    ${LOOM_CORE_SRC_DIR}/block_dev.c
     ${LOOM_CORE_SRC_DIR}/command.c
     ${LOOM_CORE_SRC_DIR}/console.c
-    ${LOOM_CORE_SRC_DIR}/disk.c
     ${LOOM_CORE_SRC_DIR}/elf.c
     ${LOOM_CORE_SRC_DIR}/error.c
     ${LOOM_CORE_SRC_DIR}/input.c

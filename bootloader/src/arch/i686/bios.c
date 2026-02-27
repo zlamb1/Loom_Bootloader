@@ -1,11 +1,12 @@
 #include "loom/arch/i686/bios.h"
-#include "loom/disk.h"
+#include "loom/assert.h"
+#include "loom/block_dev.h"
 #include "loom/mm.h"
 #include "loom/string.h"
 
 typedef struct
 {
-  loom_disk_t base;
+  loom_block_dev_t bd;
   loom_uint8_t drive;
 } bios_disk_t;
 
@@ -31,11 +32,14 @@ typedef struct
 } LOOM_PACKED bios_disk_read_t;
 
 static loom_error_t
-bios_disk_read (struct loom_disk_t *disk, loom_usize_t block,
+bios_disk_read (loom_block_dev_t *block_dev, loom_usize_t block,
                 loom_usize_t count, char *buf)
 {
-  loom_uint8_t drive = ((bios_disk_t *) disk->data)->drive;
-  loom_usize_t length = 0x10000;
+  loom_assert (block_dev != NULL);
+  loom_assert (block_dev->data != NULL);
+
+  loom_uint8_t drive = ((bios_disk_t *) block_dev->data)->drive;
+  loom_usize_t length = 0x10000, blocksz;
   char *bounce = (char *) 0x60000;
   int retries = 0;
 
@@ -45,15 +49,16 @@ bios_disk_read (struct loom_disk_t *disk, loom_usize_t block,
   if (block > LOOM_USIZE_MAX - count)
     return LOOM_ERR_OVERFLOW;
 
-  if (block + count > disk->blocks)
+  if (block + count > block_dev->blocks)
     return LOOM_ERR_OVERFLOW;
 
-  if (disk->bpb > length)
+  blocksz = block_dev->blocksz;
+  if (blocksz > length)
     return LOOM_ERR_BAD_BLOCK_SIZE;
 
   while (count)
     {
-      loom_usize_t read = length / disk->bpb, bytes;
+      loom_usize_t read = length / blocksz, bytes;
 
       if (count < read)
         read = count;
@@ -107,7 +112,7 @@ bios_disk_read (struct loom_disk_t *disk, loom_usize_t block,
         }
 
       retries = 0;
-      bytes = read * disk->bpb;
+      bytes = read * blocksz;
 
       loom_memcpy (buf, bounce, bytes);
 
@@ -159,15 +164,23 @@ loom_bios_disk_probe (void)
       if (!disk)
         continue;
 
-      disk->base = (loom_disk_t) {
+      disk->bd = (loom_block_dev_t) {
         .read = bios_disk_read,
-        .bpb = params.bps,
+        .blocksz = params.bps,
         .blocks = (loom_usize_t) params.sectors,
         .data = disk,
       };
 
+      loom_block_dev_init_t init = {
+        .read = bios_disk_read,
+        .blocksz = params.bps,
+        .blocks = (loom_usize_t) params.sectors,
+        .data = disk,
+      };
+
+      loom_block_dev_init (&disk->bd, &init);
       disk->drive = drive;
 
-      loom_disk_register (&disk->base);
+      loom_block_dev_register (&disk->bd);
     }
 }

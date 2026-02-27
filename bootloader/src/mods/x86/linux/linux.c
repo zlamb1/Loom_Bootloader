@@ -1,5 +1,5 @@
+#include "loom/block_dev.h"
 #include "loom/command.h"
-#include "loom/disk.h"
 #include "loom/endian.h"
 #include "loom/error.h"
 #include "loom/kernel_loader.h"
@@ -98,7 +98,7 @@ linux_task (LOOM_UNUSED loom_command_t *cmd, LOOM_UNUSED loom_usize_t argc,
             LOOM_UNUSED char *argv[])
 {
   loom_module_header_t hdr;
-  loom_disk_t *disk;
+  loom_block_dev_t *block_dev;
   loom_usize_t offset, kernel_size;
   loom_uint32_t setup_sects;
 
@@ -125,15 +125,15 @@ linux_task (LOOM_UNUSED loom_command_t *cmd, LOOM_UNUSED loom_usize_t argc,
   if (!kbuf)
     return -1;
 
-  if (loom_list_is_empty (&loom_disks))
+  if (loom_list_is_empty (&loom_block_devs))
     {
       loom_error (LOOM_ERR_IO, "no disks found");
       goto out;
     }
 
-  disk = loom_container_of (loom_disks.next, loom_disk_t, node);
+  block_dev = loom_container_of (loom_block_devs.next, loom_block_dev_t, node);
 
-  if (loom_disk_read (disk, offset, kernel_size, kbuf))
+  if (loom_block_dev_read (block_dev, offset, kernel_size, kbuf))
     goto out;
 
   setup_header = (setup_header_t *) (kbuf + SETUP_HEADER_OFFSET);

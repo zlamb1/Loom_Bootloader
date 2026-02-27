@@ -2,13 +2,14 @@
 #define LOOM_PARTITION_SCHEME_H 1
 
 #include "loom/compiler.h"
-#include "loom/disk.h"
 #include "loom/error.h"
 #include "loom/list.h"
 
+struct loom_partition_t;
+
 typedef struct loom_partition_scheme_t
 {
-  loom_error_t (*iterate) (loom_disk_t *);
+  loom_error_t (*iterate) (struct loom_partition_t *);
   void *data;
   loom_list_t node;
 } loom_partition_scheme_t;
