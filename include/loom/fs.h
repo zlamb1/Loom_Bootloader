@@ -7,6 +7,7 @@
 
 struct loom_block_dev_t;
 struct loom_fs_t;
+struct loom_fs_type_t;
 
 typedef struct
 {
@@ -28,14 +29,16 @@ typedef int (*loom_fs_get_uuid) (struct loom_fs_t *fs, loom_fs_uuid_t *uuid);
 typedef struct loom_fs_t
 {
   struct loom_block_dev_t *parent;
+  struct loom_fs_type_t *fs_type;
   loom_fs_read read;
   loom_fs_get_uuid get_uuid;
   void *data;
   loom_list_t node;
 } loom_fs_t;
 
-typedef struct
+typedef struct loom_fs_type_t
 {
+  const char *name;
   loom_fs_t *(*probe) (struct loom_block_dev_t *);
   void *data;
   loom_list_t node;

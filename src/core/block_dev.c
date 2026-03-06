@@ -198,6 +198,8 @@ loom_block_dev_probe (loom_block_dev_t *block_dev, loom_bool_t force)
 
     if ((fs = fs_type->probe (block_dev)) != NULL)
       {
+        fs->parent = block_dev;
+        fs->fs_type = fs_type;
         loom_fs_register (fs);
         return;
       }
