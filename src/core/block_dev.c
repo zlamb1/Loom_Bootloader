@@ -1,6 +1,7 @@
 #include "loom/block_dev.h"
 #include "loom/assert.h"
 #include "loom/error.h"
+#include "loom/fs.h"
 #include "loom/list.h"
 #include "loom/math.h"
 #include "loom/mm.h"
@@ -166,6 +167,7 @@ void
 loom_block_dev_probe (loom_block_dev_t *block_dev, loom_bool_t force)
 {
   loom_partition_scheme_t *partition_scheme;
+  loom_fs_type_t *fs_type;
 
   loom_assert (block_dev != NULL);
 
@@ -186,6 +188,20 @@ loom_block_dev_probe (loom_block_dev_t *block_dev, loom_bool_t force)
                                &ctx);
     loom_error_clear ();
     if (ctx.count)
-      break;
+      return;
+  }
+
+  loom_list_for_each_entry (&loom_fs_types, fs_type, node)
+  {
+    loom_fs_t *fs;
+    loom_assert (fs_type->probe != NULL);
+
+    if ((fs = fs_type->probe (block_dev)) != NULL)
+      {
+        loom_fs_register (fs);
+        return;
+      }
+
+    loom_error_clear ();
   }
 }

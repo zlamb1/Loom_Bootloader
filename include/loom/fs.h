@@ -5,7 +5,7 @@
 #include "loom/list.h"
 #include "loom/types.h"
 
-struct loom_partition_t;
+struct loom_block_dev_t;
 struct loom_fs_t;
 
 typedef struct
@@ -27,6 +27,7 @@ typedef int (*loom_fs_get_uuid) (struct loom_fs_t *fs, loom_fs_uuid_t *uuid);
 
 typedef struct loom_fs_t
 {
+  struct loom_block_dev_t *parent;
   loom_fs_read read;
   loom_fs_get_uuid get_uuid;
   void *data;
@@ -35,7 +36,7 @@ typedef struct loom_fs_t
 
 typedef struct
 {
-  loom_fs_t *(*probe) (struct loom_partition_t *);
+  loom_fs_t *(*probe) (struct loom_block_dev_t *);
   void *data;
   loom_list_t node;
 } loom_fs_type_t;
