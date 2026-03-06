@@ -1,6 +1,7 @@
 #ifndef LOOM_LIST_H
 #define LOOM_LIST_H 1
 
+#include "loom/assert.h"
 #include "loom/compiler.h"
 #include "loom/types.h"
 
@@ -42,6 +43,22 @@ typedef struct loom_list_t
        VARNAME != _head; (VARNAME = prev, prev = VARNAME->prev))
 
 #define loom_list_add loom_list_prepend
+
+#define loom_list_add_by_field(head, elem, field)                             \
+  do                                                                          \
+    {                                                                         \
+      loom_assert (elem != NULL);                                             \
+      loom_list_add (head, &elem->field);                                     \
+    }                                                                         \
+  while (0)
+
+#define loom_list_remove_by_field(elem, field)                                \
+  do                                                                          \
+    {                                                                         \
+      loom_assert (elem != NULL);                                             \
+      loom_list_remove (&elem->field);                                        \
+    }                                                                         \
+  while (0)
 
 void LOOM_EXPORT (loom_list_prepend) (loom_list_t *head, loom_list_t *node);
 void LOOM_EXPORT (loom_list_append) (loom_list_t *head, loom_list_t *node);
