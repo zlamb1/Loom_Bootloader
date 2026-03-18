@@ -19,6 +19,7 @@
 #define LOOM_ERR_BAD_MODULE      12
 #define LOOM_ERR_BAD_PART_SCHEME 13
 #define LOOM_ERR_HOOK            14
+#define LOOM_ERR_PLATFORM        15
 
 #define LOOM_ERROR(ERROR, ...)                                                \
   do                                                                          \

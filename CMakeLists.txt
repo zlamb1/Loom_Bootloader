@@ -31,15 +31,15 @@ set(LOOM_LINK_FLAGS -static -nostdlib)
 set(LOOM_EXPORT_SYMBOLS_SRC "${CMAKE_CURRENT_BINARY_DIR}/export_symbols.c")
 set(LOOM_GENSYMS "${CMAKE_CURRENT_LIST_DIR}/cmake/gensyms.cmake")
 set(LOOM_HOST_DIR ${CMAKE_BINARY_DIR}/host)
-set(LOOM_INSTALL_BIN ${LOOM_HOST_DIR}/bin/loom-install)
-set(LOOM_IMG "${CMAKE_BINARY_DIR}/loom.img")
+set(LOOM_MKIMAGE ${LOOM_HOST_DIR}/bin/loom-mkimage)
+set(CORE_IMG "${CMAKE_BINARY_DIR}/core.img")
 
 set(RUN_SCRIPT "${CMAKE_BINARY_DIR}/run")
 set(DBG_SCRIPT "${CMAKE_BINARY_DIR}/dbg")
 set(GDB_SCRIPT "${CMAKE_CURRENT_LIST_DIR}/gdb/config")
 set(SCRIPT_PERMS OWNER_WRITE OWNER_READ OWNER_EXECUTE 
                  GROUP_READ GROUP_EXECUTE)
-set(QEMU_COMMON "-drive format=raw,file=${LOOM_IMG} -nic none -m 512M")
+set(QEMU_COMMON "-drive format=raw,file=${CORE_IMG} -nic none -m 512M")
 
 list(APPEND LOOM_C_FLAGS
     -Wall -Wextra -Wundef -Wshadow 
@@ -159,17 +159,17 @@ ExternalProject_Add(
     SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/host
     CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${LOOM_HOST_DIR}"
     CMAKE_CACHE_ARGS -DLOOM_INCLUDE_DIRS:STRING=${LOOM_INCLUDE_DIRS}
-    BUILD_BYPRODUCTS ${LOOM_INSTALL_BIN}
+    BUILD_BYPRODUCTS ${LOOM_MKIMAGE}
 )
 
 add_custom_command(
-    OUTPUT ${LOOM_IMG}
-    COMMAND ${LOOM_INSTALL_BIN} -i ${LOOM_CORE_BIN} -o ${LOOM_IMG} ${LOOM_MODULES}
-    DEPENDS ${LOOM_CORE_BIN} ${LOOM_MODULES} ${LOOM_INSTALL_BIN}
+    OUTPUT ${CORE_IMG}
+    COMMAND ${LOOM_MKIMAGE} -i ${LOOM_CORE_BIN} -o ${CORE_IMG} ${LOOM_MODULES}
+    DEPENDS ${LOOM_CORE_BIN} ${LOOM_MODULES} ${LOOM_MKIMAGE}
     VERBATIM
 )
 
-add_custom_target("loom_img" ALL DEPENDS ${LOOM_IMG})
+add_custom_target("core_img" ALL DEPENDS ${CORE_IMG})
 
 file(WRITE ${RUN_SCRIPT}
     "make -C ${CMAKE_BINARY_DIR}\n"

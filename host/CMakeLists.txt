@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(loom-install LANGUAGES C)
+project(loom_utils LANGUAGES C)
 
 set(
     CMAKE_C_FLAGS 
@@ -10,14 +10,14 @@ set(
 	 -mno-red-zone"
 )
 
-set(SRCS install.c)
-set(BIN "loom-install")
+set(MKIMAGE_SRCS mkimage.c osdep.c)
+set(MKIMAGE_BIN "loom-mkimage")
 
 add_executable(
-    ${BIN}
-    ${SRCS}
+    ${MKIMAGE_BIN}
+    ${MKIMAGE_SRCS}
 )
 
-target_include_directories(${BIN} PRIVATE ${LOOM_INCLUDE_DIRS})
+target_include_directories(${MKIMAGE_BIN} PRIVATE ${LOOM_INCLUDE_DIRS})
 
-install(TARGETS ${BIN} RUNTIME DESTINATION bin)
+install(TARGETS ${MKIMAGE_BIN} RUNTIME DESTINATION bin)

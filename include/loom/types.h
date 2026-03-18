@@ -4,7 +4,11 @@
 #include <limits.h>
 #include <stddef.h>
 
+#ifdef LOOM_NOSTDINT
+#include <stdint.h>
+#else
 #include "loom_stdint.h"
+#endif
 
 typedef uint8_t loom_uint8_t;
 typedef uint16_t loom_uint16_t;
