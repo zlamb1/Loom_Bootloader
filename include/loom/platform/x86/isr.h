@@ -4,10 +4,10 @@
 #include "loom/compiler.h"
 #include "loom/types.h"
 
-typedef void (*isr_handler) (loom_uint32_t intno, loom_uint32_t error_code);
+typedef void (*isr_handler) (u32 intno, u32 error_code);
 
 void LOOM_EXPORT (loom_isr_wrapper) (void);
-void LOOM_NORETURN LOOM_EXPORT (loom_exception_handler) (
-    loom_uint32_t intno, loom_uint32_t error_code);
+void LOOM_NORETURN LOOM_EXPORT (loom_exception_handler) (u32 intno,
+                                                         u32 error_code);
 
 #endif

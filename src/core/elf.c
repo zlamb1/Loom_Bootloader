@@ -3,9 +3,9 @@
 #include "loom/math.h"
 
 int
-loom_elf32_ehdr_load (void *p, loom_usize_t size, loom_elf32_ehdr_t **ehdr)
+loom_elf32_ehdr_load (void *p, usize size, loom_elf32_ehdr **ehdr)
 {
-  loom_elf32_ehdr_t *_ehdr;
+  loom_elf32_ehdr *_ehdr;
 
   if (size < sizeof (*_ehdr))
     LOOM_ERROR (LOOM_ERR_BAD_ELF_EHDR, "ELF header size %lu too small",
@@ -55,9 +55,9 @@ loom_elf32_ehdr_load (void *p, loom_usize_t size, loom_elf32_ehdr_t **ehdr)
 
   if (_ehdr->phents)
     {
-      loom_address_t phoff;
+      address phoff;
 
-      if (_ehdr->phentsize < sizeof (loom_elf32_phdr_t))
+      if (_ehdr->phentsize < sizeof (loom_elf32_phdr))
         LOOM_ERROR (LOOM_ERR_BAD_ELF_EHDR,
                     "invalid program header entry size %lu",
                     (ulong) _ehdr->phentsize);
@@ -70,9 +70,9 @@ loom_elf32_ehdr_load (void *p, loom_usize_t size, loom_elf32_ehdr_t **ehdr)
 
   if (_ehdr->shents)
     {
-      loom_address_t shoff;
+      address shoff;
 
-      if (_ehdr->shentsize < sizeof (loom_elf32_shdr_t))
+      if (_ehdr->shentsize < sizeof (loom_elf32_shdr))
         LOOM_ERROR (LOOM_ERR_BAD_ELF_EHDR,
                     "invalid section header entry size %lu",
                     (ulong) _ehdr->shentsize);
@@ -89,10 +89,9 @@ loom_elf32_ehdr_load (void *p, loom_usize_t size, loom_elf32_ehdr_t **ehdr)
 }
 
 int
-loom_elf32_shdr_validate (loom_address_t addr, loom_usize_t size,
-                          loom_elf32_shdr_t *shdr)
+loom_elf32_shdr_validate (address addr, usize size, loom_elf32_shdr *shdr)
 {
-  loom_address_t shoff;
+  address shoff;
 
   if (shdr->offset >= size)
     LOOM_ERROR (LOOM_ERR_BAD_ELF_SHDR, "invalid section offset");
@@ -108,19 +107,19 @@ loom_elf32_shdr_validate (loom_address_t addr, loom_usize_t size,
 }
 
 int
-loom_elf32_strtab_validate (loom_elf32_ehdr_t *ehdr, loom_usize_t size,
-                            loom_elf32_shdr_t *shdr)
+loom_elf32_strtab_validate (loom_elf32_ehdr *ehdr, usize size,
+                            loom_elf32_shdr *shdr)
 {
   const char *strtab;
 
-  if (loom_elf32_shdr_validate ((loom_address_t) ehdr, size, shdr))
+  if (loom_elf32_shdr_validate ((address) ehdr, size, shdr))
     return -1;
 
   if (shdr->type != LOOM_SHT_STRTAB)
     LOOM_ERROR (LOOM_ERR_BAD_ELF_STRTAB, "invalid type 0x%lx for string table",
                 (ulong) shdr->type);
 
-  strtab = (const char *) ((loom_address_t) ehdr + shdr->offset);
+  strtab = (const char *) ((address) ehdr + shdr->offset);
 
   if (!shdr->size)
     LOOM_ERROR (LOOM_ERR_BAD_ELF_STRTAB, "invalid size 0 for string table");
@@ -135,31 +134,30 @@ loom_elf32_strtab_validate (loom_elf32_ehdr_t *ehdr, loom_usize_t size,
   return 0;
 }
 
-loom_elf32_shdr_t *
-loom_elf32_shdr_get (loom_elf32_ehdr_t *ehdr, loom_usize_t shidx)
+loom_elf32_shdr *
+loom_elf32_shdr_get (loom_elf32_ehdr *ehdr, usize shidx)
 {
-  loom_address_t addr;
+  address addr;
 
   if (shidx >= ehdr->shents)
     return NULL;
 
-  addr = (loom_address_t) ehdr + ehdr->shoff + shidx * ehdr->shentsize;
-  return (loom_elf32_shdr_t *) addr;
+  addr = (address) ehdr + ehdr->shoff + shidx * ehdr->shentsize;
+  return (loom_elf32_shdr *) addr;
 }
 
 int
-loom_elf32_shdr_iterate (loom_elf32_ehdr_t *ehdr,
-                         int (*hook) (loom_usize_t, loom_elf32_shdr_t *,
-                                      void *),
+loom_elf32_shdr_iterate (loom_elf32_ehdr *ehdr,
+                         int (*hook) (usize, loom_elf32_shdr *, void *),
                          void *data)
 {
-  loom_address_t addr;
+  address addr;
   int retval;
 
-  addr = (loom_address_t) ehdr + ehdr->shoff;
+  addr = (address) ehdr + ehdr->shoff;
 
   for (unsigned int i = 0; i < ehdr->shents; ++i, addr += ehdr->shentsize)
-    if ((retval = hook (i, (loom_elf32_shdr_t *) addr, data)))
+    if ((retval = hook (i, (loom_elf32_shdr *) addr, data)))
       return retval;
 
   return 0;
@@ -167,26 +165,25 @@ loom_elf32_shdr_iterate (loom_elf32_ehdr_t *ehdr,
 
 typedef struct
 {
-  loom_elf32_ehdr_t *ehdr;
-  int (*hook) (loom_elf32_rel_t *, loom_usize_t, loom_elf32_shdr_t *,
-               loom_usize_t, loom_elf32_shdr_t *, void *);
+  loom_elf32_ehdr *ehdr;
+  int (*hook) (loom_elf32_rel *, usize, loom_elf32_shdr *, usize,
+               loom_elf32_shdr *, void *);
   void *data;
-} rel_iterate_hook_context_t;
+} rel_iterate_hook_context;
 
 static int
-rel_iterate_hook (LOOM_UNUSED loom_usize_t shidx, loom_elf32_shdr_t *shdr,
-                  void *data)
+rel_iterate_hook (LOOM_UNUSED usize shidx, loom_elf32_shdr *shdr, void *data)
 {
-  rel_iterate_hook_context_t *ctx = data;
+  rel_iterate_hook_context *ctx = data;
   int retval;
 
-  loom_address_t addr;
-  loom_elf32_shdr_t *symtab, *target;
+  address addr;
+  loom_elf32_shdr *symtab, *target;
 
   if (shdr->type != LOOM_SHT_REL)
     return 0;
 
-  if (shdr->entsize < sizeof (loom_elf32_rel_t))
+  if (shdr->entsize < sizeof (loom_elf32_rel))
     LOOM_ERROR (LOOM_ERR_BAD_ELF_SHDR, "invalid relocation entry size %lu",
                 (ulong) shdr->entsize);
 
@@ -198,11 +195,11 @@ rel_iterate_hook (LOOM_UNUSED loom_usize_t shidx, loom_elf32_shdr_t *shdr,
   if (!(target = loom_elf32_shdr_get (ctx->ehdr, shdr->info)))
     LOOM_ERROR (LOOM_ERR_BAD_ELF_SHDR, "invalid relocation target");
 
-  addr = (loom_address_t) ctx->ehdr + shdr->offset;
+  addr = (address) ctx->ehdr + shdr->offset;
 
   for (unsigned int i = 0; i < shdr->size / shdr->entsize;
        ++i, addr += shdr->entsize)
-    if ((retval = ctx->hook ((loom_elf32_rel_t *) addr, shdr->link, symtab,
+    if ((retval = ctx->hook ((loom_elf32_rel *) addr, shdr->link, symtab,
                              shdr->info, target, ctx->data)))
       return retval;
 
@@ -210,13 +207,12 @@ rel_iterate_hook (LOOM_UNUSED loom_usize_t shidx, loom_elf32_shdr_t *shdr,
 }
 
 int
-loom_elf32_rel_iterate (loom_elf32_ehdr_t *ehdr,
-                        int (*hook) (loom_elf32_rel_t *, loom_usize_t,
-                                     loom_elf32_shdr_t *, loom_usize_t,
-                                     loom_elf32_shdr_t *, void *),
+loom_elf32_rel_iterate (loom_elf32_ehdr *ehdr,
+                        int (*hook) (loom_elf32_rel *, usize,
+                                     loom_elf32_shdr *, usize,
+                                     loom_elf32_shdr *, void *),
                         void *data)
 {
-  rel_iterate_hook_context_t ctx
-      = { .ehdr = ehdr, .hook = hook, .data = data };
+  rel_iterate_hook_context ctx = { .ehdr = ehdr, .hook = hook, .data = data };
   return loom_elf32_shdr_iterate (ehdr, rel_iterate_hook, &ctx);
 }

@@ -13,54 +13,54 @@ LOOM_MOD (linux)
 extern char stage1s;
 extern char stage3e;
 
-typedef struct
+typedef struct setup_header
 {
 #define SETUP_HEADER_OFFSET 0x1F1
-  loom_uint8_t setup_sects; // if 0, real value is 4
-  loom_uint16_t root_flags;
-  loom_uint32_t syssize;
-  loom_uint16_t ram_size;
-  loom_uint16_t vid_mode;
-  loom_uint16_t root_dev;
-  loom_uint16_t boot_flag; // 0xAA55
-  loom_uint16_t jump;
+  u8 setup_sects; // if 0, real value is 4
+  u16 root_flags;
+  u32 syssize;
+  u16 ram_size;
+  u16 vid_mode;
+  u16 root_dev;
+  u16 boot_flag; // 0xAA55
+  u16 jump;
   char header[4]; // HdrS
-  loom_uint16_t version;
-  loom_uint32_t realmode_swtch;
-  loom_uint16_t start_sys_seg;
-  loom_uint16_t kernel_version;
-  loom_uint8_t type_of_loader;
-  loom_uint8_t loadflags;
-  loom_uint16_t setup_move_size;
-  loom_uint32_t code32_start;
-  loom_uint32_t ramdisk_image;
-  loom_uint32_t ramdisk_size;
-  loom_uint32_t bootsect_kludge;
-  loom_uint16_t heap_end_ptr;
-  loom_uint8_t ext_loader_ver;
-  loom_uint8_t ext_loader_type;
-  loom_uint32_t cmd_line_ptr;
-  loom_uint32_t initrd_addr_max;
-  loom_uint32_t kernel_alignment;
-  loom_uint8_t relocatable_kernel;
-  loom_uint8_t min_alignment;
-  loom_uint16_t xloadflags;
-  loom_uint32_t cmdline_size;
-  loom_uint32_t hardware_subarch;
-  loom_uint64_t hardware_subarch_data;
-  loom_uint32_t payload_offset;
-  loom_uint32_t payload_length;
-  loom_uint64_t setup_data;
-  loom_uint64_t pref_address;
-  loom_uint32_t init_size;
-  loom_uint32_t handover_offset;
-  loom_uint32_t kernel_info_offset;
-} LOOM_PACKED setup_header_t;
+  u16 version;
+  u32 realmode_swtch;
+  u16 start_sys_seg;
+  u16 kernel_version;
+  u8 type_of_loader;
+  u8 loadflags;
+  u16 setup_move_size;
+  u32 code32_start;
+  u32 ramdisk_image;
+  u32 ramdisk_size;
+  u32 bootsect_kludge;
+  u16 heap_end_ptr;
+  u8 ext_loader_ver;
+  u8 ext_loader_type;
+  u32 cmd_line_ptr;
+  u32 initrd_addr_max;
+  u32 kernel_alignment;
+  u8 relocatable_kernel;
+  u8 min_alignment;
+  u16 xloadflags;
+  u32 cmdline_size;
+  u32 hardware_subarch;
+  u64 hardware_subarch_data;
+  u32 payload_offset;
+  u32 payload_length;
+  u64 setup_data;
+  u64 pref_address;
+  u32 init_size;
+  u32 handover_offset;
+  u32 kernel_info_offset;
+} LOOM_PACKED setup_header;
 
-static loom_kernel_loader_t linux_loader = { 0 };
+static loom_kernel_loader linux_loader = { 0 };
 
 static void
-linux_boot (loom_kernel_loader_t *kernel_loader)
+linux_boot (loom_kernel_loader *kernel_loader)
 {
   extern char linux_relocator;
   extern char linux_relocator_end;
@@ -71,13 +71,12 @@ linux_boot (loom_kernel_loader_t *kernel_loader)
 #define SEG     0x8000
 
   char *kernel = kernel_loader->kernel;
-  loom_usize_t off, setup_sects;
+  usize off, setup_sects;
 
-  setup_header_t *setup_header
-      = (setup_header_t *) ((char *) kernel_loader->kernel
-                            + SETUP_HEADER_OFFSET);
+  setup_header *header = (setup_header *) ((char *) kernel_loader->kernel
+                                           + SETUP_HEADER_OFFSET);
 
-  setup_sects = setup_header->setup_sects;
+  setup_sects = header->setup_sects;
   if (!setup_sects)
     setup_sects = 4;
 
@@ -85,38 +84,37 @@ linux_boot (loom_kernel_loader_t *kernel_loader)
   loom_memcpy ((void *) (SEG * 0x10), kernel, off);
 
   loom_memcpy ((void *) SCRATCH, &linux_relocator,
-               (loom_usize_t) (&linux_relocator_end - &linux_relocator));
+               (usize) (&linux_relocator_end - &linux_relocator));
 
-  ((void (*) (loom_uint32_t dst, loom_uint32_t src, loom_uint32_t size,
-              loom_uint16_t seg)) SCRATCH) (
-      setup_header->code32_start, (loom_uint32_t) kernel_loader->kernel + off,
+  ((void (*) (u32 dst, u32 src, u32 size, u16 seg)) SCRATCH) (
+      header->code32_start, (u32) kernel_loader->kernel + off,
       kernel_loader->kernel_size - off, SEG);
 }
 
 static int
-linux_task (LOOM_UNUSED loom_command_t *cmd, LOOM_UNUSED loom_usize_t argc,
+linux_task (LOOM_UNUSED loom_command *cmd, LOOM_UNUSED usize argc,
             LOOM_UNUSED char *argv[])
 {
-  loom_module_header_t hdr;
-  loom_block_dev_t *block_dev;
-  loom_usize_t offset, kernel_size;
-  loom_uint32_t setup_sects;
+  loom_module_header hdr;
+  loom_block_dev *block_dev;
+  usize offset, kernel_size;
+  u32 setup_sects;
 
-  setup_header_t *setup_header;
+  setup_header *header;
   char *kbuf = NULL, *cmdline = NULL;
 
   loom_kernel_loader_remove (1);
 
   loom_memcpy (&hdr, (void *) loom_modbase, sizeof (hdr));
 
-  offset = (loom_usize_t) &stage3e - (loom_usize_t) &stage1s;
+  offset = (usize) &stage3e - (usize) &stage1s;
   offset += hdr.size;
 
   kernel_size = loom_le32toh (hdr.kernel_size);
 
   if (!kernel_size)
     {
-      loom_error (LOOM_ERR_BAD_ARG, "no kernel appended");
+      loom_fmt_error (LOOM_ERR_BAD_ARG, "no kernel appended");
       return -1;
     }
 
@@ -127,36 +125,36 @@ linux_task (LOOM_UNUSED loom_command_t *cmd, LOOM_UNUSED loom_usize_t argc,
 
   if (loom_list_is_empty (&loom_block_devs))
     {
-      loom_error (LOOM_ERR_IO, "no disks found");
+      loom_fmt_error (LOOM_ERR_IO, "no disks found");
       goto out;
     }
 
-  block_dev = loom_container_of (loom_block_devs.next, loom_block_dev_t, node);
+  block_dev = loom_container_of (loom_block_devs.next, loom_block_dev, node);
 
   if (loom_block_dev_read (block_dev, offset, kernel_size, kbuf))
     goto out;
 
-  setup_header = (setup_header_t *) (kbuf + SETUP_HEADER_OFFSET);
+  header = (setup_header *) (kbuf + SETUP_HEADER_OFFSET);
 
-  if (loom_memcmp (setup_header->header, "HdrS", 4))
+  if (loom_memcmp (header->header, "HdrS", 4))
     {
-      loom_error (LOOM_ERR_BAD_ARG, "invalid kernel header");
+      loom_fmt_error (LOOM_ERR_BAD_ARG, "invalid kernel header");
       goto out;
     }
 
-  setup_sects = setup_header->setup_sects;
+  setup_sects = header->setup_sects;
   if (!setup_sects)
     setup_sects = 4;
 
   offset = (setup_sects + 1) * 512;
 
-  setup_header->vid_mode = 0xFFFF;
-  setup_header->type_of_loader = 0xFF;
-  setup_header->loadflags |= 0x80;
-  setup_header->ramdisk_image = 0;
-  setup_header->ramdisk_size = 0;
-  setup_header->heap_end_ptr = 0;
-  setup_header->setup_data = 0;
+  header->vid_mode = 0xFFFF;
+  header->type_of_loader = 0xFF;
+  header->loadflags |= 0x80;
+  header->ramdisk_image = 0;
+  header->ramdisk_size = 0;
+  header->heap_end_ptr = 0;
+  header->setup_data = 0;
 
   linux_loader.boot = linux_boot;
   linux_loader.flags = 0;
@@ -173,9 +171,9 @@ out:
   return -1;
 }
 
-int linux_task (loom_command_t *cmd, loom_usize_t argc, char *argv[]);
+int linux_task (loom_command *cmd, usize argc, char *argv[]);
 
-static loom_command_t linux_command = {
+static loom_command linux_command = {
   .name = "linux",
   .task = linux_task,
 };

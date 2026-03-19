@@ -4,26 +4,25 @@
 
 typedef struct
 {
-  loom_uint16_t offset_lo;
-  loom_uint16_t segment;
-  loom_uint8_t reserved;
-  loom_uint8_t flags;
-  loom_uint16_t offset_hi;
-} LOOM_PACKED idt_entry_t;
+  u16 offset_lo;
+  u16 segment;
+  u8 reserved;
+  u8 flags;
+  u16 offset_hi;
+} LOOM_PACKED idt_entry;
 
 typedef struct
 {
-  loom_uint16_t size;
-  loom_uint32_t offset;
-} LOOM_PACKED idtr_t;
+  u16 size;
+  u32 offset;
+} LOOM_PACKED idtr;
 
-idt_entry_t idt[SIZE];
-idtr_t idtr;
+idt_entry idt[SIZE];
+idtr _idtr;
 
 extern void *loom_vectors[SIZE];
 
-extern void loom_exception_handler (loom_uint32_t intno,
-                                    loom_uint32_t error_code);
+extern void loom_exception_handler (u32 intno, u32 error_code);
 
 void
 loom_idt_init (void)
@@ -31,46 +30,46 @@ loom_idt_init (void)
   for (int i = 0; i < SIZE; ++i)
     {
       // The isr stubs are initially stored in loom_vectors.
-      loom_idt_vector_map ((loom_uint8_t) i, loom_vectors[i]);
-      loom_isr_vector_map ((loom_uint8_t) i, NULL);
+      loom_idt_vector_map ((u8) i, loom_vectors[i]);
+      loom_isr_vector_map ((u8) i, NULL);
     }
 
-  for (loom_uint8_t i = 0; i < 32; ++i)
+  for (u8 i = 0; i < 32; ++i)
     loom_isr_vector_map (i, loom_exception_handler);
 }
 
 void
 loom_idtr_load (void)
 {
-  idtr.size = sizeof (idt) - 1;
-  idtr.offset = (loom_uintptr_t) idt;
-  __asm__ volatile ("lidt %0" ::"m"(idtr));
+  _idtr.size = sizeof (idt) - 1;
+  _idtr.offset = (uintptr) idt;
+  __asm__ volatile ("lidt %0" ::"m"(_idtr));
 }
 
 void
-loom_isr_vector_map (loom_uint8_t entry, void *isr)
+loom_isr_vector_map (u8 entry, void *isr)
 {
   loom_vectors[entry] = isr;
 }
 
 void
-loom_idt_vector_map (loom_uint8_t entry, void *isr)
+loom_idt_vector_map (u8 entry_nr, void *isr)
 {
-  idt_entry_t idt_entry = { 0 };
-  loom_uintptr_t addr;
+  idt_entry entry = { 0 };
+  uintptr addr;
 
-  addr = (loom_uintptr_t) isr;
+  addr = (uintptr) isr;
 
-  idt_entry.offset_lo = (loom_uint16_t) addr;
-  idt_entry.segment = 0x8;
-  idt_entry.flags = 0b10001110;
-  idt_entry.offset_hi = (loom_uint16_t) (addr >> 16);
+  entry.offset_lo = (u16) addr;
+  entry.segment = 0x8;
+  entry.flags = 0b10001110;
+  entry.offset_hi = (u16) (addr >> 16);
 
-  idt[entry] = idt_entry;
+  idt[entry_nr] = entry;
 }
 
 void
-loom_idt_vector_unmap (loom_uint8_t entry)
+loom_idt_vector_unmap (u8 entry_nr)
 {
-  idt[entry] = (idt_entry_t) { 0 };
+  idt[entry_nr] = (idt_entry) { 0 };
 }

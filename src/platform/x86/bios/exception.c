@@ -28,7 +28,7 @@ const char *exc_messages[31] = {
 };
 
 void
-loom_exception_handler (loom_uint32_t intno, loom_uint32_t error_code)
+loom_exception_handler (u32 intno, u32 error_code)
 {
   (void) intno;
   (void) error_code;

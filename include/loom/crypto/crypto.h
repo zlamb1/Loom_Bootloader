@@ -19,12 +19,12 @@
     __r;                                                                      \
   })
 
-typedef unsigned char loom_digest_t;
+typedef unsigned char loom_digest;
 
 static inline void
-loom_print_hash (loom_usize_t length, const loom_digest_t *digest)
+loom_print_hash (usize length, const loom_digest *digest)
 {
-  for (loom_usize_t i = 0; i < length; ++i)
+  for (usize i = 0; i < length; ++i)
     loom_printf ("%02hhx", digest[i]);
 }
 

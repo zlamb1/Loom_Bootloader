@@ -9,11 +9,11 @@ typedef struct
   int press;
   int keycode;
   int mods;
-} loom_input_event_t;
+} loom_input_event;
 
-typedef struct loom_input_source_t
+typedef struct loom_input_source
 {
-  int (*poll) (struct loom_input_source_t *, loom_input_event_t *);
+  int (*poll) (struct loom_input_source *, loom_input_event *);
 #define LOOM_INPUT_MOD_LEFTSHIFT   (1 << 1)
 #define LOOM_INPUT_MOD_RIGHTSHIFT  (1 << 2)
 #define LOOM_INPUT_MOD_LEFTALT     (1 << 3)
@@ -22,19 +22,18 @@ typedef struct loom_input_source_t
 #define LOOM_INPUT_MOD_PASSTHROUGH (1 << 6)
   int mods;
   void *data;
-  loom_list_t node;
-} loom_input_source_t;
+  loom_list node;
+} loom_input_source;
 
-extern loom_list_t loom_input_sources;
+extern loom_list loom_input_sources;
 
-void LOOM_EXPORT (loom_input_source_register) (loom_input_source_t *input_src);
+void LOOM_EXPORT (loom_input_source_register) (loom_input_source *input_src);
 
-void LOOM_EXPORT (loom_input_source_unregister) (
-    loom_input_source_t *input_src);
+void LOOM_EXPORT (loom_input_source_unregister) (loom_input_source *input_src);
 
-int LOOM_EXPORT (loom_input_source_poll) (loom_input_source_t *input_src,
-                                          loom_input_event_t *evt);
+int LOOM_EXPORT (loom_input_source_poll) (loom_input_source *input_src,
+                                          loom_input_event *evt);
 
-int loom_input_sources_poll (loom_input_event_t *evt);
+int loom_input_sources_poll (loom_input_event *evt);
 
 #endif

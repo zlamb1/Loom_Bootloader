@@ -11,27 +11,27 @@
 #define CRTC_CURSOR_HIGH_LOC_REG 0x00E
 #define CRTC_CURSOR_LOW_LOC_REG  0x00F
 
-volatile loom_uint16_t *VMEM = (volatile loom_uint16_t *) 0xB8000;
+volatile u16 *VMEM = (volatile u16 *) 0xB8000;
 
 typedef struct
 {
-  loom_usize_t x, y;
-  loom_uint8_t attribs;
-  loom_console_t interface;
+  usize x, y;
+  u8 attribs;
+  loom_console super;
 } loom_vga_console;
 
-static loom_uint8_t console_color_vga_map[8] = {
+static u8 console_color_vga_map[8] = {
   [LOOM_CONSOLE_COLOR_BLACK] = 0x0,  [LOOM_CONSOLE_COLOR_BLUE] = 0x1,
   [LOOM_CONSOLE_COLOR_GREEN] = 0x2,  [LOOM_CONSOLE_COLOR_CYAN] = 0x3,
   [LOOM_CONSOLE_COLOR_RED] = 0x4,    [LOOM_CONSOLE_COLOR_MAGENTA] = 0x5,
   [LOOM_CONSOLE_COLOR_YELLOW] = 0x6, [LOOM_CONSOLE_COLOR_WHITE] = 0x7,
 };
 
-static inline loom_uint16_t
-loom_vga_convert_attribs (loom_uint16_t attribs)
+static inline u16
+loom_vga_convert_attribs (u16 attribs)
 {
-  loom_uint8_t fg = (loom_uint8_t) attribs;
-  loom_uint8_t bg = (loom_uint8_t) (attribs >> 8);
+  u8 fg = (u8) attribs;
+  u8 bg = (u8) (attribs >> 8);
 
   if (fg > 0xF)
     fg = 0;
@@ -42,49 +42,49 @@ loom_vga_convert_attribs (loom_uint16_t attribs)
   fg = fg > 7 ? console_color_vga_map[fg & 7] | 8 : console_color_vga_map[fg];
   bg = bg > 7 ? console_color_vga_map[bg & 7] | 8 : console_color_vga_map[bg];
 
-  return (loom_uint16_t) (fg | (bg << 4));
+  return (u16) (fg | (bg << 4));
 }
 
 static void
-loom_vga_sync_cursor (loom_usize_t x, loom_usize_t y)
+loom_vga_sync_cursor (usize x, usize y)
 {
-  loom_uint16_t pos = (loom_uint16_t) (y * COLS + x);
+  u16 pos = (u16) (y * COLS + x);
   loom_outb (CRTC_ADDRESS_REG, CRTC_CURSOR_LOW_LOC_REG);
-  loom_outb (CRTC_DATA_REG, (loom_uint8_t) (pos & 0xFF));
+  loom_outb (CRTC_DATA_REG, (u8) (pos & 0xFF));
   loom_outb (CRTC_ADDRESS_REG, CRTC_CURSOR_HIGH_LOC_REG);
-  loom_outb (CRTC_DATA_REG, (loom_uint8_t) ((pos >> 8) & 0xFF));
+  loom_outb (CRTC_DATA_REG, (u8) ((pos >> 8) & 0xFF));
 }
 
-static loom_usize_t
-loom_vga_get_x (loom_console_t *con)
+static usize
+loom_vga_get_x (loom_console *con)
 {
   loom_vga_console *vga_con = (loom_vga_console *) con->data;
   return vga_con->x;
 }
 
-static loom_usize_t
-loom_vga_get_y (loom_console_t *con)
+static usize
+loom_vga_get_y (loom_console *con)
 {
   loom_vga_console *vga_con = (loom_vga_console *) con->data;
   return vga_con->y;
 }
 
-static loom_uint8_t
-loom_vga_get_fg (loom_console_t *con)
+static u8
+loom_vga_get_fg (loom_console *con)
 {
   loom_vga_console *vga_con = (loom_vga_console *) con->data;
   return vga_con->attribs & 0xF;
 }
 
-static loom_uint8_t
-loom_vga_get_bg (loom_console_t *con)
+static u8
+loom_vga_get_bg (loom_console *con)
 {
   loom_vga_console *vga_con = (loom_vga_console *) con->data;
   return (vga_con->attribs >> 4) & 0xF;
 }
 
-static loom_error_t
-loom_vga_set_x (loom_console_t *con, loom_usize_t x)
+static loom_error
+loom_vga_set_x (loom_console *con, usize x)
 {
   if (x >= COLS)
     return LOOM_ERR_BAD_ARG;
@@ -95,8 +95,8 @@ loom_vga_set_x (loom_console_t *con, loom_usize_t x)
   return LOOM_ERR_NONE;
 }
 
-static loom_error_t
-loom_vga_set_y (loom_console_t *con, loom_usize_t y)
+static loom_error
+loom_vga_set_y (loom_console *con, usize y)
 {
   if (y >= ROWS)
     return LOOM_ERR_BAD_ARG;
@@ -107,8 +107,8 @@ loom_vga_set_y (loom_console_t *con, loom_usize_t y)
   return LOOM_ERR_NONE;
 }
 
-static loom_error_t
-loom_vga_set_fg (loom_console_t *con, loom_uint8_t fg)
+static loom_error
+loom_vga_set_fg (loom_console *con, u8 fg)
 {
   if (fg > LOOM_CONSOLE_COLOR_MAX)
     return LOOM_ERR_BAD_ARG;
@@ -119,27 +119,26 @@ loom_vga_set_fg (loom_console_t *con, loom_uint8_t fg)
   return LOOM_ERR_NONE;
 }
 
-static loom_error_t
-loom_vga_set_bg (loom_console_t *con, loom_uint8_t bg)
+static loom_error
+loom_vga_set_bg (loom_console *con, u8 bg)
 {
   if (bg > LOOM_CONSOLE_COLOR_MAX)
     return LOOM_ERR_BAD_ARG;
 
   loom_vga_console *vga_con = (loom_vga_console *) con->data;
-  vga_con->attribs = (loom_uint8_t) ((vga_con->attribs & 0xF) | (bg << 4));
+  vga_con->attribs = (u8) ((vga_con->attribs & 0xF) | (bg << 4));
 
   return LOOM_ERR_NONE;
 }
 
 static void
-loom_vga_clear (loom_console_t *con)
+loom_vga_clear (loom_console *con)
 {
   loom_vga_console *vga_con = (loom_vga_console *) con->data;
-  loom_uint16_t char_and_attribs
-      = (loom_uint16_t) ' '
-        | (loom_uint16_t) (loom_vga_convert_attribs (vga_con->attribs) << 8);
+  u16 char_and_attribs
+      = (u16) ' ' | (u16) (loom_vga_convert_attribs (vga_con->attribs) << 8);
 
-  for (loom_usize_t i = 0; i < ROWS * COLS; ++i)
+  for (usize i = 0; i < ROWS * COLS; ++i)
     VMEM[i] = char_and_attribs;
 
   vga_con->x = 0;
@@ -148,16 +147,16 @@ loom_vga_clear (loom_console_t *con)
 }
 
 static void
-loom_vga_scroll (struct loom_console_t *con)
+loom_vga_scroll (loom_console *con)
 {
   (void) con;
 }
 
-static loom_usize_t
-loom_vga_write_wbuf (loom_console_t *con, loom_write_buffer_t wbuf,
-                     loom_uint16_t attribs, loom_usize_t index)
+static usize
+loom_vga_write_wbuf (loom_console *con, loom_write_buffer wbuf, u16 attribs,
+                     usize index)
 {
-  for (loom_usize_t windex = 0; windex < wbuf.len; ++windex)
+  for (usize windex = 0; windex < wbuf.len; ++windex)
     {
       char ch = wbuf.s[windex];
 
@@ -177,7 +176,7 @@ loom_vga_write_wbuf (loom_console_t *con, loom_write_buffer_t wbuf,
           break;
         }
 
-      VMEM[index++] = (loom_uint16_t) ch | attribs;
+      VMEM[index++] = (u16) ch | attribs;
 
     maybe_scroll:
       if (index >= VMEM_MAX)
@@ -194,13 +193,12 @@ loom_vga_write_wbuf (loom_console_t *con, loom_write_buffer_t wbuf,
 }
 
 static void
-loom_vga_write_all (struct loom_console_t *con, loom_write_buffer_t wbufs[])
+loom_vga_write_all (struct loom_console *con, loom_write_buffer wbufs[])
 {
   loom_vga_console *vga_con = (loom_vga_console *) con->data;
-  loom_usize_t index = vga_con->y * COLS + vga_con->x;
-  loom_uint16_t attribs
-      = (loom_uint16_t) (loom_vga_convert_attribs (vga_con->attribs) << 8);
-  loom_write_buffer_t wbuf;
+  usize index = vga_con->y * COLS + vga_con->x;
+  u16 attribs = (u16) (loom_vga_convert_attribs (vga_con->attribs) << 8);
+  loom_write_buffer wbuf;
 
   if (vga_con->x >= COLS || vga_con->y >= ROWS)
     loom_panic ("loom_vga_write_all");
@@ -209,7 +207,7 @@ loom_vga_write_all (struct loom_console_t *con, loom_write_buffer_t wbufs[])
     {
       wbuf = wbufs[i];
 
-      for (loom_usize_t j = 0; j < wbuf.splats; ++j)
+      for (usize j = 0; j < wbuf.splats; ++j)
         index = loom_vga_write_wbuf (con, wbuf, attribs, index);
     }
 
@@ -223,7 +221,7 @@ static loom_vga_console vga_con = {
     .x = 0,
     .y = 0,
     .attribs = 0,
-    .interface = {
+    .super = {
         .get_x = loom_vga_get_x,
         .get_y = loom_vga_get_y,
         .get_fg = loom_vga_get_fg,
@@ -241,5 +239,5 @@ static loom_vga_console vga_con = {
 void
 loom_vga_con_register (void)
 {
-  loom_console_register (&vga_con.interface);
+  loom_console_register (&vga_con.super);
 }

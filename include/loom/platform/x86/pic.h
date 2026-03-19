@@ -4,12 +4,12 @@
 #include "loom/compiler.h"
 #include "loom/types.h"
 
-void LOOM_EXPORT (loom_pic_remap) (loom_uint8_t offset1, loom_uint8_t offset2);
-void LOOM_EXPORT (loom_pic_mask) (loom_uint8_t irq);
-void LOOM_EXPORT (loom_pic_unmask) (loom_uint8_t irq);
-void LOOM_EXPORT (loom_pic_eoi) (loom_uint8_t irq);
+void LOOM_EXPORT (loom_pic_remap) (u8 offset1, u8 offset2);
+void LOOM_EXPORT (loom_pic_mask) (u8 irq);
+void LOOM_EXPORT (loom_pic_unmask) (u8 irq);
+void LOOM_EXPORT (loom_pic_eoi) (u8 irq);
 void LOOM_EXPORT (loom_pic_disable) (void);
-void LOOM_EXPORT (loom_pic_register_isr) (loom_uint8_t irq, void *isr);
+void LOOM_EXPORT (loom_pic_register_isr) (u8 irq, void *isr);
 
 void loom_pic_bios_save_masks (void);
 

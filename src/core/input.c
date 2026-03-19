@@ -4,25 +4,24 @@
 #include "loom/list.h"
 #include "loom/types.h"
 
-loom_list_t loom_input_sources = LOOM_LIST_HEAD (loom_input_sources);
+loom_list loom_input_sources = LOOM_LIST_HEAD (loom_input_sources);
 
 void
-loom_input_source_register (loom_input_source_t *input_src)
+loom_input_source_register (loom_input_source *input_src)
 {
   loom_assert (input_src != NULL);
   loom_list_prepend (&loom_input_sources, &input_src->node);
 }
 
 void
-loom_input_source_unregister (loom_input_source_t *input_src)
+loom_input_source_unregister (loom_input_source *input_src)
 {
   loom_assert (input_src != NULL);
   loom_list_remove (&input_src->node);
 }
 
 int
-loom_input_source_poll (loom_input_source_t *input_src,
-                        loom_input_event_t *evt)
+loom_input_source_poll (loom_input_source *input_src, loom_input_event *evt)
 {
   loom_assert (input_src != NULL);
   loom_assert (input_src->poll != NULL);
@@ -73,9 +72,9 @@ loom_input_source_poll (loom_input_source_t *input_src,
 }
 
 int
-loom_input_sources_poll (loom_input_event_t *evt)
+loom_input_sources_poll (loom_input_event *evt)
 {
-  loom_input_source_t *input_src;
+  loom_input_source *input_src;
 
   loom_list_for_each_entry (&loom_input_sources, input_src, node)
   {

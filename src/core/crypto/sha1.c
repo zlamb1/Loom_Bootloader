@@ -5,14 +5,14 @@
 
 typedef struct
 {
-  loom_uint32_t w[80];
-  loom_uint32_t h[5];
-} sha1_context_t;
+  u32 w[80];
+  u32 h[5];
+} sha1_context;
 
 static void
-sha1_process_chunk (sha1_context_t *ctx)
+sha1_process_chunk (sha1_context *ctx)
 {
-  loom_uint32_t *w = ctx->w, a, b, c, d, e, f, k, tmp;
+  u32 *w = ctx->w, a, b, c, d, e, f, k, tmp;
 
   for (unsigned int i = 0; i < 16; ++i)
     w[i] = loom_be32toh (w[i]);
@@ -68,13 +68,13 @@ sha1_process_chunk (sha1_context_t *ctx)
 }
 
 void
-loom_sha1_hash (loom_usize_t length, const char *buf, loom_digest_t digest[20])
+loom_sha1_hash (usize length, const char *buf, loom_digest digest[20])
 {
   // See: https://en.wikipedia.org/wiki/SHA-1#SHA-1_pseudocode
 
-  loom_usize_t original_length = length;
+  usize original_length = length;
 
-  sha1_context_t ctx;
+  sha1_context ctx;
   unsigned char *w_bytes;
 
   ctx.h[0] = 0x67452301;
@@ -105,14 +105,14 @@ loom_sha1_hash (loom_usize_t length, const char *buf, loom_digest_t digest[20])
         ctx.w[i] = 0;
     }
 
-  loom_uint64_t message_length = original_length * 8;
-  ctx.w[14] = loom_htobe32 ((loom_uint32_t) (message_length >> 32));
-  ctx.w[15] = loom_htobe32 ((loom_uint32_t) message_length);
+  u64 message_length = original_length * 8;
+  ctx.w[14] = loom_htobe32 ((u32) (message_length >> 32));
+  ctx.w[15] = loom_htobe32 ((u32) message_length);
   sha1_process_chunk (&ctx);
 
   for (unsigned int i = 0; i < 5; ++i)
     {
-      loom_uint32_t h = loom_htobe32 (ctx.h[i]);
+      u32 h = loom_htobe32 (ctx.h[i]);
       loom_memcpy (digest + i * 4, &h, 4);
     }
 }

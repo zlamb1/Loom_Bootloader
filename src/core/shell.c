@@ -10,11 +10,11 @@
 #define CAP    4096
 #define PROMPT "loom> "
 
-typedef struct
+struct shell
 {
-  loom_usize_t len, cursor;
+  usize len, cursor;
   char *buf;
-} shell_t;
+};
 
 static void
 shell_print_prompt (void)
@@ -25,9 +25,9 @@ shell_print_prompt (void)
 }
 
 static char *
-shell_parse_arg (char *buf, loom_usize_t *pos)
+shell_parse_arg (char *buf, usize *pos)
 {
-  loom_usize_t runpos = *pos, runlen = 0;
+  usize runpos = *pos, runlen = 0;
 
   while (buf[runpos])
     {
@@ -59,10 +59,10 @@ shell_parse_arg (char *buf, loom_usize_t *pos)
 }
 
 static void
-shell_exec_command (shell_t *shell)
+shell_exec_command (struct shell *shell)
 {
-  loom_command_t *command;
-  loom_usize_t argc = 0, argvc = 0, pos = 0;
+  loom_command *command;
+  usize argc = 0, argvc = 0, pos = 0;
   char **argv = NULL, *arg;
 
   while ((arg = shell_parse_arg (shell->buf, &pos)))
@@ -115,7 +115,7 @@ shell_exec_command (shell_t *shell)
 }
 
 static void
-shell_write_keycode (shell_t *shell, int mods, int keycode)
+shell_write_keycode (struct shell *shell, int mods, int keycode)
 {
   char *buf = shell->buf;
 
@@ -133,11 +133,11 @@ shell_write_keycode (shell_t *shell, int mods, int keycode)
         }
 
       loom_printf ("\b%s \b", buf + shell->cursor + 1);
-      for (loom_usize_t i = shell->cursor; i < shell->len; ++i)
+      for (usize i = shell->cursor; i < shell->len; ++i)
         buf[i] = shell->buf[i + 1];
 
       {
-        loom_write_buffer_t wbufs[]
+        loom_write_buffer wbufs[]
             = { { .len = 1, .splats = shell->len - shell->cursor, .s = "\b" },
                 { 0 } };
         loom_consoles_write_all (wbufs);
@@ -186,12 +186,12 @@ shell_write_keycode (shell_t *shell, int mods, int keycode)
           }
         else
           {
-            loom_write_buffer_t wbufs[] = {
+            loom_write_buffer wbufs[] = {
               { .len = 1, .splats = shell->len - shell->cursor, .s = "\b" },
               { 0 }
             };
 
-            for (loom_usize_t i = shell->len - 1; i >= shell->cursor; --i)
+            for (usize i = shell->len - 1; i >= shell->cursor; --i)
               {
                 buf[i + 1] = buf[i];
                 if (!i)
@@ -213,7 +213,7 @@ shell_write_keycode (shell_t *shell, int mods, int keycode)
 void
 loom_shell_exec (void)
 {
-  shell_t shell = { 0 };
+  struct shell shell = { 0 };
   shell.buf = loom_malloc (CAP);
 
   if (!shell.buf)
@@ -225,7 +225,7 @@ loom_shell_exec (void)
 
   for (;;)
     {
-      loom_input_event_t evt;
+      loom_input_event evt;
 
       if (loom_input_sources_poll (&evt))
         {

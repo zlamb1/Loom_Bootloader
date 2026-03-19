@@ -10,32 +10,32 @@
 #include "loom/string.h"
 #include "loom/types.h"
 
-loom_list_t loom_block_devs = LOOM_LIST_HEAD (loom_block_devs);
+loom_list loom_block_devs = LOOM_LIST_HEAD (loom_block_devs);
 
 void
-loom_block_dev_register (loom_block_dev_t *block_dev)
+loom_block_dev_register (loom_block_dev *block_dev)
 {
   loom_assert (block_dev != NULL);
   loom_assert (block_dev->read != NULL);
-  loom_assert (block_dev->blocksz);
+  loom_assert (block_dev->block_size);
 
   loom_list_prepend (&loom_block_devs, &block_dev->node);
 }
 
 void
-loom_block_dev_unregister (loom_block_dev_t *block_dev)
+loom_block_dev_unregister (loom_block_dev *block_dev)
 {
   loom_assert (block_dev != NULL);
 
   loom_list_remove (&block_dev->node);
 }
 
-loom_error_t
-loom_block_dev_read (loom_block_dev_t *block_dev, loom_usize_t offset,
-                     loom_usize_t size, char *buf)
+loom_error
+loom_block_dev_read (loom_block_dev *block_dev, usize offset, usize size,
+                     char *buf)
 {
-  loom_usize_t mod, block, blocks, blocksz, disk_end;
-  loom_error_t error = LOOM_ERR_NONE;
+  usize mod, block, blocks, block_size, disk_end;
+  loom_error error = LOOM_ERR_NONE;
 
   char *bounce = NULL;
 
@@ -45,31 +45,31 @@ loom_block_dev_read (loom_block_dev_t *block_dev, loom_usize_t offset,
   if (!size)
     return LOOM_ERR_NONE;
 
-  blocksz = block_dev->blocksz;
-  loom_assert (blocksz);
+  block_size = block_dev->block_size;
+  loom_assert (block_size);
 
   if (loom_add (offset, size - 1, &mod))
     return LOOM_ERR_OVERFLOW;
 
-  if (loom_mul (block_dev->blocks, blocksz, &disk_end))
+  if (loom_mul (block_dev->blocks, block_size, &disk_end))
     // Note: Not all blocks are accessible as the disk is larger than the
     // (typically 32-bit) address space.
-    disk_end = LOOM_USIZE_MAX;
+    disk_end = USIZE_MAX;
 
   if (mod >= disk_end)
     return LOOM_ERR_RANGE;
 
-  block = offset / blocksz;
-  mod = offset % blocksz;
+  block = offset / block_size;
+  mod = offset % block_size;
 
   if (mod)
     {
-      loom_usize_t read = blocksz - mod;
+      usize read = block_size - mod;
 
       if (read > size)
         read = size;
 
-      if (size >= blocksz)
+      if (size >= block_size)
         {
           // Note: Use the buffer for the first partial read if it can contain
           // at least one block.
@@ -85,7 +85,7 @@ loom_block_dev_read (loom_block_dev_t *block_dev, loom_usize_t offset,
         }
       else
         {
-          bounce = loom_malloc (blocksz);
+          bounce = loom_malloc (block_size);
 
           if (bounce == NULL)
             {
@@ -101,11 +101,11 @@ loom_block_dev_read (loom_block_dev_t *block_dev, loom_usize_t offset,
         }
     }
 
-  blocks = size / blocksz;
+  blocks = size / block_size;
 
   if (blocks)
     {
-      loom_usize_t read = blocks * blocksz;
+      usize read = blocks * block_size;
 
       if ((error = block_dev->read (block_dev, block, blocks, buf)))
         goto done;
@@ -119,7 +119,7 @@ loom_block_dev_read (loom_block_dev_t *block_dev, loom_usize_t offset,
     {
       if (bounce == NULL)
         {
-          bounce = loom_malloc (blocksz);
+          bounce = loom_malloc (block_size);
 
           if (bounce == NULL)
             {
@@ -141,18 +141,18 @@ done:
 
 typedef struct
 {
-  loom_usize_t count;
-} partition_hook_ctx_t;
+  usize count;
+} partition_hook_ctx;
 
 static int
-partition_hook (loom_block_dev_t *parent, loom_partition_t *partition, void *p)
+partition_hook (loom_block_dev *parent, loom_partition *partition, void *p)
 {
-  partition_hook_ctx_t *ctx = p;
+  partition_hook_ctx *ctx = p;
   (void) parent;
 
   ctx->count += 1;
 
-  loom_partition_t *n = loom_malloc (sizeof (*n));
+  loom_partition *n = loom_malloc (sizeof (*n));
 
   if (n == NULL)
     return -1;
@@ -164,22 +164,22 @@ partition_hook (loom_block_dev_t *parent, loom_partition_t *partition, void *p)
 }
 
 void
-loom_block_dev_probe (loom_block_dev_t *block_dev, loom_bool_t force)
+loom_block_dev_probe (loom_block_dev *block_dev, bool force)
 {
-  loom_partition_scheme_t *partition_scheme;
-  loom_fs_type_t *fs_type;
+  loom_partition_scheme *partition_scheme;
+  loom_fs_type *fs_type;
 
   loom_assert (block_dev != NULL);
 
   if (force)
-    block_dev->flags &= (loom_uint8_t) ~LOOM_BLOCK_DEVICE_FLAG_PROBED;
+    block_dev->flags &= (u8) ~LOOM_BLOCK_DEVICE_FLAG_PROBED;
 
   if (block_dev->flags & LOOM_BLOCK_DEVICE_FLAG_PROBED)
     return;
 
   block_dev->flags |= LOOM_BLOCK_DEVICE_FLAG_PROBED;
 
-  partition_hook_ctx_t ctx = { 0 };
+  partition_hook_ctx ctx = { 0 };
 
   loom_list_for_each_entry (&loom_partition_schemes, partition_scheme, node)
   {
@@ -193,7 +193,7 @@ loom_block_dev_probe (loom_block_dev_t *block_dev, loom_bool_t force)
 
   loom_list_for_each_entry (&loom_fs_types, fs_type, node)
   {
-    loom_fs_t *fs;
+    loom_fs *fs;
     loom_assert (fs_type->probe != NULL);
 
     if ((fs = fs_type->probe (block_dev)) != NULL)

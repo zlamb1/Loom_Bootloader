@@ -6,19 +6,19 @@
 
 typedef struct
 {
-  loom_uint32_t eax;
-  loom_uint32_t ebx;
-  loom_uint32_t ecx;
-  loom_uint32_t edx;
-  loom_uint32_t esi;
-  loom_uint32_t edi;
-  loom_uint16_t flags;
-  loom_uint16_t ds;
-  loom_uint16_t es;
-} LOOM_PACKED loom_bios_args_t;
+  u32 eax;
+  u32 ebx;
+  u32 ecx;
+  u32 edx;
+  u32 esi;
+  u32 edi;
+  u16 flags;
+  u16 ds;
+  u16 es;
+} LOOM_PACKED loom_bios_args;
 
 void LOOM_EXPORT (loom_enter_rmode) (void);
-void LOOM_EXPORT (loom_bios_int) (loom_uint8_t intno, loom_bios_args_t *args);
+void LOOM_EXPORT (loom_bios_int) (u8 intno, loom_bios_args *args);
 
 void loom_bios_disk_probe (void);
 

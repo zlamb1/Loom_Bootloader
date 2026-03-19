@@ -28,7 +28,7 @@ loom_panic (const char *fmt, ...)
 
   while (*ebp)
     {
-      loom_symbol_t *symbol;
+      loom_symbol *symbol;
       void **next = ebp[0];
       void *addr = ebp[1];
 

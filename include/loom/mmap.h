@@ -11,25 +11,25 @@ typedef enum
   LOOM_MEMORY_TYPE_ACPI_NVS = 3,
   LOOM_MEMORY_TYPE_RESERVED = 4,
   LOOM_MEMORY_TYPE_BAD_RAM = 5
-} loom_memory_type_t;
+} loom_memory_type;
 
 typedef struct
 {
-  loom_uint64_t address;
-  loom_uint64_t length;
-  loom_memory_type_t type;
-} loom_mmap_entry_t;
+  u64 addr;
+  u64 length;
+  loom_memory_type type;
+} loom_mmap_entry;
 
 typedef struct
 {
-  loom_usize_t count;
-  loom_mmap_entry_t *entries;
-} loom_mmap_t;
+  usize count;
+  loom_mmap_entry *entries;
+} loom_memory_map;
 
-extern loom_mmap_t loom_mmap;
+extern loom_memory_map loom_mmap;
 
 static LOOM_UNUSED const char *
-loom_memory_type_str (loom_memory_type_t type)
+loom_memory_type_str (loom_memory_type type)
 {
   if (type == LOOM_MEMORY_TYPE_FREE)
     return "Free";
@@ -45,7 +45,7 @@ loom_memory_type_str (loom_memory_type_t type)
 
 void loom_mmap_init (void);
 
-int LOOM_EXPORT (loom_mmap_iterate) (int (*hook) (loom_mmap_entry_t *entry,
+int LOOM_EXPORT (loom_mmap_iterate) (int (*hook) (loom_mmap_entry *entry,
                                                   void *data),
                                      void *data);
 

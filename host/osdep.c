@@ -9,8 +9,8 @@
 #define LOOM_NOSTDINT
 #include "loom/error.h"
 
-loom_error_t
-loom_file_open (const char *path, uint oflags, loom_file_t *file)
+loom_error
+loom_file_open (const char *path, uint oflags, loom_file *file)
 {
   int flags = 0;
   uint access;
@@ -50,8 +50,8 @@ loom_file_open (const char *path, uint oflags, loom_file_t *file)
   return LOOM_ERR_NONE;
 }
 
-loom_error_t
-loom_file_meta (loom_file_t file, loom_file_meta_t *meta)
+loom_error
+loom_file_get_meta (loom_file file, loom_file_meta *meta)
 {
   struct stat buf;
 
@@ -61,29 +61,29 @@ loom_file_meta (loom_file_t file, loom_file_meta_t *meta)
   if (fstat (file, &buf) < 0 || buf.st_size < 0)
     return LOOM_ERR_PLATFORM;
 
-  meta->size = (loom_usize_t) buf.st_size;
+  meta->size = (usize) buf.st_size;
 
   return LOOM_ERR_NONE;
 }
 
-loom_error_t
-loom_file_sync (loom_file_t file)
+loom_error
+loom_file_sync (loom_file file)
 {
   if (fsync (file) < 0)
     return LOOM_ERR_PLATFORM;
   return LOOM_ERR_NONE;
 }
 
-loom_error_t
-loom_file_close (loom_file_t file)
+loom_error
+loom_file_close (loom_file file)
 {
   if (close (file) < 0)
     return LOOM_ERR_PLATFORM;
   return LOOM_ERR_NONE;
 }
 
-loom_error_t
-loom_file_read (loom_file_t file, void *buf, loom_usize_t nbytes)
+loom_error
+loom_file_read (loom_file file, void *buf, usize nbytes)
 {
   while (nbytes)
     {
@@ -92,24 +92,24 @@ loom_file_read (loom_file_t file, void *buf, loom_usize_t nbytes)
       if (nread < 0 && errno == EINTR)
         continue;
 
-      if (nread < 0 || (loom_usize_t) nread > nbytes)
+      if (nread < 0 || (usize) nread > nbytes)
         return LOOM_ERR_PLATFORM;
 
       if (!nread && nbytes)
         return LOOM_ERR_PLATFORM;
 
       buf = (char *) buf + nread;
-      nbytes -= (loom_usize_t) nread;
+      nbytes -= (usize) nread;
     }
 
   return LOOM_ERR_NONE;
 }
 
-loom_error_t
-loom_file_read_all (loom_file_t file, loom_slice_t *slice)
+loom_error
+loom_file_read_all (loom_file file, loom_slice_t *slice)
 {
   struct stat buf;
-  loom_usize_t size;
+  usize size;
   __off_t off = 0;
 
   if (slice == NULL)
@@ -124,7 +124,7 @@ loom_file_read_all (loom_file_t file, loom_slice_t *slice)
   if (!buf.st_size)
     return LOOM_ERR_NONE;
 
-  size = (loom_usize_t) buf.st_size;
+  size = (usize) buf.st_size;
 
   slice->buf = malloc (size + 1);
   if (slice->buf == NULL)
@@ -140,14 +140,14 @@ loom_file_read_all (loom_file_t file, loom_slice_t *slice)
       if (read < 0 && errno == EINTR)
         continue;
 
-      if (read < 0 || (loom_usize_t) read > size)
+      if (read < 0 || (usize) read > size)
         goto fail;
 
       if (!read && size)
         goto fail;
 
       off += read;
-      size -= (loom_usize_t) read;
+      size -= (usize) read;
     }
 
   return LOOM_ERR_NONE;
@@ -159,8 +159,8 @@ fail:
   return LOOM_ERR_PLATFORM;
 }
 
-loom_error_t
-loom_file_write (loom_file_t file, void *buf, loom_usize_t nbytes)
+loom_error
+loom_file_write (loom_file file, void *buf, usize nbytes)
 {
   while (nbytes)
     {
@@ -169,22 +169,21 @@ loom_file_write (loom_file_t file, void *buf, loom_usize_t nbytes)
       if (nwrite < 0 && errno == EINTR)
         continue;
 
-      if (nwrite < 0 || (loom_usize_t) nwrite > nbytes)
+      if (nwrite < 0 || (usize) nwrite > nbytes)
         return LOOM_ERR_PLATFORM;
 
       if (!nwrite && nbytes)
         return LOOM_ERR_PLATFORM;
 
       buf = (char *) buf + nwrite;
-      nbytes -= (loom_usize_t) nwrite;
+      nbytes -= (usize) nwrite;
     }
 
   return LOOM_ERR_NONE;
 }
 
-loom_error_t
-loom_file_write_exact (loom_file_t file, void *buf, loom_usize_t off,
-                       loom_usize_t nbytes)
+loom_error
+loom_file_write_exact (loom_file file, void *buf, usize off, usize nbytes)
 {
   while (nbytes)
     {
@@ -193,11 +192,11 @@ loom_file_write_exact (loom_file_t file, void *buf, loom_usize_t off,
       if (write < 0 && errno == EINTR)
         continue;
 
-      if (write <= 0 || (loom_usize_t) write > nbytes)
+      if (write <= 0 || (usize) write > nbytes)
         return LOOM_ERR_PLATFORM;
 
-      off += (loom_usize_t) write;
-      nbytes -= (loom_usize_t) write;
+      off += (usize) write;
+      nbytes -= (usize) write;
     }
 
   return LOOM_ERR_NONE;

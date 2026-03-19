@@ -7,26 +7,25 @@
 typedef struct
 {
   const char *name;
-  loom_bool_t isfunc;
+  bool is_fn;
   void *p;
-} loom_symbol_t;
+} loom_symbol;
 
 typedef struct
 {
-  loom_usize_t length;
+  usize length;
 #define LOOM_SYMTAB_SIZE 128
-  loom_symbol_t *symbols[LOOM_SYMTAB_SIZE];
-} loom_symtab_t;
+  loom_symbol *symbols[LOOM_SYMTAB_SIZE];
+} loom_symbol_table;
 
-extern loom_symtab_t loom_symtab;
+extern loom_symbol_table loom_symtab;
 
 // This function's source is generated at compile time by gensym.sh.
 void loom_register_export_symbols (void);
 
-int LOOM_EXPORT (loom_symbol_register) (const char *name, loom_bool_t isfunc,
-                                        void *p);
+int LOOM_EXPORT (loom_symbol_register) (const char *name, bool is_fn, void *p);
 
-loom_symbol_t *LOOM_EXPORT (loom_symbol_find) (void *p);
-loom_symbol_t *LOOM_EXPORT (loom_symbol_lookup) (const char *name);
+loom_symbol *LOOM_EXPORT (loom_symbol_find) (void *p);
+loom_symbol *LOOM_EXPORT (loom_symbol_lookup) (const char *name);
 
 #endif

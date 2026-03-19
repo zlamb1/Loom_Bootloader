@@ -20,12 +20,12 @@ LOOM_MOD (ps2)
 
 typedef struct
 {
-  loom_input_source_t interface;
-  loom_uint16_t poll;
-  loom_uint8_t lastkey;
-  volatile loom_usize_t head, tail;
+  loom_input_source super;
+  u16 poll;
+  u8 last_key;
+  volatile usize head, tail;
   volatile char *buf;
-} loom_ps2_keyboard_t;
+} loom_ps2_keyboard;
 
 static int sc1_to_kc[128] = {
   [0x01] = LOOM_KEY_ESCAPE,     [0x02] = LOOM_KEY_1,
@@ -83,17 +83,17 @@ static int sc1_e0_to_kc[128] = {
   [0x52] = LOOM_KEY_INSERT,  [0x53] = LOOM_KEY_DELETE,
 };
 
-static loom_ps2_keyboard_t kb = { 0 };
+static loom_ps2_keyboard kb = { 0 };
 
 static void
-ps2_isr (LOOM_UNUSED loom_uint32_t intno, LOOM_UNUSED loom_uint32_t error_code)
+ps2_isr (LOOM_UNUSED u32 intno, LOOM_UNUSED u32 error_code)
 {
   if (kb.buf)
     {
       char ch = (char) loom_inb (PS2_DATA);
 
-      loom_usize_t tail = kb.tail;
-      loom_usize_t next_tail = (tail + 1) & (CAP - 1);
+      usize tail = kb.tail;
+      usize next_tail = (tail + 1) & (CAP - 1);
 
       if (kb.head == next_tail)
         goto done;
@@ -107,13 +107,13 @@ done:
 }
 
 static int
-ps2_poll (loom_input_source_t *src, loom_input_event_t *evt)
+ps2_poll (loom_input_source *src, loom_input_event *evt)
 {
-  loom_ps2_keyboard_t *ps2 = (loom_ps2_keyboard_t *) src->data;
-  loom_usize_t head, tail;
+  loom_ps2_keyboard *ps2 = (loom_ps2_keyboard *) src->data;
+  usize head, tail;
 
   int keycode = 0, press;
-  loom_uint8_t sc;
+  u8 sc;
 
   int flags = loom_irq_save ();
 
@@ -124,7 +124,7 @@ ps2_poll (loom_input_source_t *src, loom_input_event_t *evt)
     {
       if (++ps2->poll >= 1000)
         {
-          loom_uint8_t status = loom_inb (PS2_STATUS);
+          u8 status = loom_inb (PS2_STATUS);
           ps2->poll = 0;
 
           if (status & 1)
@@ -140,24 +140,24 @@ ps2_poll (loom_input_source_t *src, loom_input_event_t *evt)
 
   ps2->poll = 0;
 
-  sc = (loom_uint8_t) ps2->buf[head];
+  sc = (u8) ps2->buf[head];
   press = (sc & 0x80) == 0;
 
   if (sc != 0xE0)
-    sc = (loom_uint8_t) (sc & ~0x80);
+    sc = (u8) (sc & ~0x80);
 
   ps2->head = (head + 1) & (CAP - 1);
 
   loom_irq_restore (flags);
 
-  if (ps2->lastkey == 0xE0)
+  if (ps2->last_key == 0xE0)
     {
       keycode = sc1_e0_to_kc[sc];
-      ps2->lastkey = 0;
+      ps2->last_key = 0;
       goto done;
     }
 
-  ps2->lastkey = sc;
+  ps2->last_key = sc;
 
   if (sc == 0xE0)
     return 0;
@@ -177,8 +177,8 @@ done:
 
 LOOM_MOD_INIT ()
 {
-  kb.interface.poll = ps2_poll;
-  kb.interface.data = &kb;
+  kb.super.poll = ps2_poll;
+  kb.super.data = &kb;
 
   kb.head = 0;
   kb.tail = 0;
@@ -187,7 +187,7 @@ LOOM_MOD_INIT ()
   if (!kb.buf)
     return;
 
-  loom_input_source_register (&kb.interface);
+  loom_input_source_register (&kb.super);
 
   loom_pic_register_isr (1, ps2_isr);
   loom_pic_unmask (1);
@@ -197,5 +197,5 @@ LOOM_MOD_DEINIT ()
 {
   loom_pic_mask (1);
 
-  loom_input_source_unregister (&kb.interface);
+  loom_input_source_unregister (&kb.super);
 }

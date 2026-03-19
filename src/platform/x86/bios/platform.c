@@ -6,30 +6,29 @@
 
 typedef struct
 {
-  loom_uint64_t address;
-  loom_uint64_t length;
-  loom_uint32_t type;
+  u64 address;
+  u64 length;
+  u32 type;
 } LOOM_PACKED e820_t;
 
 void loom_vga_con_register (void);
 
 void
-mmap_mm_hook (loom_uint64_t address, loom_uint64_t length,
-              loom_memory_type_t type, LOOM_UNUSED void *data)
+mmap_mm_hook (u64 addr, u64 length, loom_memory_type type,
+              LOOM_UNUSED void *data)
 {
-  if (address >= 0xffffffff || address >= LOOM_USIZE_MAX
-      || type != LOOM_MEMORY_TYPE_FREE)
+  if (addr >= 0xffffffff || addr >= USIZE_MAX || type != LOOM_MEMORY_TYPE_FREE)
     return;
 
-  if (address < 0x100000)
+  if (addr < 0x100000)
     {
-      if (address + length <= 0x100000)
+      if (addr + length <= 0x100000)
         return;
-      length -= 0x100000 - address;
-      address = 0x100000;
+      length -= 0x100000 - addr;
+      addr = 0x100000;
     }
 
-  loom_mm_add_region ((loom_usize_t) address, (loom_usize_t) length);
+  loom_mm_add_region ((usize) addr, (usize) length);
 }
 
 void
@@ -50,7 +49,7 @@ loom_platform_init (void)
 void
 loom_platform_mmap_iterate (mmap_hook hook, void *data)
 {
-  loom_bios_args_t args = { 0 };
+  loom_bios_args args = { 0 };
   volatile e820_t e820;
 
   loom_compile_assert (sizeof (e820_t) >= 20,
@@ -61,7 +60,7 @@ loom_platform_mmap_iterate (mmap_hook hook, void *data)
       args.eax = 0xE820;
       args.ecx = sizeof (e820_t);
       args.edx = 0x534D4150;
-      args.edi = (loom_uintptr_t) &e820;
+      args.edi = (uintptr) &e820;
       args.ds = 0;
 
       loom_bios_int (0x15, &args);
@@ -70,7 +69,7 @@ loom_platform_mmap_iterate (mmap_hook hook, void *data)
           || args.ecx < 20)
         break;
 
-      loom_memory_type_t type;
+      loom_memory_type type;
 
       switch (e820.type)
         {

@@ -5,14 +5,14 @@
 LOOM_MOD (hello)
 
 static int
-hello_task (LOOM_UNUSED loom_command_t *cmd, LOOM_UNUSED loom_usize_t argc,
+hello_task (LOOM_UNUSED loom_command *cmd, LOOM_UNUSED usize argc,
             LOOM_UNUSED char *argv[])
 {
   loom_printf ("Hello!\n");
   return 0;
 }
 
-static loom_command_t hello_command = {
+static loom_command hello_command = {
   .name = "hello",
   .task = hello_task,
 };

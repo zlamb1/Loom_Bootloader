@@ -8,40 +8,39 @@
 #include "loom/partition_scheme.h"
 #include "loom/string.h"
 
-int gpt_partition_scheme_iterate (loom_partition_scheme_t *,
-                                  loom_block_dev_t *,
-                                  loom_partition_scheme_hook_t, void *);
+int gpt_partition_scheme_iterate (loom_partition_scheme *, loom_block_dev *,
+                                  loom_partition_scheme_hook, void *);
 
-static loom_partition_scheme_t gpt_partition_scheme = {
+static loom_partition_scheme gpt_partition_scheme = {
   .iterate = gpt_partition_scheme_iterate,
 };
 
-typedef loom_uint64_t lba_t;
+typedef u64 lba;
 
 typedef struct
 {
-  lba_t start;
-  lba_t end;
-} LOOM_PACKED range_t;
+  lba start;
+  lba end;
+} LOOM_PACKED range;
 
 typedef struct
 {
 #define GPT_SIGNATURE "EFI PART"
 #define GPT_GUID_SIZE 16
-  loom_uint64_t signature;
-  loom_uint32_t revision;
-  loom_uint32_t hdr_sz;
-  loom_uint32_t hdr_crc32;
-  loom_uint32_t res1;
-  lba_t hdr_loc;
-  lba_t backup_loc;
-  range_t alloc;
+  u64 signature;
+  u32 revision;
+  u32 hdr_sz;
+  u32 hdr_crc32;
+  u32 res1;
+  lba hdr_loc;
+  lba backup_loc;
+  range alloc;
   char disk_uuid[GPT_GUID_SIZE];
-  lba_t ents_loc;
-  loom_uint32_t ents;
-  loom_uint32_t ents_sz;
-  loom_uint32_t ents_crc32;
-} LOOM_PACKED gpt_header_t;
+  lba ents_loc;
+  u32 ents;
+  u32 ents_sz;
+  u32 ents_crc32;
+} LOOM_PACKED gpt_header;
 
 static char gpt_part_type_unused[GPT_GUID_SIZE] = { 0 };
 
@@ -49,24 +48,24 @@ typedef struct
 {
   char partition_type[GPT_GUID_SIZE];
   char partition_uuid[GPT_GUID_SIZE];
-  range_t range;
+  range range;
 #define GPT_PART_PLATFORM_REQ  (1 << 0)
 #define GPT_PART_EFI_IGNORE    (1 << 1)
 #define GPT_PART_BIOS_BOOTABLE (1 << 2)
-  loom_uint64_t attributes;
+  u64 attributes;
   char name[72]; // UTF-16LE
-} LOOM_PACKED gpt_partition_entry_t;
+} LOOM_PACKED gpt_partition_entry;
 
 int
-gpt_partition_scheme_iterate (loom_partition_scheme_t *partition_scheme,
-                              loom_block_dev_t *parent,
-                              loom_partition_scheme_hook_t hook, void *ctx)
+gpt_partition_scheme_iterate (loom_partition_scheme *partition_scheme,
+                              loom_block_dev *parent,
+                              loom_partition_scheme_hook hook, void *ctx)
 {
-  int retval = -1;
-  gpt_header_t *hdr = NULL;
+  int ret_val = -1;
+  gpt_header *hdr = NULL;
   char *ents = NULL;
-  loom_error_t error;
-  loom_usize_t size, loc;
+  loom_error error;
+  usize size, loc;
 
   (void) partition_scheme;
 
@@ -74,7 +73,7 @@ gpt_partition_scheme_iterate (loom_partition_scheme_t *partition_scheme,
   if (hdr == NULL)
     goto out;
 
-  if ((error = loom_block_dev_read (parent, parent->blocksz, sizeof (*hdr),
+  if ((error = loom_block_dev_read (parent, parent->block_size, sizeof (*hdr),
                                     (char *) hdr)))
     {
       loom_error_np (error);
@@ -83,7 +82,7 @@ gpt_partition_scheme_iterate (loom_partition_scheme_t *partition_scheme,
 
   if (loom_memcmp (&hdr->signature, GPT_SIGNATURE, 8))
     {
-      loom_error (LOOM_ERR_BAD_PART_SCHEME, "bad GPT signature");
+      loom_fmt_error (LOOM_ERR_BAD_PART_SCHEME, "bad GPT signature");
       goto out;
     }
 
@@ -91,7 +90,7 @@ gpt_partition_scheme_iterate (loom_partition_scheme_t *partition_scheme,
 
   if (hdr->hdr_sz < sizeof (*hdr))
     {
-      loom_error (LOOM_ERR_BAD_PART_SCHEME, "bad GPT header size");
+      loom_fmt_error (LOOM_ERR_BAD_PART_SCHEME, "bad GPT header size");
       goto out;
     }
 
@@ -99,9 +98,9 @@ gpt_partition_scheme_iterate (loom_partition_scheme_t *partition_scheme,
 
   hdr->ents_sz = loom_le32toh (hdr->ents_sz);
 
-  if (hdr->ents_sz < sizeof (gpt_partition_entry_t))
+  if (hdr->ents_sz < sizeof (gpt_partition_entry))
     {
-      loom_error (LOOM_ERR_BAD_PART_SCHEME, "bad GPT entry size");
+      loom_fmt_error (LOOM_ERR_BAD_PART_SCHEME, "bad GPT entry size");
       goto out;
     }
 
@@ -109,15 +108,16 @@ gpt_partition_scheme_iterate (loom_partition_scheme_t *partition_scheme,
 
   if (loom_mul (hdr->ents, hdr->ents_sz, &size))
     {
-      loom_error (LOOM_ERR_BAD_PART_SCHEME, "GPT table entries overflow");
+      loom_fmt_error (LOOM_ERR_BAD_PART_SCHEME, "GPT table entries overflow");
       goto out;
     }
 
   hdr->ents_loc = loom_le64toh (hdr->ents_loc);
 
-  if (loom_mul (parent->blocksz, hdr->ents_loc, &loc))
+  if (loom_mul (parent->block_size, hdr->ents_loc, &loc))
     {
-      loom_error (LOOM_ERR_BAD_PART_SCHEME, "GPT table entries out of range");
+      loom_fmt_error (LOOM_ERR_BAD_PART_SCHEME,
+                      "GPT table entries out of range");
       goto out;
     }
 
@@ -134,12 +134,12 @@ gpt_partition_scheme_iterate (loom_partition_scheme_t *partition_scheme,
 
   // TODO: validate entries CRC32
 
-  for (loom_usize_t i = 0; i < hdr->ents; ++i)
+  for (usize i = 0; i < hdr->ents; ++i)
     {
-      loom_partition_t partition;
-      gpt_partition_entry_t *ent
-          = (gpt_partition_entry_t *) (ents + i * hdr->ents_sz);
-      loom_usize_t offset, blocks;
+      loom_partition partition;
+      gpt_partition_entry *ent
+          = (gpt_partition_entry *) (ents + i * hdr->ents_sz);
+      usize offset, blocks;
 
       if (!loom_memcmp (ent->partition_type, gpt_part_type_unused,
                         GPT_GUID_SIZE))
@@ -150,8 +150,8 @@ gpt_partition_scheme_iterate (loom_partition_scheme_t *partition_scheme,
 
       if (ent->range.start > ent->range.end)
         {
-          loom_error (LOOM_ERR_BAD_PART_SCHEME,
-                      "bad GPT partition entry range");
+          loom_fmt_error (LOOM_ERR_BAD_PART_SCHEME,
+                          "bad GPT partition entry range");
           goto out;
         }
 
@@ -162,19 +162,19 @@ gpt_partition_scheme_iterate (loom_partition_scheme_t *partition_scheme,
 
       loom_partition_init (&partition, parent, offset, blocks);
 
-      if ((retval = hook (parent, &partition, ctx)))
+      if ((ret_val = hook (parent, &partition, ctx)))
         {
           loom_error_np (LOOM_ERR_HOOK);
           goto out;
         }
     }
 
-  retval = 0;
+  ret_val = 0;
 out:
   loom_free (ents);
   loom_free (hdr);
 
-  return retval;
+  return ret_val;
 }
 
 LOOM_MOD (gpt)

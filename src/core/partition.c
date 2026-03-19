@@ -2,13 +2,13 @@
 #include "loom/assert.h"
 #include "loom/math.h"
 
-loom_error_t
-loom_partition_read (loom_block_dev_t *block_dev, loom_usize_t block,
-                     loom_usize_t n, char *buf)
+loom_error
+loom_partition_read (loom_block_dev *block_dev, usize block, usize n,
+                     char *buf)
 {
-  loom_block_dev_t *parent;
-  loom_partition_t *partition;
-  loom_usize_t end;
+  loom_block_dev *parent;
+  loom_partition *partition;
+  usize end;
 
   loom_assert (block_dev != NULL);
   loom_assert (block_dev->parent != NULL);

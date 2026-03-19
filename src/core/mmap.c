@@ -3,35 +3,33 @@
 #include "loom/mm.h"
 #include "loom/platform.h"
 
-loom_mmap_t loom_mmap;
+loom_memory_map loom_mmap;
 
 static void
-mmap_count_hook (LOOM_UNUSED loom_uint64_t address,
-                 LOOM_UNUSED loom_uint64_t length,
-                 LOOM_UNUSED loom_memory_type_t type, void *data)
+mmap_count_hook (LOOM_UNUSED u64 addr, LOOM_UNUSED u64 length,
+                 LOOM_UNUSED loom_memory_type type, void *data)
 {
-  loom_usize_t *count = data;
+  usize *count = data;
   (*count)++;
 }
 
 static void
-mmap_fill_hook (loom_uint64_t address, loom_uint64_t length,
-                loom_memory_type_t type, LOOM_UNUSED void *data)
+mmap_fill_hook (u64 addr, u64 length, loom_memory_type type,
+                LOOM_UNUSED void *data)
 {
-  loom_usize_t count = *(loom_usize_t *) data;
+  usize count = *(usize *) data;
 
   if (loom_mmap.count >= count)
     loom_panic ("mmap_iterate_fill");
 
-  loom_mmap.entries[loom_mmap.count++] = (loom_mmap_entry_t) {
-    .address = address, .length = length, .type = type
-  };
+  loom_mmap.entries[loom_mmap.count++]
+      = (loom_mmap_entry) { .addr = addr, .length = length, .type = type };
 }
 
 void
 loom_mmap_init (void)
 {
-  loom_usize_t count = 0;
+  usize count = 0;
   loom_platform_mmap_iterate (mmap_count_hook, &count);
 
   if (!count)
@@ -45,14 +43,14 @@ loom_mmap_init (void)
 }
 
 int
-loom_mmap_iterate (int (*hook) (loom_mmap_entry_t *entry, void *data),
+loom_mmap_iterate (int (*hook) (loom_mmap_entry *entry, void *data),
                    void *data)
 {
-  int retval = 0;
+  int ret_val = 0;
 
-  for (loom_usize_t i = 0; i < loom_mmap.count; ++i)
-    if ((retval = hook (loom_mmap.entries + i, data)))
-      return retval;
+  for (usize i = 0; i < loom_mmap.count; ++i)
+    if ((ret_val = hook (loom_mmap.entries + i, data)))
+      return ret_val;
 
-  return retval;
+  return ret_val;
 }

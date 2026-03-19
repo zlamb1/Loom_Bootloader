@@ -24,29 +24,29 @@
 #define LOOM_ERROR(ERROR, ...)                                                \
   do                                                                          \
     {                                                                         \
-      loom_error ((ERROR), ##__VA_ARGS__);                                    \
+      loom_fmt_error ((ERROR), ##__VA_ARGS__);                                \
       return -1;                                                              \
     }                                                                         \
   while (0)
 
-typedef loom_uint8_t loom_error_t;
+typedef uint loom_error;
 
-extern loom_error_t LOOM_EXPORT_VAR (loom_errno);
+extern loom_error LOOM_EXPORT_VAR (loom_errno);
 
-loom_error_t LOOM_PRINTF (2, 3)
-    LOOM_EXPORT (loom_error) (loom_error_t, const char *fmt, ...);
+loom_error LOOM_PRINTF (2, 3)
+    LOOM_EXPORT (loom_fmt_error) (loom_error, const char *fmt, ...);
 const char *LOOM_EXPORT (loom_error_get) (void);
 void LOOM_EXPORT (loom_error_clear) (void);
 
-const char *LOOM_EXPORT (loom_strerror) (loom_error_t);
+const char *LOOM_EXPORT (loom_strerror) (loom_error);
 
 void LOOM_NORETURN LOOM_PRINTF (1, 2)
     LOOM_EXPORT (loom_panic) (const char *fmt, ...);
 
-static inline loom_error_t
-loom_error_np (loom_error_t error)
+static inline loom_error
+loom_error_np (loom_error error)
 {
-  loom_error (error, "%s", loom_strerror (error));
+  loom_fmt_error (error, "%s", loom_strerror (error));
   return error;
 }
 

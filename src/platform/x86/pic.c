@@ -23,11 +23,11 @@
 
 #define DEFAULT_MASK 0xFF
 
-static loom_uint8_t offsets[2] = { BIOS_MASTER_OFFSET, BIOS_SLAVE_OFFSET };
-static loom_uint8_t masks[2] = { DEFAULT_MASK, DEFAULT_MASK }, bios_masks[2];
+static u8 offsets[2] = { BIOS_MASTER_OFFSET, BIOS_SLAVE_OFFSET };
+static u8 masks[2] = { DEFAULT_MASK, DEFAULT_MASK }, bios_masks[2];
 
 static void
-pic_remap (loom_uint8_t offset1, loom_uint8_t offset2, loom_bool_t save)
+pic_remap (u8 offset1, u8 offset2, bool save)
 {
   int flags = loom_irq_save ();
 
@@ -57,16 +57,16 @@ pic_remap (loom_uint8_t offset1, loom_uint8_t offset2, loom_bool_t save)
 }
 
 void
-loom_pic_remap (loom_uint8_t offset1, loom_uint8_t offset2)
+loom_pic_remap (u8 offset1, u8 offset2)
 {
   pic_remap (offset1, offset2, 1);
 }
 
 void
-loom_pic_mask (loom_uint8_t irq)
+loom_pic_mask (u8 irq)
 {
-  loom_uint16_t port;
-  loom_uint8_t mask;
+  u16 port;
+  u8 mask;
 
   if (irq < 8)
     port = PIC1_DATA;
@@ -87,10 +87,10 @@ loom_pic_mask (loom_uint8_t irq)
 }
 
 void
-loom_pic_unmask (loom_uint8_t irq)
+loom_pic_unmask (u8 irq)
 {
-  loom_uint16_t port;
-  loom_uint8_t mask;
+  u16 port;
+  u8 mask;
 
   if (irq < 8)
     port = PIC1_DATA;
@@ -100,7 +100,7 @@ loom_pic_unmask (loom_uint8_t irq)
       irq -= 8;
     }
 
-  mask = loom_inb (port) & (loom_uint8_t) ~(1 << irq);
+  mask = loom_inb (port) & (u8) ~(1 << irq);
 
   if (irq < 8)
     masks[0] = mask;
@@ -111,7 +111,7 @@ loom_pic_unmask (loom_uint8_t irq)
 }
 
 void
-loom_pic_eoi (loom_uint8_t irq)
+loom_pic_eoi (u8 irq)
 {
   if (irq >= 8)
     loom_outb (PIC2_CMD, PIC_EOI);
@@ -126,9 +126,9 @@ loom_pic_disable (void)
 }
 
 void
-loom_pic_register_isr (loom_uint8_t irq, void *isr)
+loom_pic_register_isr (u8 irq, void *isr)
 {
-  loom_uint8_t offset;
+  u8 offset;
   if (irq < 8)
     offset = offsets[0];
   else

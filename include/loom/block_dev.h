@@ -4,36 +4,36 @@
 #include "loom/error.h"
 #include "loom/list.h"
 
-struct loom_block_dev_t;
+struct loom_block_dev;
 
-typedef loom_error_t (*block_dev_read) (struct loom_block_dev_t *,
-                                        loom_usize_t, loom_usize_t, char *);
+typedef loom_error (*block_dev_read) (struct loom_block_dev *, usize, usize,
+                                      char *);
 
-typedef struct loom_block_dev_t
+typedef struct loom_block_dev
 {
-  struct loom_block_dev_t *parent;
+  struct loom_block_dev *parent;
   block_dev_read read;
-  loom_usize_t blocksz;
-  loom_usize_t blocks;
+  usize block_size;
+  usize blocks;
 #define LOOM_BLOCK_DEVICE_FLAG_PROBED (1 << 0)
-  loom_uint8_t flags;
+  byte flags;
   void *data;
-  loom_list_t children, child_node, node;
-} loom_block_dev_t;
+  loom_list children, child_node, node;
+} loom_block_dev;
 
-extern loom_list_t LOOM_EXPORT_VAR (loom_block_devs);
+extern loom_list LOOM_EXPORT_VAR (loom_block_devs);
 
 typedef struct
 {
-  loom_block_dev_t *parent;
+  loom_block_dev *parent;
   block_dev_read read;
-  loom_usize_t blocksz;
-  loom_usize_t blocks;
+  usize block_size;
+  usize blocks;
   void *data;
 } loom_block_dev_init_t;
 
 static inline void
-loom_block_dev_init (loom_block_dev_t *block_dev, loom_block_dev_init_t *init)
+loom_block_dev_init (loom_block_dev *block_dev, loom_block_dev_init_t *init)
 {
   loom_block_dev_init_t zero = { .parent = NULL, .read = NULL, .data = NULL };
 
@@ -42,7 +42,7 @@ loom_block_dev_init (loom_block_dev_t *block_dev, loom_block_dev_init_t *init)
 
   block_dev->parent = init->parent;
   block_dev->read = init->read;
-  block_dev->blocksz = init->blocksz;
+  block_dev->block_size = init->block_size;
   block_dev->blocks = init->blocks;
   block_dev->flags = 0;
   block_dev->data = init->data;
@@ -50,14 +50,14 @@ loom_block_dev_init (loom_block_dev_t *block_dev, loom_block_dev_init_t *init)
   block_dev->child_node = LOOM_LIST_HEAD (block_dev->child_node);
 }
 
-void LOOM_EXPORT (loom_block_dev_register) (loom_block_dev_t *block_dev);
-void LOOM_EXPORT (loom_block_dev_unregister) (loom_block_dev_t *block_dev);
+void LOOM_EXPORT (loom_block_dev_register) (loom_block_dev *block_dev);
+void LOOM_EXPORT (loom_block_dev_unregister) (loom_block_dev *block_dev);
 
-loom_error_t LOOM_EXPORT (loom_block_dev_read) (loom_block_dev_t *block_dev,
-                                                loom_usize_t offset,
-                                                loom_usize_t size, char *buf);
+loom_error LOOM_EXPORT (loom_block_dev_read) (loom_block_dev *block_dev,
+                                              usize offset, usize size,
+                                              char *buf);
 
-void LOOM_EXPORT (loom_block_dev_probe) (loom_block_dev_t *block_dev,
-                                         loom_bool_t force);
+void LOOM_EXPORT (loom_block_dev_probe) (loom_block_dev *block_dev,
+                                         bool force);
 
 #endif

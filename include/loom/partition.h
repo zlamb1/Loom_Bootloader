@@ -1,4 +1,3 @@
-#include "loom/list.h"
 #ifndef LOOM_PARTITION_H
 #define LOOM_PARTITION_H 1
 
@@ -6,21 +5,20 @@
 #include "loom/block_dev.h"
 #include "loom/partition_scheme.h"
 
-typedef struct loom_partition_t
+typedef struct loom_partition
 {
-  loom_block_dev_t base;
-  loom_usize_t offset;
-} loom_partition_t;
+  loom_block_dev base;
+  usize offset;
+} loom_partition;
 
-extern loom_list_t loom_partition_schemes;
+extern loom_list loom_partition_schemes;
 
-loom_error_t LOOM_EXPORT (loom_partition_read) (loom_block_dev_t *block_dev,
-                                                loom_usize_t block,
-                                                loom_usize_t n, char *buf);
+loom_error LOOM_EXPORT (loom_partition_read) (loom_block_dev *block_dev,
+                                              usize block, usize n, char *buf);
 
 static inline void
-loom_partition_init (loom_partition_t *partition, loom_block_dev_t *parent,
-                     loom_usize_t offset, loom_usize_t blocks)
+loom_partition_init (loom_partition *partition, loom_block_dev *parent,
+                     usize offset, usize blocks)
 {
   loom_assert (partition != NULL);
   loom_assert (parent != NULL);
@@ -28,7 +26,7 @@ loom_partition_init (loom_partition_t *partition, loom_block_dev_t *parent,
   loom_block_dev_init_t init = {
     .parent = parent,
     .read = loom_partition_read,
-    .blocksz = parent->blocksz,
+    .block_size = parent->block_size,
     .blocks = blocks,
     .data = partition,
   };
@@ -39,7 +37,7 @@ loom_partition_init (loom_partition_t *partition, loom_block_dev_t *parent,
 }
 
 static inline void
-loom_partition_deinit (loom_partition_t *partition)
+loom_partition_deinit (loom_partition *partition)
 {
   loom_assert (partition != NULL);
   loom_assert (partition->base.parent != NULL);

@@ -9,42 +9,42 @@
 
 typedef struct
 {
-  loom_uint8_t status;
+  u8 status;
   char chs_start[3];
 #define PART_TYPE_EMPTY 0x00
 #define PART_TYPE_GPT   0xEE
-  loom_uint8_t partition_type;
+  u8 partition_type;
   char chs_end[3];
-  loom_uint32_t lba_start;
-  loom_uint32_t sectors;
-} LOOM_PACKED mbr_partition_entry_t;
+  u32 lba_start;
+  u32 sectors;
+} LOOM_PACKED mbr_partition_entry;
 
-typedef struct
+struct LOOM_PACKED mbr
 {
 #define MBR_SIZE 512
   char pad[446];
-  mbr_partition_entry_t entries[4];
-  loom_uint16_t signature;
-} LOOM_PACKED mbr_t;
+  mbr_partition_entry entries[4];
+  u16 signature;
+};
 
-static int mbr_partition_scheme_iterate (loom_partition_scheme_t *,
-                                         loom_block_dev_t *,
-                                         loom_partition_scheme_hook_t, void *);
+static int mbr_partition_scheme_iterate (loom_partition_scheme *,
+                                         loom_block_dev *,
+                                         loom_partition_scheme_hook, void *);
 
-loom_partition_scheme_t mbr_partition_scheme = {
+loom_partition_scheme mbr_partition_scheme = {
   .iterate = mbr_partition_scheme_iterate,
 };
 
 int
-mbr_partition_scheme_iterate (loom_partition_scheme_t *partition_scheme,
-                              loom_block_dev_t *parent,
-                              loom_partition_scheme_hook_t hook, void *ctx)
+mbr_partition_scheme_iterate (loom_partition_scheme *partition_scheme,
+                              loom_block_dev *parent,
+                              loom_partition_scheme_hook hook, void *ctx)
 {
   int retval = -1;
-  mbr_t *mbr = loom_malloc (sizeof (mbr_t));
-  loom_error_t error;
+  struct mbr *mbr = loom_malloc (sizeof (struct mbr));
+  loom_error error;
 
-  loom_compile_assert (sizeof (mbr_t) == MBR_SIZE, "bad size for mbr_t");
+  loom_compile_assert (sizeof (struct mbr) == MBR_SIZE, "bad size for mbr_t");
 
   (void) partition_scheme;
 
@@ -61,21 +61,20 @@ mbr_partition_scheme_iterate (loom_partition_scheme_t *partition_scheme,
 
   if (mbr->signature != 0xAA55)
     {
-      loom_error (LOOM_ERR_BAD_PART_SCHEME, "bad MBR signature '%lx'",
-                  (unsigned long) mbr->signature);
+      loom_fmt_error (LOOM_ERR_BAD_PART_SCHEME, "bad MBR signature '%lx'",
+                      (unsigned long) mbr->signature);
       goto out;
     }
 
   for (int i = 0; i < 4; ++i)
     {
-      loom_partition_t partition;
-
-      mbr_partition_entry_t *entry = mbr->entries + i;
+      loom_partition partition;
+      mbr_partition_entry *entry = mbr->entries + i;
 
       if (entry->status & 0x7F)
         {
-          loom_error (LOOM_ERR_BAD_PART_SCHEME,
-                      "invalid MBR partition entry status");
+          loom_fmt_error (LOOM_ERR_BAD_PART_SCHEME,
+                          "invalid MBR partition entry status");
           goto out;
         }
 
@@ -89,7 +88,7 @@ mbr_partition_scheme_iterate (loom_partition_scheme_t *partition_scheme,
 
       if (entry->partition_type == PART_TYPE_GPT)
         {
-          loom_error (LOOM_ERR_BAD_PART_SCHEME, "protective MBR");
+          loom_fmt_error (LOOM_ERR_BAD_PART_SCHEME, "protective MBR");
           goto out;
         }
 

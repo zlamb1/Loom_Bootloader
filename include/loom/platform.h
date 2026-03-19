@@ -7,8 +7,7 @@
 extern char LOOM_EXPORT_VAR (stage1s);
 extern char LOOM_EXPORT_VAR (stage3e);
 
-typedef void (*mmap_hook) (loom_uint64_t, loom_uint64_t, loom_memory_type_t,
-                           void *);
+typedef void (*mmap_hook) (u64, u64, loom_memory_type, void *);
 
 void LOOM_EXPORT (loom_platform_init) (void);
 void LOOM_EXPORT (loom_platform_mmap_iterate) (mmap_hook hook, void *);

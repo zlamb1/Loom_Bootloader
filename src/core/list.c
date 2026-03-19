@@ -3,7 +3,7 @@
 #include "loom/types.h"
 
 void
-loom_list_prepend (loom_list_t *head, loom_list_t *node)
+loom_list_prepend (loom_list *head, loom_list *node)
 {
   loom_assert (head != NULL);
   loom_assert (head->prev != NULL);
@@ -18,7 +18,7 @@ loom_list_prepend (loom_list_t *head, loom_list_t *node)
 }
 
 void
-loom_list_append (loom_list_t *head, loom_list_t *node)
+loom_list_append (loom_list *head, loom_list *node)
 {
   loom_assert (head != NULL);
   loom_assert (head->prev != NULL);
@@ -33,7 +33,7 @@ loom_list_append (loom_list_t *head, loom_list_t *node)
 }
 
 void
-loom_list_remove (loom_list_t *node)
+loom_list_remove (loom_list *node)
 {
   loom_assert (node != NULL);
   loom_assert (node->prev != NULL);
@@ -46,7 +46,7 @@ loom_list_remove (loom_list_t *node)
 }
 
 void
-loom_list_replace (loom_list_t *oldnode, loom_list_t *newnode)
+loom_list_replace (loom_list *oldnode, loom_list *newnode)
 {
   loom_assert (oldnode != NULL);
   loom_assert (oldnode->prev != NULL);
@@ -63,8 +63,8 @@ loom_list_replace (loom_list_t *oldnode, loom_list_t *newnode)
   oldnode->prev = oldnode->next = oldnode;
 }
 
-loom_bool_t
-loom_list_is_empty (loom_list_t *head)
+bool
+loom_list_is_empty (loom_list *head)
 {
   loom_assert (head != NULL);
   loom_assert (head->prev != NULL);
@@ -73,8 +73,8 @@ loom_list_is_empty (loom_list_t *head)
   if (head->prev == head)
     {
       loom_assert (head->next == head);
-      return 1;
+      return true;
     }
 
-  return 0;
+  return false;
 }

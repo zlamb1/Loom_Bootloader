@@ -10,43 +10,52 @@
 #include "loom_stdint.h"
 #endif
 
-typedef uint8_t loom_uint8_t;
-typedef uint16_t loom_uint16_t;
-typedef uint32_t loom_uint32_t;
-typedef uint64_t loom_uint64_t;
+typedef uint8_t u8;
+typedef uint16_t u16;
+typedef uint32_t u32;
+typedef uint64_t u64;
 
-typedef int8_t loom_int8_t;
-typedef int16_t loom_int16_t;
-typedef int32_t loom_int32_t;
-typedef int64_t loom_int64_t;
-
-typedef int loom_bool_t;
-
-typedef uint32_t loom_usize_t;
-typedef uintptr_t loom_uintptr_t;
-typedef loom_uintptr_t loom_address_t;
+typedef int8_t i8;
+typedef int16_t i16;
+typedef int32_t i32;
+typedef int64_t i64;
 
 typedef unsigned char uchar;
 typedef unsigned short ushort;
 typedef unsigned int uint;
 typedef unsigned long ulong;
+typedef unsigned long long ullong;
 
-#define LOOM_UINT8_MAX  UINT8_MAX
-#define LOOM_UINT16_MAX UINT16_MAX
-#define LOOM_UINT32_MAX UINT32_MAX
-#define LOOM_UINT64_MAX UINT64_MAX
+typedef uchar byte;
 
-#define LOOM_INT8_MIN  INT8_MIN
-#define LOOM_INT16_MIN INT16_MIN
-#define LOOM_INT32_MIN INT32_MIN
-#define LOOM_INT64_MIN INT64_MIN
+#define false 0
+#define true  1
 
-#define LOOM_INT8_MAX  INT8_MAX
-#define LOOM_INT16_MAX INT16_MAX
-#define LOOM_INT32_MAX INT32_MAX
-#define LOOM_INT64_MAX INT64_MAX
+typedef u8 b8;
+typedef u16 b16;
+typedef u32 b32;
+typedef uint bool;
 
-#define LOOM_USIZE_MAX   UINT32_MAX
-#define LOOM_ADDRESS_MAX UINTPTR_MAX
+typedef u32 usize;
+typedef uintptr_t uintptr;
+typedef uintptr address;
+
+#define U8_MAX  UINT8_MAX
+#define U16_MAX UINT16_MAX
+#define U32_MAX UINT32_MAX
+#define U64_MAX UINT64_MAX
+
+#define I8_MIN  INT8_MIN
+#define I16_MIN INT16_MIN
+#define I32_MIN INT32_MIN
+#define I64_MIN INT64_MIN
+
+#define I8_MAX  INT8_MAX
+#define I16_MAX INT16_MAX
+#define I32_MAX INT32_MAX
+#define I64_MAX INT64_MAX
+
+#define USIZE_MAX   U32_MAX
+#define ADDRESS_MAX UINTPTR_MAX
 
 #endif

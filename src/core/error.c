@@ -3,12 +3,12 @@
 
 #define ERROR_BUF_SIZE 64
 
-loom_error_t loom_errno;
+loom_error loom_errno;
 
 static char error_buf[ERROR_BUF_SIZE];
 
-loom_error_t
-loom_error (loom_error_t error, const char *fmt, ...)
+loom_error
+loom_fmt_error (loom_error error, const char *fmt, ...)
 {
   loom_errno = error;
 
@@ -38,11 +38,11 @@ loom_error_get (void)
 void
 loom_error_clear (void)
 {
-  loom_error (LOOM_ERR_NONE, NULL);
+  loom_fmt_error (LOOM_ERR_NONE, NULL);
 }
 
 const char *
-loom_strerror (loom_error_t error)
+loom_strerror (loom_error error)
 {
   switch (error)
     {

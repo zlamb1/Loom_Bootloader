@@ -5,9 +5,9 @@
 void
 _loom_assert (const char *cond, const char *file, uint line)
 {
-  loom_usize_t index = 0;
+  usize index = 0;
 
-  for (loom_usize_t i = 0; file[i]; ++i)
+  for (usize i = 0; file[i]; ++i)
     {
       if (file[i] == '/')
         index = i + 1;

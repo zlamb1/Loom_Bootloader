@@ -13,18 +13,18 @@
 
 typedef struct
 {
-  loom_usize_t count, cap;
+  usize count, cap;
   char **buf;
-} module_args_t;
+} module_args;
 
 typedef struct
 {
-  loom_usize_t size, cap;
+  usize size, cap;
   char *data;
-} modules_t;
+} modules;
 
-static loom_file_t bin, kernel, initrd, new_bin, mod;
-static modules_t mods;
+static loom_file bin, kernel, initrd, new_bin, mod;
+static modules mods;
 
 static void
 error ()
@@ -48,19 +48,19 @@ error_with (const char *fmt, ...)
 int
 main (int argc, char *argv[])
 {
-  loom_module_header_t hdr;
-  loom_file_meta_t file_meta;
+  loom_module_header hdr;
+  loom_file_meta file_meta;
 
-  loom_usize_t mod_index = 0, table_bytes, table_size, bin_size,
-               kernel_size = 0, initrd_size = 0;
+  usize mod_index = 0, table_bytes, table_size, bin_size, kernel_size = 0,
+        initrd_size = 0;
 
-  uint32_t *table;
+  u32 *table;
   char *bin_data, *kernel_data, *initrd_data;
 
   const char *in_path = NULL, *kernel_path = NULL, *initrd_path = NULL,
              *out_path = NULL;
 
-  module_args_t mod_args = { 0 };
+  module_args mod_args = { 0 };
 
   for (int i = 1; i < argc; ++i)
     {
@@ -124,7 +124,7 @@ main (int argc, char *argv[])
       if (loom_file_open (kernel_path, LOOM_O_RDONLY, &kernel))
         error ();
 
-      if (loom_file_meta (kernel, &file_meta))
+      if (loom_file_get_meta (kernel, &file_meta))
         error ();
 
       kernel_size = file_meta.size;
@@ -135,7 +135,7 @@ main (int argc, char *argv[])
       if (loom_file_open (initrd_path, LOOM_O_RDONLY, &initrd))
         error ();
 
-      if (loom_file_meta (initrd, &file_meta))
+      if (loom_file_get_meta (initrd, &file_meta))
         error ();
 
       initrd_size = file_meta.size;
@@ -147,7 +147,7 @@ main (int argc, char *argv[])
   if (loom_file_open (in_path, LOOM_O_RDONLY, &bin))
     error ();
 
-  if (loom_file_meta (bin, &file_meta))
+  if (loom_file_get_meta (bin, &file_meta))
     error ();
 
   if (!file_meta.size)
@@ -176,12 +176,12 @@ main (int argc, char *argv[])
   for (unsigned int i = 0; i < mod_args.count; ++i)
     {
       const char *mod_path = mod_args.buf[i];
-      loom_usize_t mod_size, req_size;
+      usize mod_size, req_size;
 
       if (loom_file_open (mod_path, LOOM_O_RDONLY, &mod))
         error ();
 
-      if (loom_file_meta (mod, &file_meta))
+      if (loom_file_get_meta (mod, &file_meta))
         error ();
 
       mod_size = file_meta.size;
@@ -276,11 +276,11 @@ main (int argc, char *argv[])
         error ();
     }
 
-  if (loom_file_meta (new_bin, &file_meta))
+  if (loom_file_get_meta (new_bin, &file_meta))
     error ();
 
   {
-    loom_usize_t align = file_meta.size & 511;
+    usize align = file_meta.size & 511;
     if (align)
       {
         char tmp[512] = { 0 };
