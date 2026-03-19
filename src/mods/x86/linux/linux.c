@@ -60,7 +60,7 @@ typedef struct setup_header
 static loom_kernel_loader linux_loader = { 0 };
 
 static void
-linux_boot (loom_kernel_loader *kernel_loader)
+linuxBoot (loom_kernel_loader *kernel_loader)
 {
   extern char linux_relocator;
   extern char linux_relocator_end;
@@ -81,9 +81,9 @@ linux_boot (loom_kernel_loader *kernel_loader)
     setup_sects = 4;
 
   off = (setup_sects + 1) * 512;
-  loom_memcpy ((void *) (SEG * 0x10), kernel, off);
+  loomMemCopy ((void *) (SEG * 0x10), kernel, off);
 
-  loom_memcpy ((void *) SCRATCH, &linux_relocator,
+  loomMemCopy ((void *) SCRATCH, &linux_relocator,
                (usize) (&linux_relocator_end - &linux_relocator));
 
   ((void (*) (u32 dst, u32 src, u32 size, u16 seg)) SCRATCH) (
@@ -92,7 +92,7 @@ linux_boot (loom_kernel_loader *kernel_loader)
 }
 
 static int
-linux_task (unused loom_command *cmd, unused usize argc, unused char *argv[])
+linuxTask (unused loom_command *cmd, unused usize argc, unused char *argv[])
 {
   loom_module_header hdr;
   loom_block_dev *block_dev;
@@ -102,9 +102,9 @@ linux_task (unused loom_command *cmd, unused usize argc, unused char *argv[])
   setup_header *header;
   char *kbuf = NULL, *cmdline = NULL;
 
-  loom_kernel_loader_remove (1);
+  loomKernelLoaderRemove (true);
 
-  loom_memcpy (&hdr, (void *) loom_modbase, sizeof (hdr));
+  loomMemCopy (&hdr, (void *) loom_modbase, sizeof (hdr));
 
   offset = (usize) &stage3e - (usize) &stage1s;
   offset += hdr.size;
@@ -113,31 +113,31 @@ linux_task (unused loom_command *cmd, unused usize argc, unused char *argv[])
 
   if (!kernel_size)
     {
-      loom_fmt_error (LOOM_ERR_BAD_ARG, "no kernel appended");
+      loomErrorFmt (LOOM_ERR_BAD_ARG, "no kernel appended");
       return -1;
     }
 
-  kbuf = loom_malloc (kernel_size);
+  kbuf = loomAlloc (kernel_size);
 
   if (!kbuf)
     return -1;
 
-  if (loom_list_is_empty (&loom_block_devs))
+  if (loomListIsEmpty (&loom_block_devs))
     {
-      loom_fmt_error (LOOM_ERR_IO, "no disks found");
+      loomErrorFmt (LOOM_ERR_IO, "no disks found");
       goto out;
     }
 
   block_dev = container_of (loom_block_devs.next, loom_block_dev, node);
 
-  if (loom_block_dev_read (block_dev, offset, kernel_size, kbuf))
+  if (loomBlockDevRead (block_dev, offset, kernel_size, kbuf))
     goto out;
 
   header = (setup_header *) (kbuf + SETUP_HEADER_OFFSET);
 
-  if (loom_memcmp (header->header, "HdrS", 4))
+  if (loomMemCmp (header->header, "HdrS", 4))
     {
-      loom_fmt_error (LOOM_ERR_BAD_ARG, "invalid kernel header");
+      loomErrorFmt (LOOM_ERR_BAD_ARG, "invalid kernel header");
       goto out;
     }
 
@@ -155,28 +155,26 @@ linux_task (unused loom_command *cmd, unused usize argc, unused char *argv[])
   header->heap_end_ptr = 0;
   header->setup_data = 0;
 
-  linux_loader.boot = linux_boot;
+  linux_loader.boot = linuxBoot;
   linux_loader.flags = 0;
   linux_loader.kernel_size = kernel_size;
   linux_loader.kernel = kbuf;
 
-  loom_kernel_loader_add (&linux_loader);
+  loomKernelLoaderSet (&linux_loader);
 
   return 0;
 
 out:
-  loom_free (kbuf);
-  loom_free (cmdline);
+  loomFree (kbuf);
+  loomFree (cmdline);
   return -1;
 }
 
-int linux_task (loom_command *cmd, usize argc, char *argv[]);
-
 static loom_command linux_command = {
   .name = "linux",
-  .task = linux_task,
+  .task = linuxTask,
 };
 
-LOOM_MOD_INIT () { loom_command_register (&linux_command); }
+LOOM_MOD_INIT () { loomCommandRegister (&linux_command); }
 
-LOOM_MOD_DEINIT () { loom_command_unregister (&linux_command); }
+LOOM_MOD_DEINIT () { loomCommandUnregister (&linux_command); }

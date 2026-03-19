@@ -20,7 +20,7 @@ typedef struct loom_partition_scheme
 
 extern loom_list export_var (loom_partition_schemes);
 
-void export (loom_partition_scheme_register) (loom_partition_scheme *);
-void export (loom_partition_scheme_unregister) (loom_partition_scheme *);
+void export (loomPartitionSchemeRegister) (loom_partition_scheme *);
+void export (loomPartitionSchemeUnregister) (loom_partition_scheme *);
 
 #endif

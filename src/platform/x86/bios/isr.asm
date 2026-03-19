@@ -2,10 +2,10 @@ BITS 32
 
 SECTION .stage2.isr EXEC
 
-GLOBAL loom_isr_wrapper
+GLOBAL loomIsrWrapper
 GLOBAL loom_vectors
 
-loom_isr_wrapper:
+loomIsrWrapper:
     pushad
     mov ebp, esp
     cld
@@ -38,7 +38,7 @@ isr_stub_%1:
     push 0
     %endif
     push %1
-    jmp loom_isr_wrapper
+    jmp loomIsrWrapper
 %endmacro
 
 %assign i 0

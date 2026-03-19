@@ -9,14 +9,22 @@
 
 typedef void (*loom_write_fn) (loom_write_buffer wbufs[], void *data);
 
-usize export (loom_bvprintf) (loom_write_fn write_fn, void *data,
-                              const char *fmt, va_list args);
-usize export (loom_vsnprintf) (char *s, usize n, const char *fmt,
-                               va_list args);
-usize printf_func (3, 4) export (loom_snprintf) (char *s, usize n,
-                                                 const char *fmt, ...);
-usize export (loom_vprintf) (const char *fmt, va_list args);
-usize printf_func (1, 2) export (loom_printf) (const char *fmt, ...);
-usize printf_func (1, 2) loom_wprintf (const char *fmt, ...);
+typedef struct
+{
+  loom_write_fn write;
+  void *data;
+} loom_writer;
+
+usize export (loomWriterFormatV) (loom_writer w, const char *fmt,
+                                  va_list args);
+usize export (loomWriterFormat) (loom_writer w, const char *fmt, ...);
+usize export (loomBufferFormatV) (char *s, usize n, const char *fmt,
+                                  va_list args);
+usize printf_func (3, 4) export (loomBufferFormat) (char *s, usize n,
+                                                    const char *fmt, ...);
+usize export (loomLogV) (const char *fmt, va_list args);
+usize printf_func (1, 2) export (loomLog) (const char *fmt, ...);
+usize export (loomLogLnV) (const char *fmt, va_list args);
+usize printf_func (1, 2) export (loomLogLn) (const char *fmt, ...);
 
 #endif

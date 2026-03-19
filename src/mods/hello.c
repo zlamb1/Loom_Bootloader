@@ -7,7 +7,7 @@ LOOM_MOD (hello)
 static int
 hello_task (unused loom_command *cmd, unused usize argc, unused char *argv[])
 {
-  loom_printf ("Hello!\n");
+  loomLogLn ("Hello!");
   return 0;
 }
 
@@ -16,6 +16,6 @@ static loom_command hello_command = {
   .task = hello_task,
 };
 
-LOOM_MOD_INIT () { loom_command_register (&hello_command); }
+LOOM_MOD_INIT () { loomCommandRegister (&hello_command); }
 
-LOOM_MOD_DEINIT () { loom_command_unregister (&hello_command); }
+LOOM_MOD_DEINIT () { loomCommandUnregister (&hello_command); }

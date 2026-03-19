@@ -33,10 +33,10 @@ typedef struct
 } packed bios_disk_read_packet;
 
 static loom_error
-bios_disk_read (loom_block_dev *block_dev, usize block, usize count, char *buf)
+biosDiskRead (loom_block_dev *block_dev, usize block, usize count, char *buf)
 {
-  loom_assert (block_dev != NULL);
-  loom_assert (block_dev->data != NULL);
+  loomAssert (block_dev != NULL);
+  loomAssert (block_dev->data != NULL);
 
   u8 drive = ((bios_disk *) block_dev->data)->drive;
   usize length = 0x10000, block_size;
@@ -80,7 +80,7 @@ bios_disk_read (loom_block_dev *block_dev, usize block, usize count, char *buf)
       read_packet.segment = (u16) (((address) bounce) / 0x10);
       read_packet.start_block = block;
 
-      loom_bios_int (0x13, &args);
+      loomBiosInt (0x13, &args);
 
       if ((args.flags & 1) || ((args.eax >> 8) & 0xFF)
           || read_packet.blocks != (u16) read)
@@ -114,7 +114,7 @@ bios_disk_read (loom_block_dev *block_dev, usize block, usize count, char *buf)
       retries = 0;
       bytes = read * block_size;
 
-      loom_memcpy (buf, bounce, bytes);
+      loomMemCopy (buf, bounce, bytes);
 
       block += read;
       count -= read;
@@ -125,7 +125,7 @@ bios_disk_read (loom_block_dev *block_dev, usize block, usize count, char *buf)
 }
 
 void
-loom_bios_disk_probe (void)
+loomBiosDisksProbe (void)
 {
   loom_bios_args args = { 0 };
   volatile bios_disk_params params;
@@ -138,7 +138,7 @@ loom_bios_disk_probe (void)
       args.ebx = 0x55AA;
       args.edx = drive;
 
-      loom_bios_int (0x13, &args);
+      loomBiosInt (0x13, &args);
 
       if ((args.flags & 1) || args.ebx != 0xAA55)
         continue;
@@ -152,7 +152,7 @@ loom_bios_disk_probe (void)
                       "bios_disk_params_t must be at least 26 bytes.");
       params.size = 0x1A;
 
-      loom_bios_int (0x13, &args);
+      loomBiosInt (0x13, &args);
 
       if ((args.flags & 1) || ((args.eax >> 8) & 0xFF))
         continue;
@@ -160,27 +160,27 @@ loom_bios_disk_probe (void)
       if (params.sectors == U64_MAX || !params.bps)
         continue;
 
-      disk = loom_malloc (sizeof (*disk));
+      disk = loomAlloc (sizeof (*disk));
       if (!disk)
         continue;
 
       disk->bd = (loom_block_dev) {
-        .read = bios_disk_read,
+        .read = biosDiskRead,
         .block_size = params.bps,
         .blocks = (usize) params.sectors,
         .data = disk,
       };
 
       loom_block_dev_init_t init = {
-        .read = bios_disk_read,
+        .read = biosDiskRead,
         .block_size = params.bps,
         .blocks = (usize) params.sectors,
         .data = disk,
       };
 
-      loom_block_dev_init (&disk->bd, &init);
+      loomBlockDevInit (&disk->bd, &init);
       disk->drive = drive;
 
-      loom_block_dev_register (&disk->bd);
+      loomBlockDevRegister (&disk->bd);
     }
 }

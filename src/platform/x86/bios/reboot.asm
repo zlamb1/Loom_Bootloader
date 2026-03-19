@@ -2,11 +2,11 @@ BITS 32
 
 SECTION .stage2.reboot EXEC
 
-GLOBAL loom_reboot
+GLOBAL loomReboot
 
 EXTERN loom_enter_rmode
 
-loom_reboot:
+loomReboot:
     call loom_enter_rmode
 
 BITS 16

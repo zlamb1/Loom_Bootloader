@@ -8,7 +8,7 @@ loom_error loom_errno;
 static char error_buf[ERROR_BUF_SIZE];
 
 loom_error
-loom_fmt_error (loom_error error, const char *fmt, ...)
+loomErrorFmt (loom_error error, const char *fmt, ...)
 {
   loom_errno = error;
 
@@ -16,7 +16,7 @@ loom_fmt_error (loom_error error, const char *fmt, ...)
     {
       va_list args;
       va_start (args, fmt);
-      loom_vsnprintf (error_buf, ERROR_BUF_SIZE, fmt, args);
+      loomBufferFormatV (error_buf, ERROR_BUF_SIZE, fmt, args);
       va_end (args);
     }
   else
@@ -26,23 +26,23 @@ loom_fmt_error (loom_error error, const char *fmt, ...)
 }
 
 const char *
-loom_error_get (void)
+loomErrorGet (void)
 {
   if (!error_buf[0])
-    loom_snprintf (error_buf, ERROR_BUF_SIZE, "%s",
-                   loom_strerror (loom_errno));
+    loomBufferFormat (error_buf, ERROR_BUF_SIZE, "%s",
+                      loomStringError (loom_errno));
 
   return error_buf;
 }
 
 void
-loom_error_clear (void)
+loomErrorClear (void)
 {
-  loom_fmt_error (LOOM_ERR_NONE, NULL);
+  loomErrorFmt (LOOM_ERR_NONE, NULL);
 }
 
 const char *
-loom_strerror (loom_error error)
+loomStringError (loom_error error)
 {
   switch (error)
     {

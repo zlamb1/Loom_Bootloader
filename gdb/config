@@ -5,9 +5,9 @@ set pagination off
 
 layout src
 
-b loom_main
+b loomMain
 
-b loom_module_add
+b loomModuleAdd
 commands
     loom_gdb_module_load module
     c

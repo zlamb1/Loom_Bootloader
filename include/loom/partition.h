@@ -13,37 +13,37 @@ typedef struct loom_partition
 
 extern loom_list loom_partition_schemes;
 
-loom_error export (loom_partition_read) (loom_block_dev *block_dev,
-                                         usize block, usize n, char *buf);
+loom_error export (loomPartitionRead) (loom_block_dev *block_dev, usize block,
+                                       usize n, char *buf);
 
 static inline void
-loom_partition_init (loom_partition *partition, loom_block_dev *parent,
-                     usize offset, usize blocks)
+loomPartitionInit (loom_partition *partition, loom_block_dev *parent,
+                   usize offset, usize blocks)
 {
-  loom_assert (partition != NULL);
-  loom_assert (parent != NULL);
+  loomAssert (partition != NULL);
+  loomAssert (parent != NULL);
 
   loom_block_dev_init_t init = {
     .parent = parent,
-    .read = loom_partition_read,
+    .read = loomPartitionRead,
     .block_size = parent->block_size,
     .blocks = blocks,
     .data = partition,
   };
 
-  loom_block_dev_init (&partition->base, &init);
-  loom_list_add (&parent->children, &partition->base.child_node);
+  loomBlockDevInit (&partition->base, &init);
+  loomListAdd (&parent->children, &partition->base.child_node);
   partition->offset = offset;
 }
 
 static inline void
-loom_partition_deinit (loom_partition *partition)
+loomPartitionDeinit (loom_partition *partition)
 {
-  loom_assert (partition != NULL);
-  loom_assert (partition->base.parent != NULL);
+  loomAssert (partition != NULL);
+  loomAssert (partition->base.parent != NULL);
 
-  loom_list_remove (&partition->base.child_node);
-  loom_list_remove (&partition->base.node);
+  loomListRemove (&partition->base.child_node);
+  loomListRemove (&partition->base.node);
 }
 
 #endif

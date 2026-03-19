@@ -33,19 +33,19 @@ typedef struct
 } format;
 
 static void
-write (loom_write_fn write_fn, void *data, usize len, const char *buf)
+write (loom_writer w, usize len, const char *buf)
 {
-  write_fn (
-      (loom_write_buffer[]) {
-          { .len = len, .splats = 1, .s = buf },
-          { 0 },
-      },
-      data);
+  if (w.write != null)
+    w.write (
+        (loom_write_buffer[]) {
+            { .len = len, .splats = 1, .s = buf },
+            { 0 },
+        },
+        w.data);
 }
 
 static void
-flush (loom_write_fn write_fn, void *data, const char *fmt, usize *run,
-       usize *len)
+flush (loom_writer w, const char *fmt, usize *run, usize *len)
 {
   usize tmprun = *run;
 
@@ -53,17 +53,17 @@ flush (loom_write_fn write_fn, void *data, const char *fmt, usize *run,
     {
       usize tmplen = *len;
 
-      if (loom_add (tmplen, tmprun, len))
+      if (loomAdd (tmplen, tmprun, len))
         *len = USIZE_MAX;
 
-      write (write_fn, data, *run, fmt - tmprun);
+      write (w, *run, fmt - tmprun);
 
       *run = 0;
     }
 }
 
 static const char *
-parse_flags (const char *fmt, unsigned int *flags)
+parseFlags (const char *fmt, unsigned int *flags)
 {
   char ch;
   unsigned int tmp = 0;
@@ -104,8 +104,8 @@ read:
 }
 
 static const char *
-parse_width (const char *fmt, unsigned int *flags, unsigned int *width,
-             va_list *args)
+parseWidth (const char *fmt, unsigned int *flags, unsigned int *width,
+            va_list *args)
 {
   char ch;
   int tmpwidth = 0;
@@ -120,7 +120,7 @@ parse_width (const char *fmt, unsigned int *flags, unsigned int *width,
         {
           *flags |= FLAG_LEFT_JUSTIFY;
 
-          if (loom_mul (tmpwidth, -1, &tmpwidth))
+          if (loomMul (tmpwidth, -1, &tmpwidth))
             tmpwidth = INT_MAX;
 
           *width = (unsigned int) tmpwidth;
@@ -133,8 +133,8 @@ parse_width (const char *fmt, unsigned int *flags, unsigned int *width,
 
   while (ch >= '0' && ch <= '9')
     {
-      if (loom_mul (tmpwidth, 10, &tmpwidth)
-          || loom_add (tmpwidth, ch - '0', &tmpwidth))
+      if (loomMul (tmpwidth, 10, &tmpwidth)
+          || loomAdd (tmpwidth, ch - '0', &tmpwidth))
         tmpwidth = INT_MAX;
 
       ch = (++fmt)[0];
@@ -145,7 +145,7 @@ parse_width (const char *fmt, unsigned int *flags, unsigned int *width,
 }
 
 static const char *
-parse_precision (const char *fmt, precision *prec, va_list *args)
+parsePrecision (const char *fmt, precision *prec, va_list *args)
 {
   char ch;
   int tmpprec = 0;
@@ -177,8 +177,8 @@ parse_precision (const char *fmt, precision *prec, va_list *args)
 
   while (ch >= '0' && ch <= '9')
     {
-      if (loom_mul (tmpprec, 10, &tmpprec)
-          || loom_add (tmpprec, ch - '0', &tmpprec))
+      if (loomMul (tmpprec, 10, &tmpprec)
+          || loomAdd (tmpprec, ch - '0', &tmpprec))
         tmpprec = INT_MAX;
 
       ch = (++fmt)[0];
@@ -191,7 +191,7 @@ parse_precision (const char *fmt, precision *prec, va_list *args)
 }
 
 static const char *
-parse_length (const char *fmt, unsigned int *length)
+parseLength (const char *fmt, unsigned int *length)
 {
   char ch = fmt[0];
 
@@ -242,18 +242,18 @@ parse_length (const char *fmt, unsigned int *length)
 }
 
 static void
-printf_warn (unsigned int length, char spec)
+printfWarn (unsigned int length, char spec)
 {
   (void) length;
   (void) spec;
   // This will change so that the bootloader doesn't panic
   // on minor printf errors.
   // For now we panic to catch any issues during development.
-  loom_panic ("Invalid format specifier.");
+  loomPanic ("Invalid format specifier.");
 }
 
 static int
-printint (char ch, usize cap, loom_write_buffer wbufs[], char nbuf[],
+printInt (char ch, usize cap, loom_write_buffer wbufs[], char nbuf[],
           va_list *args, unsigned int flags, unsigned int width,
           precision prec, unsigned int length)
 {
@@ -279,16 +279,16 @@ printint (char ch, usize cap, loom_write_buffer wbufs[], char nbuf[],
 
       if (p == NULL)
         {
-          loom_wbufs_append (cap, wbufs, WBUF (5, "(nil)"));
+          loomWbufsAppend (cap, wbufs, WBUF (5, "(nil)"));
           return 0;
         }
 
       base = 16;
 
       if (length != LENGTH_NONE)
-        printf_warn (length, 'p');
+        printfWarn (length, 'p');
 
-      loom_wbufs_append (cap, wbufs, WBUF (2, "0x"));
+      loomWbufsAppend (cap, wbufs, WBUF (2, "0x"));
       goto buffer_digits;
     }
 
@@ -320,7 +320,7 @@ printint (char ch, usize cap, loom_write_buffer wbufs[], char nbuf[],
         n.i = va_arg (*args, ptrdiff_t);
         break;
       default:
-        loom_panic ("printint");
+        loomPanic ("printInt");
       }
   else
     switch (length)
@@ -350,7 +350,7 @@ printint (char ch, usize cap, loom_write_buffer wbufs[], char nbuf[],
         n.u = (uintmax_t) va_arg (*args, ptrdiff_t);
         break;
       default:
-        loom_panic ("printint");
+        loomPanic ("printInt");
       }
 
   if (ch == 'b' || ch == 'B')
@@ -359,7 +359,7 @@ printint (char ch, usize cap, loom_write_buffer wbufs[], char nbuf[],
       capitals = ch == 'B';
 
       if (flags & FLAG_PREFIX && n.u)
-        loom_wbufs_append (cap, wbufs, WBUF (2, capitals ? "0B" : "0b"));
+        loomWbufsAppend (cap, wbufs, WBUF (2, capitals ? "0B" : "0b"));
     }
 
   if (ch == 'o')
@@ -369,7 +369,7 @@ printint (char ch, usize cap, loom_write_buffer wbufs[], char nbuf[],
       // Edge Case: always emit the prefix in the case of octal
       // even if the value is zero.
       if (flags & FLAG_PREFIX)
-        loom_wbufs_append (cap, wbufs, WBUF (1, "0"));
+        loomWbufsAppend (cap, wbufs, WBUF (1, "0"));
     }
 
   if (ch == 'x' || ch == 'X')
@@ -378,7 +378,7 @@ printint (char ch, usize cap, loom_write_buffer wbufs[], char nbuf[],
       capitals = ch == 'X';
 
       if (flags & FLAG_PREFIX && n.u)
-        loom_wbufs_append (cap, wbufs, WBUF (2, capitals ? "0X" : "0x"));
+        loomWbufsAppend (cap, wbufs, WBUF (2, capitals ? "0X" : "0x"));
     }
 
   // Normalize to an unsigned int.
@@ -386,7 +386,7 @@ printint (char ch, usize cap, loom_write_buffer wbufs[], char nbuf[],
     {
       if (n.i < 0)
         {
-          loom_wbufs_append (cap, wbufs, WBUF (1, "-"));
+          loomWbufsAppend (cap, wbufs, WBUF (1, "-"));
 
           if (n.i == INTMAX_MIN)
             n.u = ((uintmax_t) INTMAX_MAX) + 1;
@@ -398,16 +398,16 @@ printint (char ch, usize cap, loom_write_buffer wbufs[], char nbuf[],
           n.u = (uintmax_t) n.i;
 
           if (flags & FLAG_FORCE_SIGN)
-            loom_wbufs_append (cap, wbufs, WBUF (1, "+"));
+            loomWbufsAppend (cap, wbufs, WBUF (1, "+"));
           else if (flags & FLAG_BLANK_SIGN)
-            loom_wbufs_append (cap, wbufs, WBUF (1, " "));
+            loomWbufsAppend (cap, wbufs, WBUF (1, " "));
         }
     }
 
 buffer_digits:
 
   if (base < 2 || base > 16)
-    loom_panic ("printint");
+    loomPanic ("printInt");
 
   if (!n.u)
     {
@@ -444,32 +444,32 @@ buffer_digits:
 
   if (prec.valid && prec.value > nlen)
     // Leading zeroes for precision go before number.
-    loom_wbufs_append (cap, wbufs,
-                       (loom_write_buffer) {
-                           .len = 1, .s = "0", .splats = prec.value - nlen });
+    loomWbufsAppend (cap, wbufs,
+                     (loom_write_buffer) {
+                         .len = 1, .s = "0", .splats = prec.value - nlen });
 
   wbuf = WBUF (nlen, nbuf);
 
 pad:
   if (!prec.valid && flags & FLAG_PAD_ZEROES)
     {
-      usize tmplen = loom_wbufs_char_len (wbufs) + nlen;
+      usize tmplen = loomWbufsCharLen (wbufs) + nlen;
 
       if (width > tmplen)
-        loom_wbufs_append (cap, wbufs,
-                           (loom_write_buffer) {
-                               .len = 1, .s = "0", .splats = width - tmplen });
+        loomWbufsAppend (cap, wbufs,
+                         (loom_write_buffer) {
+                             .len = 1, .s = "0", .splats = width - tmplen });
       retval = 1;
     }
 
-  loom_wbufs_append (cap, wbufs, wbuf);
+  loomWbufsAppend (cap, wbufs, wbuf);
   return retval;
 }
 
 static const char *
-print (loom_write_fn write_fn, void *data, const char *fmt, usize *len,
-       va_list *args, unsigned int flags, unsigned int width, precision prec,
-       unsigned int length)
+basePrint (loom_writer w, const char *fmt, usize *len, va_list *args,
+           unsigned int flags, unsigned int width, precision prec,
+           unsigned int length)
 {
   loom_write_buffer wbufs[8] = { 0 };
   char ch = fmt[0], nbuf[sizeof (uintmax_t) * CHAR_BIT];
@@ -483,9 +483,9 @@ print (loom_write_fn write_fn, void *data, const char *fmt, usize *len,
       ch = (char) va_arg (*args, int);
 
       if (length != LENGTH_NONE)
-        printf_warn (length, 'c');
+        printfWarn (length, 'c');
 
-      loom_wbufs_append (cap, wbufs, WBUF (1, &ch));
+      loomWbufsAppend (cap, wbufs, WBUF (1, &ch));
       goto pad;
     }
 
@@ -495,11 +495,11 @@ print (loom_write_fn write_fn, void *data, const char *fmt, usize *len,
       usize slen = 0, max_slen = USIZE_MAX;
 
       if (length != LENGTH_NONE)
-        printf_warn (length, 's');
+        printfWarn (length, 's');
 
       if (s == NULL)
         {
-          loom_wbufs_append (cap, wbufs, WBUF (6, "(null)"));
+          loomWbufsAppend (cap, wbufs, WBUF (6, "(null)"));
           goto pad;
         }
 
@@ -509,16 +509,16 @@ print (loom_write_fn write_fn, void *data, const char *fmt, usize *len,
       for (; slen < max_slen && s[slen]; ++slen)
         ;
 
-      loom_wbufs_append (cap, wbufs, WBUF (slen, s));
+      loomWbufsAppend (cap, wbufs, WBUF (slen, s));
       goto pad;
     }
 
   if (ch == 'p' || ch == 'd' || ch == 'i' || ch == 'b' || ch == 'B'
       || ch == 'o' || ch == 'u' || ch == 'x' || ch == 'X')
     {
-      if (printint (ch, cap, wbufs, nbuf, args, flags, width, prec, length))
+      if (printInt (ch, cap, wbufs, nbuf, args, flags, width, prec, length))
         {
-          speclen = loom_wbufs_char_len (wbufs);
+          speclen = loomWbufsCharLen (wbufs);
           goto write;
         }
       else
@@ -526,12 +526,12 @@ print (loom_write_fn write_fn, void *data, const char *fmt, usize *len,
     }
 
   // Invalid specifier.
-  printf_warn (length, ch);
+  printfWarn (length, ch);
 
   goto done;
 
 pad:
-  speclen = loom_wbufs_char_len (wbufs);
+  speclen = loomWbufsCharLen (wbufs);
 
   if (width > speclen)
     {
@@ -542,9 +542,9 @@ pad:
       speclen = width;
 
       if (flags & FLAG_LEFT_JUSTIFY)
-        loom_wbufs_append (cap, wbufs, wbuf);
+        loomWbufsAppend (cap, wbufs, wbuf);
       else
-        loom_wbufs_prepend (cap, wbufs, wbuf);
+        loomWbufsPrepend (cap, wbufs, wbuf);
     }
 
 write:
@@ -553,15 +553,15 @@ write:
   else
     *len = *len + speclen;
 
-  write_fn (wbufs, data);
+  if (w.write != null)
+    w.write (wbufs, w.data);
 
 done:
   return ++fmt;
 }
 
 usize
-loom_bvprintf (loom_write_fn write_fn, void *data, const char *fmt,
-               va_list args)
+loomWriterFormatV (loom_writer w, const char *fmt, va_list args)
 {
   usize len = 0, run = 0;
   char ch;
@@ -580,7 +580,7 @@ read:
       if (run < USIZE_MAX)
         ++run;
       else
-        flush (write_fn, data, fmt, &run, &len);
+        flush (w, fmt, &run, &len);
 
       ++fmt;
       goto read;
@@ -593,46 +593,57 @@ read:
       if (run < USIZE_MAX)
         {
           ++run;
-          flush (write_fn, data, fmt - 1, &run, &len);
+          flush (w, fmt - 1, &run, &len);
         }
       else
         {
-          flush (write_fn, data, fmt - 1, &run, &len);
+          flush (w, fmt - 1, &run, &len);
           if (len < USIZE_MAX)
             ++len;
-          write (write_fn, data, 1, "%");
+          write (w, 1, "%");
         }
 
       ++fmt;
       goto read;
     }
 
-  flush (write_fn, data, fmt - 1, &run, &len);
+  flush (w, fmt - 1, &run, &len);
 
-  fmt = parse_flags (fmt, &flags);
-  fmt = parse_width (fmt, &flags, &width, &args);
-  fmt = parse_precision (fmt, &prec, &args);
-  fmt = parse_length (fmt, &length);
-  fmt = print (write_fn, data, fmt, &len, &args, flags, width, prec, length);
+  fmt = parseFlags (fmt, &flags);
+  fmt = parseWidth (fmt, &flags, &width, &args);
+  fmt = parsePrecision (fmt, &prec, &args);
+  fmt = parseLength (fmt, &length);
+  fmt = basePrint (w, fmt, &len, &args, flags, width, prec, length);
 
   goto read;
 
 done:
-  flush (write_fn, data, fmt, &run, &len);
+  flush (w, fmt, &run, &len);
   return len;
+}
+
+usize
+loomWriterFormat (loom_writer w, const char *fmt, ...)
+{
+  usize length;
+  va_list args;
+  va_start (args, fmt);
+  length = loomWriterFormatV (w, fmt, args);
+  va_end (args);
+  return length;
 }
 
 typedef struct
 {
   usize length;
   char *s;
-} snprintf_context;
+} write_buffer_ctx;
 
 static void
-snprintf_write_all (loom_write_buffer wbufs[], void *p)
+writeBuffer (loom_write_buffer wbufs[], void *p)
 {
   loom_write_buffer wbuf;
-  snprintf_context *ctx = (snprintf_context *) p;
+  write_buffer_ctx *ctx = (write_buffer_ctx *) p;
 
   for (int i = 0; wbufs[i].s != NULL; ++i)
     {
@@ -651,18 +662,20 @@ snprintf_write_all (loom_write_buffer wbufs[], void *p)
 }
 
 usize
-loom_vsnprintf (char *s, usize n, const char *fmt, va_list args)
+loomBufferFormatV (char *s, usize n, const char *fmt, va_list args)
 {
   usize length;
-  snprintf_context ctx = {
+  write_buffer_ctx ctx = {
     .length = n ? n - 1 : 0,
     .s = s,
   };
 
-  length = loom_bvprintf (snprintf_write_all, &ctx, fmt, args);
+  loom_writer w = { .write = writeBuffer, .data = &ctx };
+
+  length = loomWriterFormatV (w, fmt, args);
 
   if (ctx.length >= n)
-    loom_panic ("loom_vsnprintf");
+    loomPanic ("loomWriterFormat");
 
   if (n)
     s[n - ctx.length - 1] = 0;
@@ -671,39 +684,54 @@ loom_vsnprintf (char *s, usize n, const char *fmt, va_list args)
 }
 
 usize
-loom_snprintf (char *s, usize n, const char *fmt, ...)
+loomBufferFormat (char *s, usize n, const char *fmt, ...)
 {
   va_list args;
   usize length;
-
   va_start (args, fmt);
-  length = loom_vsnprintf (s, n, fmt, args);
+  length = loomBufferFormatV (s, n, fmt, args);
   va_end (args);
-
   return length;
 }
 
 static void
-console_write_all (loom_write_buffer wbufs[], unused void *data)
+writeConsoles (loom_write_buffer wbufs[], unused void *data)
 {
-  loom_consoles_write_all (wbufs);
+  loomConsolesWriteAll (wbufs);
 }
 
 usize
-loom_vprintf (const char *fmt, va_list args)
+loomLogV (const char *fmt, va_list args)
 {
-  return loom_bvprintf (console_write_all, NULL, fmt, args);
+  loom_writer w = { .write = writeConsoles };
+  return loomWriterFormatV (w, fmt, args);
 }
 
 usize
-loom_printf (const char *fmt, ...)
+loomLog (const char *fmt, ...)
 {
   va_list args;
   usize len;
-
   va_start (args, fmt);
-  len = loom_vprintf (fmt, args);
+  len = loomLogV (fmt, args);
   va_end (args);
+  return len;
+}
 
+usize
+loomLogLnV (const char *fmt, va_list args)
+{
+  loom_writer w = { .write = writeConsoles };
+  return loomWriterFormatV (w, fmt, args) + loomWriterFormat (w, "\n");
+}
+
+usize
+loomLogLn (const char *fmt, ...)
+{
+  va_list args;
+  usize len;
+  va_start (args, fmt);
+  len = loomLogLnV (fmt, args);
+  va_end (args);
   return len;
 }

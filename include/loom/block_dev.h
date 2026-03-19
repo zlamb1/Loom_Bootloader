@@ -33,7 +33,7 @@ typedef struct
 } loom_block_dev_init_t;
 
 static inline void
-loom_block_dev_init (loom_block_dev *block_dev, loom_block_dev_init_t *init)
+loomBlockDevInit (loom_block_dev *block_dev, loom_block_dev_init_t *init)
 {
   loom_block_dev_init_t zero = { .parent = NULL, .read = NULL, .data = NULL };
 
@@ -50,12 +50,12 @@ loom_block_dev_init (loom_block_dev *block_dev, loom_block_dev_init_t *init)
   block_dev->child_node = LOOM_LIST_HEAD (block_dev->child_node);
 }
 
-void export (loom_block_dev_register) (loom_block_dev *block_dev);
-void export (loom_block_dev_unregister) (loom_block_dev *block_dev);
+void export (loomBlockDevRegister) (loom_block_dev *block_dev);
+void export (loomBlockDevUnregister) (loom_block_dev *block_dev);
 
-loom_error export (loom_block_dev_read) (loom_block_dev *block_dev,
-                                         usize offset, usize size, char *buf);
+loom_error export (loomBlockDevRead) (loom_block_dev *block_dev, usize offset,
+                                      usize size, char *buf);
 
-void export (loom_block_dev_probe) (loom_block_dev *block_dev, bool force);
+void export (loomBlockDevProbe) (loom_block_dev *block_dev, bool force);
 
 #endif

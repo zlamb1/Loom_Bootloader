@@ -3,26 +3,26 @@
 #include "loom/mm.h"
 
 void
-loom_memcpy (void *restrict dst, const void *restrict src, usize count)
+loomMemCopy (void *restrict dst, const void *restrict src, usize count)
 {
   char *d = dst;
   const char *s = src;
 
   if (!d || !s)
-    loom_panic ("memcpy");
+    loomPanic ("loomMemCopy");
 
   for (usize i = 0; i < count; ++i)
     *d++ = *s++;
 }
 
 void
-loom_memmove (void *dst, const void *src, usize count)
+loomMemMove (void *dst, const void *src, usize count)
 {
   char *d = dst;
   const char *s = src;
 
   if (!d || !s)
-    loom_panic ("memmove");
+    loomPanic ("loomMemMove");
 
   if ((address) s < (address) d)
     while (count--)
@@ -33,13 +33,13 @@ loom_memmove (void *dst, const void *src, usize count)
 }
 
 int
-loom_memcmp (const void *lhs, const void *rhs, usize count)
+loomMemCmp (const void *lhs, const void *rhs, usize count)
 {
   const unsigned char *l = lhs;
   const unsigned char *r = rhs;
 
   if (!lhs || !rhs)
-    loom_panic ("memcmp");
+    loomPanic ("loomMemCmp");
 
   while (count--)
     {
@@ -53,23 +53,23 @@ loom_memcmp (const void *lhs, const void *rhs, usize count)
 }
 
 void
-loom_memset (void *dst, int v, usize n)
+loomMemSet (void *dst, int v, usize n)
 {
   unsigned char *d = dst;
   unsigned char vc = (unsigned char) v;
 
   if (!dst)
-    loom_panic ("memset");
+    loomPanic ("loomMemSet");
 
   while (n--)
     *d++ = vc;
 }
 
 usize
-loom_strlen (const char *s)
+loomStrLength (const char *s)
 {
   if (!s)
-    loom_panic ("strlen");
+    loomPanic ("loomStrLength");
 
   usize len = 0;
   for (; s[len]; ++len)
@@ -78,12 +78,12 @@ loom_strlen (const char *s)
 }
 
 int
-loom_strcmp (const char *s1, const char *s2)
+loomStrCmp (const char *s1, const char *s2)
 {
   unsigned char c1, c2;
 
   if (!s1 || !s2)
-    loom_panic ("strcmp");
+    loomPanic ("loomStrCmp");
 
 read:
   c1 = (unsigned char) (*s1++);
@@ -99,10 +99,10 @@ read:
 }
 
 void
-loom_strlower (char *s)
+loomStrLower (char *s)
 {
   if (!s)
-    loom_panic ("strlower");
+    loomPanic ("loomStrLower");
 
   while (s[0])
     {
@@ -128,13 +128,13 @@ chartoi (int base, char ch)
 }
 
 loom_error
-loom_strtoi (char *s, int *out)
+loomParseInt (char *s, int *out)
 {
   int base = 10, z = 0, n = 0, neg = 0;
   char ch;
 
   if (!s[0])
-    loom_panic ("strtoi");
+    loomPanic ("strtoi");
 
   while ((ch = s[0]))
     {
@@ -168,10 +168,10 @@ loom_strtoi (char *s, int *out)
 
       prev = n;
 
-      if (loom_mul (n, base, &n))
+      if (loomMul (n, base, &n))
         return LOOM_ERR_OVERFLOW;
 
-      if (loom_add (n, neg ? -cv : cv, &n))
+      if (loomAdd (n, neg ? -cv : cv, &n))
         return LOOM_ERR_OVERFLOW;
 
       if (!n)
@@ -199,17 +199,17 @@ loom_strtoi (char *s, int *out)
 }
 
 char *
-loom_strdup (const char *s)
+loomStrDup (const char *s)
 {
-  usize len = loom_strlen (s);
+  usize len = loomStrLength (s);
   char *dups;
 
   if (!s)
-    loom_panic ("strdup");
+    loomPanic ("strdup");
 
-  if (len == USIZE_MAX || !(dups = loom_malloc (len + 1)))
+  if (len == USIZE_MAX || !(dups = loomAlloc (len + 1)))
     return NULL;
-  loom_memcpy (dups, s, len);
+  loomMemCopy (dups, s, len);
   dups[len] = '\0';
   return dups;
 }

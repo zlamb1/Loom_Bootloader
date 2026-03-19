@@ -50,81 +50,81 @@ static serial_input_source *serial_input_srcs = NULL;
 LOOM_MOD (serial)
 
 static inline void
-set_baud_rate (u16 port, u16 baud_rate)
+setBaudRate (u16 port, u16 baud_rate)
 {
-  u8 line_ctrl = loom_inb (port + SERIAL_LINE_CTRL_PORT);
+  u8 line_ctrl = loomInByte (port + SERIAL_LINE_CTRL_PORT);
 
   if (!(line_ctrl & 0x80))
-    loom_outb (port + SERIAL_LINE_CTRL_PORT, line_ctrl | 0x80);
+    loomOutByte (port + SERIAL_LINE_CTRL_PORT, line_ctrl | 0x80);
 
-  loom_outb (port + SERIAL_BAUD_DIVISOR_LO_PORT, (u8) baud_rate);
-  loom_outb (port + SERIAL_BAUD_DIVISOR_HI_PORT, (u8) (baud_rate >> 8));
+  loomOutByte (port + SERIAL_BAUD_DIVISOR_LO_PORT, (u8) baud_rate);
+  loomOutByte (port + SERIAL_BAUD_DIVISOR_HI_PORT, (u8) (baud_rate >> 8));
 
-  loom_outb (port + SERIAL_LINE_CTRL_PORT, (u8) (line_ctrl & ~0x80));
+  loomOutByte (port + SERIAL_LINE_CTRL_PORT, (u8) (line_ctrl & ~0x80));
 }
 
 static used void
-serial_irq_4 ()
+serialIrq4 ()
 {
-  if (loom_inb (COM1 + SERIAL_LINE_STATUS_PORT) & 1)
-    loom_inb (COM1 + SERIAL_READ_PORT);
+  if (loomInByte (COM1 + SERIAL_LINE_STATUS_PORT) & 1)
+    loomInByte (COM1 + SERIAL_READ_PORT);
 
-  if (loom_inb (COM3 + SERIAL_LINE_STATUS_PORT) & 1)
-    loom_inb (COM3 + SERIAL_READ_PORT);
+  if (loomInByte (COM3 + SERIAL_LINE_STATUS_PORT) & 1)
+    loomInByte (COM3 + SERIAL_READ_PORT);
 
-  loom_pic_eoi (4);
+  loomPICAckIrq (4);
 }
 
-static void serial_write_all (loom_console *console,
-                              loom_write_buffer wbufs[]);
+static void serialWriteAll (loom_console *console, loom_write_buffer wbufs[]);
 
 static void
-serial_write_fn (loom_write_buffer wbufs[], void *data)
+serialWrite (loom_write_buffer wbufs[], void *data)
 {
-  serial_write_all (data, wbufs);
+  serialWriteAll (data, wbufs);
 }
 
 static usize printf_func (2, 3)
-    serial_printf (serial_console *console, const char *fmt, ...)
+    serialFormat (serial_console *console, const char *fmt, ...)
 {
   usize ret_val;
   va_list args;
+  loom_writer w = { .write = serialWrite, .data = &console->super };
   va_start (args, fmt);
-  ret_val = loom_bvprintf (serial_write_fn, &console->super, fmt, args);
+  ret_val = loomWriterFormatV (w, fmt, args);
   va_end (args);
   return ret_val;
 }
 
 static usize
-serial_get_x (loom_console *super)
+serialGetX (loom_console *super)
 {
   (void) super;
   return 0;
 }
 
 static usize
-serial_get_y (loom_console *super)
+serialGetY (loom_console *super)
 {
   (void) super;
   return 0;
 }
 
 static u8
-serial_get_fg (loom_console *super)
+serialGetFg (loom_console *super)
 {
   (void) super;
   return 0;
 }
 
 static u8
-serial_get_bg (loom_console *super)
+serialGetBg (loom_console *super)
 {
   (void) super;
   return 0;
 }
 
 static loom_error
-serial_set_x (loom_console *super, usize x)
+serialSetX (loom_console *super, usize x)
 {
   (void) super;
   (void) x;
@@ -132,7 +132,7 @@ serial_set_x (loom_console *super, usize x)
 }
 
 static loom_error
-serial_set_y (loom_console *super, usize y)
+serialSetY (loom_console *super, usize y)
 {
   (void) super;
   (void) y;
@@ -140,51 +140,51 @@ serial_set_y (loom_console *super, usize y)
 }
 
 static loom_error
-serial_set_fg (loom_console *super, u8 fg)
+serialSetFg (loom_console *super, u8 fg)
 {
-  loom_assert (super != NULL);
-  loom_assert (super->data != NULL);
+  loomAssert (super != NULL);
+  loomAssert (super->data != NULL);
 
   if (fg > 0xF)
     return LOOM_ERR_BAD_ARG;
 
-  serial_printf (super->data, "\033[%um", fg > 0x7 ? fg + 82 : fg + 30);
+  serialFormat (super->data, "\033[%um", fg > 0x7 ? fg + 82 : fg + 30);
 
   return LOOM_ERR_NONE;
 }
 
 static loom_error
-serial_set_bg (loom_console *super, u8 bg)
+serialSetBg (loom_console *super, u8 bg)
 {
-  loom_assert (super != NULL);
-  loom_assert (super->data != NULL);
+  loomAssert (super != NULL);
+  loomAssert (super->data != NULL);
 
   if (bg > 0xF)
     return LOOM_ERR_BAD_ARG;
 
-  serial_printf (super->data, "\033[%um", bg > 0x7 ? bg + 92 : bg + 40);
+  serialFormat (super->data, "\033[%um", bg > 0x7 ? bg + 92 : bg + 40);
 
   return LOOM_ERR_NONE;
 }
 
 static void
-serial_clear (loom_console *super)
+serialClear (loom_console *super)
 {
   serial_console *console = super->data;
   console->x = console->y = 0;
-  serial_printf (console, "\033[2J\033[1;1H");
+  serialFormat (console, "\033[2J\033[1;1H");
 }
 
 static void
-serial_putchar (u16 port, char ch)
+serialPutChar (u16 port, char ch)
 {
-  while (!(loom_inb (port + SERIAL_LINE_STATUS_PORT) & 0x20))
+  while (!(loomInByte (port + SERIAL_LINE_STATUS_PORT) & 0x20))
     ;
-  loom_outb (port + SERIAL_WRITE_PORT, (u8) ch);
+  loomOutByte (port + SERIAL_WRITE_PORT, (u8) ch);
 }
 
 static void
-serial_write_all (loom_console *super, loom_write_buffer wbufs[])
+serialWriteAll (loom_console *super, loom_write_buffer wbufs[])
 {
   serial_console *console = super->data;
   u16 port = console->port;
@@ -195,7 +195,7 @@ serial_write_all (loom_console *super, loom_write_buffer wbufs[])
       wbuf = wbufs[i];
       for (usize j = 0; j < wbuf.splats; ++j)
         for (usize k = 0; k < wbuf.len; ++k)
-          serial_putchar (port, wbuf.s[k]);
+          serialPutChar (port, wbuf.s[k]);
     }
 }
 
@@ -305,16 +305,16 @@ static u16 ascii_to_keycode_mod[128] = {
 };
 
 static int
-serial_poll (loom_input_source *super, loom_input_event *evt)
+serialPoll (loom_input_source *super, loom_input_event *evt)
 {
   serial_input_source *input_src = super->data;
   u16 keycode_mod;
   unsigned char ch;
 
-  if (!(loom_inb (input_src->port + SERIAL_LINE_STATUS_PORT) & 1))
+  if (!(loomInByte (input_src->port + SERIAL_LINE_STATUS_PORT) & 1))
     return 0;
 
-  ch = loom_inb (input_src->port + SERIAL_READ_PORT);
+  ch = loomInByte (input_src->port + SERIAL_READ_PORT);
 
   if (ch & 0x80)
     return 0;
@@ -349,72 +349,72 @@ LOOM_MOD_INIT ()
       serial_console *console;
       serial_input_source *input_src;
 
-      loom_outb (port + SERIAL_SCRATCH_PORT, 0xAA);
-      if (loom_inb (port + SERIAL_SCRATCH_PORT) != 0xAA)
+      loomOutByte (port + SERIAL_SCRATCH_PORT, 0xAA);
+      if (loomInByte (port + SERIAL_SCRATCH_PORT) != 0xAA)
         continue;
 
-      loom_outb (port + SERIAL_SCRATCH_PORT, 0x55);
-      if (loom_inb (port + SERIAL_SCRATCH_PORT) != 0x55)
+      loomOutByte (port + SERIAL_SCRATCH_PORT, 0x55);
+      if (loomInByte (port + SERIAL_SCRATCH_PORT) != 0x55)
         continue;
 
-      save = loom_inb (port + SERIAL_MODEM_CTRL_PORT);
+      save = loomInByte (port + SERIAL_MODEM_CTRL_PORT);
 
       // Enable loopback mode.
-      loom_outb (port + SERIAL_MODEM_CTRL_PORT, 0b10011);
+      loomOutByte (port + SERIAL_MODEM_CTRL_PORT, 0b10011);
 
-      loom_outb (port + SERIAL_WRITE_PORT, 0xAA);
-      if (loom_inb (port + SERIAL_READ_PORT) != 0xAA)
+      loomOutByte (port + SERIAL_WRITE_PORT, 0xAA);
+      if (loomInByte (port + SERIAL_READ_PORT) != 0xAA)
         goto restore;
 
-      loom_outb (port + SERIAL_WRITE_PORT, 0x55);
-      if (loom_inb (port + SERIAL_READ_PORT) != 0x55)
+      loomOutByte (port + SERIAL_WRITE_PORT, 0x55);
+      if (loomInByte (port + SERIAL_READ_PORT) != 0x55)
         goto restore;
 
       did_loopback = 1;
 
     restore:
       // Restore modem control register.
-      loom_outb (port + SERIAL_MODEM_CTRL_PORT, save);
+      loomOutByte (port + SERIAL_MODEM_CTRL_PORT, save);
 
       if (!did_loopback)
         continue;
 
       // This port is usable.
 
-      console = loom_zalloc (sizeof (*console));
-      input_src = loom_zalloc (sizeof (*input_src));
+      console = loomZeroAlloc (sizeof (*console));
+      input_src = loomZeroAlloc (sizeof (*input_src));
 
       if (console == NULL || input_src == NULL)
         {
           // TODO: emit warning
-          loom_free (console);
-          loom_free (input_src);
+          loomFree (console);
+          loomFree (input_src);
           break;
         }
 
       // For now we disable IRQs. We only use polling writes/read.
-      loom_outb (port + SERIAL_IRQ_ENABLE_PORT, 0);
+      loomOutByte (port + SERIAL_IRQ_ENABLE_PORT, 0);
 
       // Set baud rate divisor.
-      set_baud_rate (port, 1);
+      setBaudRate (port, 1);
 
       // Configure transmit settings to match standard.
-      loom_outb (port + SERIAL_LINE_CTRL_PORT, 0b00000011);
+      loomOutByte (port + SERIAL_LINE_CTRL_PORT, 0b00000011);
 
       // Enable OUT2/IRQ and disable loopback mode.
-      loom_outb (port + SERIAL_MODEM_CTRL_PORT, 0b1011);
+      loomOutByte (port + SERIAL_MODEM_CTRL_PORT, 0b1011);
 
       console->port = port;
-      console->super = (loom_console) { .get_x = serial_get_x,
-                                        .get_y = serial_get_y,
-                                        .get_fg = serial_get_fg,
-                                        .get_bg = serial_get_bg,
-                                        .set_x = serial_set_x,
-                                        .set_y = serial_set_y,
-                                        .set_fg = serial_set_fg,
-                                        .set_bg = serial_set_bg,
-                                        .clear = serial_clear,
-                                        .write_all = serial_write_all,
+      console->super = (loom_console) { .get_x = serialGetX,
+                                        .get_y = serialGetY,
+                                        .get_fg = serialGetFg,
+                                        .get_bg = serialGetBg,
+                                        .set_x = serialSetX,
+                                        .set_y = serialSetY,
+                                        .set_fg = serialSetFg,
+                                        .set_bg = serialSetBg,
+                                        .clear = serialClear,
+                                        .write_all = serialWriteAll,
                                         .data = console };
       console->next = serial_consoles;
 
@@ -422,13 +422,13 @@ LOOM_MOD_INIT ()
 
       input_src->port = port;
       input_src->super
-          = (loom_input_source) { .poll = serial_poll, .data = input_src };
+          = (loom_input_source) { .poll = serialPoll, .data = input_src };
       input_src->next = serial_input_srcs;
 
       serial_input_srcs = input_src;
 
-      loom_console_register (&console->super);
-      loom_input_source_register (&input_src->super);
+      loomConsoleRegister (&console->super);
+      loomInputSourceRegister (&input_src->super);
     }
 }
 
@@ -440,16 +440,16 @@ LOOM_MOD_DEINIT ()
   while (console != NULL)
     {
       next_console = console->next;
-      loom_console_unregister (&console->super);
-      loom_free (console);
+      loomConsoleUnregister (&console->super);
+      loomFree (console);
       console = next_console;
     }
 
   while (input_src != NULL)
     {
       next_input_src = input_src->next;
-      loom_input_source_unregister (&input_src->super);
-      loom_free (input_src);
+      loomInputSourceUnregister (&input_src->super);
+      loomFree (input_src);
       input_src = next_input_src;
     }
 }

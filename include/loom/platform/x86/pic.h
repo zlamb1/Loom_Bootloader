@@ -4,16 +4,15 @@
 #include "loom/compiler.h"
 #include "loom/types.h"
 
-void export (loom_pic_remap) (u8 offset1, u8 offset2);
-void export (loom_pic_mask) (u8 irq);
-void export (loom_pic_unmask) (u8 irq);
-void export (loom_pic_eoi) (u8 irq);
-void export (loom_pic_disable) (void);
-void export (loom_pic_register_isr) (u8 irq, void *isr);
+void export (loomPICRemap) (u8 offset1, u8 offset2);
+void export (loomPICMask) (u8 irq);
+void export (loomPICUnmask) (u8 irq);
+void export (loomPICAckIrq) (u8 irq);
+void export (loomPICDisable) (void);
+void export (loomPICRegisterIsr) (u8 irq, void *isr);
 
-void loom_pic_bios_save_masks (void);
-
-void loom_pic_bios_reset (void);
-void loom_pic_bios_restore (void);
+void loomPICSaveBiosDefaults (void);
+void loomPICResetBiosDefaults (void);
+void loomPICRestoreMasks (void);
 
 #endif

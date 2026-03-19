@@ -6,12 +6,12 @@ GLOBAL linux_relocator
 GLOBAL linux_relocator_end
 
 EXTERN loom_enter_rmode
-EXTERN loom_memmove
+EXTERN loomMemMove
 
 linux_relocator:
     cli
     add esp, 4
-    mov eax, loom_memmove
+    mov eax, loomMemMove
     call eax
     mov eax, loom_enter_rmode
     call eax

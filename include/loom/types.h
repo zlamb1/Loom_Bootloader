@@ -10,6 +10,10 @@
 #include "loom_stdint.h"
 #endif
 
+#define null  0
+#define false 0
+#define true  1
+
 typedef uint8_t u8;
 typedef uint16_t u16;
 typedef uint32_t u32;
@@ -27,9 +31,6 @@ typedef unsigned long ulong;
 typedef unsigned long long ullong;
 
 typedef uchar byte;
-
-#define false 0
-#define true  1
 
 typedef u8 b8;
 typedef u16 b16;

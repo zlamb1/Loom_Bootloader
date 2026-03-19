@@ -26,7 +26,7 @@ EXTERN ebss
 EXTERN stage3e
 
 EXTERN loom_modbase
-EXTERN loom_main
+EXTERN loomMain
 
 BITS 32
     cld
@@ -49,7 +49,7 @@ BITS 32
     ; reset stack
     mov esp, 0x7C00
 
-    jmp loom_main
+    jmp loomMain
 
 .loop:
     jmp .loop

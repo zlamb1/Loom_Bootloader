@@ -86,11 +86,11 @@ static int sc1_e0_to_kc[128] = {
 static loom_ps2_keyboard kb = { 0 };
 
 static void
-ps2_isr (unused u32 intno, unused u32 error_code)
+ps2Isr (unused u32 intno, unused u32 error_code)
 {
   if (kb.buf)
     {
-      char ch = (char) loom_inb (PS2_DATA);
+      char ch = (char) loomInByte (PS2_DATA);
 
       usize tail = kb.tail;
       usize next_tail = (tail + 1) & (CAP - 1);
@@ -103,11 +103,11 @@ ps2_isr (unused u32 intno, unused u32 error_code)
     }
 
 done:
-  loom_pic_eoi (1);
+  loomPICAckIrq (1);
 }
 
 static int
-ps2_poll (loom_input_source *src, loom_input_event *evt)
+ps2Poll (loom_input_source *src, loom_input_event *evt)
 {
   loom_ps2_keyboard *ps2 = (loom_ps2_keyboard *) src->data;
   usize head, tail;
@@ -115,7 +115,7 @@ ps2_poll (loom_input_source *src, loom_input_event *evt)
   int keycode = 0, press;
   u8 sc;
 
-  int flags = loom_irq_save ();
+  int flags = loomIrqSave ();
 
   head = ps2->head;
   tail = ps2->tail;
@@ -124,17 +124,17 @@ ps2_poll (loom_input_source *src, loom_input_event *evt)
     {
       if (++ps2->poll >= 1000)
         {
-          u8 status = loom_inb (PS2_STATUS);
+          u8 status = loomInByte (PS2_STATUS);
           ps2->poll = 0;
 
           if (status & 1)
             {
-              ps2->buf[ps2->tail] = (char) loom_inb (PS2_DATA);
+              ps2->buf[ps2->tail] = (char) loomInByte (PS2_DATA);
               ps2->tail = (ps2->tail + 1) & (CAP - 1);
             }
         }
 
-      loom_irq_restore (flags);
+      loomIrqRestore (flags);
       return 0;
     }
 
@@ -148,7 +148,7 @@ ps2_poll (loom_input_source *src, loom_input_event *evt)
 
   ps2->head = (head + 1) & (CAP - 1);
 
-  loom_irq_restore (flags);
+  loomIrqRestore (flags);
 
   if (ps2->last_key == 0xE0)
     {
@@ -177,25 +177,24 @@ done:
 
 LOOM_MOD_INIT ()
 {
-  kb.super.poll = ps2_poll;
+  kb.super.poll = ps2Poll;
   kb.super.data = &kb;
 
   kb.head = 0;
   kb.tail = 0;
-  kb.buf = loom_malloc (CAP);
+  kb.buf = loomAlloc (CAP);
 
   if (!kb.buf)
     return;
 
-  loom_input_source_register (&kb.super);
+  loomInputSourceRegister (&kb.super);
 
-  loom_pic_register_isr (1, ps2_isr);
-  loom_pic_unmask (1);
+  loomPICRegisterIsr (1, ps2Isr);
+  loomPICUnmask (1);
 }
 
 LOOM_MOD_DEINIT ()
 {
-  loom_pic_mask (1);
-
-  loom_input_source_unregister (&kb.super);
+  loomPICMask (1);
+  loomInputSourceUnregister (&kb.super);
 }

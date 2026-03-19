@@ -27,23 +27,23 @@ static u8 offsets[2] = { BIOS_MASTER_OFFSET, BIOS_SLAVE_OFFSET };
 static u8 masks[2] = { DEFAULT_MASK, DEFAULT_MASK }, bios_masks[2];
 
 static void
-pic_remap (u8 offset1, u8 offset2, bool save)
+picRemap (u8 offset1, u8 offset2, bool save)
 {
-  int flags = loom_irq_save ();
+  int flags = loomIrqSave ();
 
   if (offset1 % 8 != 0 || offset2 % 8 != 0)
-    loom_panic ("loom_pic_remap: bad offset");
+    loomPanic ("picRemap: bad offset");
 
-  loom_outb (PIC1_CMD, ICW1_ICW4 | ICW1_INIT);
-  loom_outb (PIC2_CMD, ICW1_ICW4 | ICW1_INIT);
-  loom_outb (PIC1_DATA, offset1);
-  loom_outb (PIC2_DATA, offset2);
-  loom_outb (PIC1_DATA, 1 << CASCADE_IRQ);
-  loom_outb (PIC2_DATA, CASCADE_IRQ);
-  loom_outb (PIC1_DATA, ICW4_8086);
-  loom_outb (PIC2_DATA, ICW4_8086);
-  loom_outb (PIC1_DATA, DEFAULT_MASK);
-  loom_outb (PIC2_DATA, DEFAULT_MASK);
+  loomOutByte (PIC1_CMD, ICW1_ICW4 | ICW1_INIT);
+  loomOutByte (PIC2_CMD, ICW1_ICW4 | ICW1_INIT);
+  loomOutByte (PIC1_DATA, offset1);
+  loomOutByte (PIC2_DATA, offset2);
+  loomOutByte (PIC1_DATA, 1 << CASCADE_IRQ);
+  loomOutByte (PIC2_DATA, CASCADE_IRQ);
+  loomOutByte (PIC1_DATA, ICW4_8086);
+  loomOutByte (PIC2_DATA, ICW4_8086);
+  loomOutByte (PIC1_DATA, DEFAULT_MASK);
+  loomOutByte (PIC2_DATA, DEFAULT_MASK);
 
   if (save)
     {
@@ -53,41 +53,17 @@ pic_remap (u8 offset1, u8 offset2, bool save)
       masks[1] = DEFAULT_MASK;
     }
 
-  loom_irq_restore (flags);
+  loomIrqRestore (flags);
 }
 
 void
-loom_pic_remap (u8 offset1, u8 offset2)
+loomPICRemap (u8 offset1, u8 offset2)
 {
-  pic_remap (offset1, offset2, 1);
+  picRemap (offset1, offset2, 1);
 }
 
 void
-loom_pic_mask (u8 irq)
-{
-  u16 port;
-  u8 mask;
-
-  if (irq < 8)
-    port = PIC1_DATA;
-  else
-    {
-      port = PIC2_DATA;
-      irq -= 8;
-    }
-
-  mask = loom_inb (port) | (uint8_t) (1 << irq);
-
-  if (irq < 8)
-    masks[0] = mask;
-  else
-    masks[1] = mask;
-
-  loom_outb (port, mask);
-}
-
-void
-loom_pic_unmask (u8 irq)
+loomPICMask (u8 irq)
 {
   u16 port;
   u8 mask;
@@ -100,33 +76,57 @@ loom_pic_unmask (u8 irq)
       irq -= 8;
     }
 
-  mask = loom_inb (port) & (u8) ~(1 << irq);
+  mask = loomInByte (port) | (uint8_t) (1 << irq);
 
   if (irq < 8)
     masks[0] = mask;
   else
     masks[1] = mask;
 
-  loom_outb (port, mask);
+  loomOutByte (port, mask);
 }
 
 void
-loom_pic_eoi (u8 irq)
+loomPICUnmask (u8 irq)
+{
+  u16 port;
+  u8 mask;
+
+  if (irq < 8)
+    port = PIC1_DATA;
+  else
+    {
+      port = PIC2_DATA;
+      irq -= 8;
+    }
+
+  mask = loomInByte (port) & (u8) ~(1 << irq);
+
+  if (irq < 8)
+    masks[0] = mask;
+  else
+    masks[1] = mask;
+
+  loomOutByte (port, mask);
+}
+
+void
+loomPICAckIrq (u8 irq)
 {
   if (irq >= 8)
-    loom_outb (PIC2_CMD, PIC_EOI);
-  loom_outb (PIC1_CMD, PIC_EOI);
+    loomOutByte (PIC2_CMD, PIC_EOI);
+  loomOutByte (PIC1_CMD, PIC_EOI);
 }
 
 void
-loom_pic_disable (void)
+loomPICDisable (void)
 {
-  loom_outb (PIC1_DATA, 0xFF);
-  loom_outb (PIC2_DATA, 0xFF);
+  loomOutByte (PIC1_DATA, 0xFF);
+  loomOutByte (PIC2_DATA, 0xFF);
 }
 
 void
-loom_pic_register_isr (u8 irq, void *isr)
+loomPICRegisterIsr (u8 irq, void *isr)
 {
   u8 offset;
   if (irq < 8)
@@ -137,32 +137,32 @@ loom_pic_register_isr (u8 irq, void *isr)
       irq -= 8;
     }
 
-  loom_isr_vector_map (offset + irq, isr);
+  loomIsrVectorMap (offset + irq, isr);
 }
 
 void
-loom_pic_bios_save_masks (void)
+loomPICSaveBiosDefaults (void)
 {
-  bios_masks[0] = loom_inb (PIC1_DATA);
-  bios_masks[1] = loom_inb (PIC2_DATA);
+  bios_masks[0] = loomInByte (PIC1_DATA);
+  bios_masks[1] = loomInByte (PIC2_DATA);
 }
 
 void
-loom_pic_bios_reset (void)
+loomPICResetBiosDefaults (void)
 {
-  int flags = loom_irq_save ();
-  pic_remap (BIOS_MASTER_OFFSET, BIOS_SLAVE_OFFSET, 0);
-  loom_outb (PIC1_DATA, bios_masks[0]);
-  loom_outb (PIC2_DATA, bios_masks[1]);
-  loom_irq_restore (flags);
+  int flags = loomIrqSave ();
+  picRemap (BIOS_MASTER_OFFSET, BIOS_SLAVE_OFFSET, 0);
+  loomOutByte (PIC1_DATA, bios_masks[0]);
+  loomOutByte (PIC2_DATA, bios_masks[1]);
+  loomIrqRestore (flags);
 }
 
 void
-loom_pic_bios_restore (void)
+loomPICRestoreMasks (void)
 {
-  int flags = loom_irq_save ();
-  pic_remap (offsets[0], offsets[1], 0);
-  loom_outb (PIC1_DATA, masks[0]);
-  loom_outb (PIC2_DATA, masks[1]);
-  loom_irq_restore (flags);
+  int flags = loomIrqSave ();
+  picRemap (offsets[0], offsets[1], 0);
+  loomOutByte (PIC1_DATA, masks[0]);
+  loomOutByte (PIC2_DATA, masks[1]);
+  loomIrqRestore (flags);
 }

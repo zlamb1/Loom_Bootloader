@@ -17,15 +17,15 @@ struct shell
 };
 
 static void
-shell_print_prompt (void)
+shellPrintPrompt (void)
 {
-  loom_consoles_set_fg (LOOM_CONSOLE_COLOR_BRIGHT (LOOM_CONSOLE_COLOR_CYAN));
-  loom_printf (PROMPT);
-  loom_consoles_set_fg (LOOM_CONSOLE_DEFAULT_FG);
+  loomConsolesSetFg (LOOM_CONSOLE_COLOR_BRIGHT (LOOM_CONSOLE_COLOR_CYAN));
+  loomLog (PROMPT);
+  loomConsolesSetFg (LOOM_CONSOLE_DEFAULT_FG);
 }
 
 static char *
-shell_parse_arg (char *buf, usize *pos)
+shellParseArg (char *buf, usize *pos)
 {
   usize runpos = *pos, runlen = 0;
 
@@ -59,13 +59,13 @@ shell_parse_arg (char *buf, usize *pos)
 }
 
 static void
-shell_exec_command (struct shell *shell)
+shellExecCommand (struct shell *shell)
 {
   loom_command *command;
   usize argc = 0, argvc = 0, pos = 0;
   char **argv = NULL, *arg;
 
-  while ((arg = shell_parse_arg (shell->buf, &pos)))
+  while ((arg = shellParseArg (shell->buf, &pos)))
     {
       if (argc == argvc)
         {
@@ -76,11 +76,11 @@ shell_exec_command (struct shell *shell)
           else
             argvc *= 2;
 
-          newargv = loom_realloc (argv, argvc * sizeof (char *));
+          newargv = loomRealloc (argv, argvc * sizeof (char *));
           if (!newargv)
             {
-              loom_free (argv);
-              loom_panic ("Out of memory.");
+              loomFree (argv);
+              loomPanic ("Out of memory.");
             }
 
           argv = newargv;
@@ -92,30 +92,30 @@ shell_exec_command (struct shell *shell)
   if (!argc)
     return;
 
-  command = loom_command_find (argv[0]);
+  command = loomCommandFind (argv[0]);
 
   if (command)
     {
       if (command->task (command, argc, argv))
         {
-          loom_printf ("%s: ", argv[0]);
-          loom_consoles_save_fg ();
-          loom_consoles_set_fg (
+          loomLog ("%s: ", argv[0]);
+          loomConsolesSaveFg ();
+          loomConsolesSetFg (
               LOOM_CONSOLE_COLOR_BRIGHT (LOOM_CONSOLE_COLOR_RED));
-          loom_printf ("error: ");
-          loom_consoles_restore_fg ();
-          loom_printf ("%s\n", loom_error_get ());
-          loom_error_clear ();
+          loomLog ("error: ");
+          loomConsolesRestoreFg ();
+          loomLogLn ("%s", loomErrorGet ());
+          loomErrorClear ();
         }
     }
   else
-    loom_printf ("unknown command: '%s'\n", argv[0]);
+    loomLogLn ("unknown command: '%s'", argv[0]);
 
-  loom_free (argv);
+  loomFree (argv);
 }
 
 static void
-shell_write_keycode (struct shell *shell, int mods, int keycode)
+shellWriteKeyCode (struct shell *shell, int mods, int keycode)
 {
   char *buf = shell->buf;
 
@@ -128,11 +128,11 @@ shell_write_keycode (struct shell *shell, int mods, int keycode)
       if (shell->cursor-- == shell->len--)
         {
           buf[shell->len] = 0;
-          loom_printf ("\b \b");
+          loomLog ("\b \b");
           return;
         }
 
-      loom_printf ("\b%s \b", buf + shell->cursor + 1);
+      loomLog ("\b%s \b", buf + shell->cursor + 1);
       for (usize i = shell->cursor; i < shell->len; ++i)
         buf[i] = shell->buf[i + 1];
 
@@ -140,30 +140,30 @@ shell_write_keycode (struct shell *shell, int mods, int keycode)
         loom_write_buffer wbufs[]
             = { { .len = 1, .splats = shell->len - shell->cursor, .s = "\b" },
                 { 0 } };
-        loom_consoles_write_all (wbufs);
+        loomConsolesWriteAll (wbufs);
       }
 
       shell->buf[shell->len] = 0;
 
       break;
     case LOOM_KEY_ENTER:
-      loom_printf ("\n");
-      shell_exec_command (shell);
+      loomLog ("\n");
+      shellExecCommand (shell);
       shell->len = 0;
       shell->cursor = 0;
       shell->buf[0] = 0;
-      shell_print_prompt ();
+      shellPrintPrompt ();
       break;
     case LOOM_KEY_LEFT:
       if (shell->cursor)
         {
           --shell->cursor;
-          loom_printf ("\b");
+          loomLog ("\b");
         }
       break;
     case LOOM_KEY_RIGHT:
       if (shell->cursor < shell->len)
-        loom_printf ("%c", shell->buf[shell->cursor++]);
+        loomLog ("%c", shell->buf[shell->cursor++]);
       break;
     default:
       {
@@ -172,7 +172,7 @@ shell_write_keycode (struct shell *shell, int mods, int keycode)
         if (shell->len >= CAP - 2)
           return;
 
-        ch = loom_keycode_to_char (mods, keycode);
+        ch = loomKeyCodeToChar (mods, keycode);
 
         if (!ch || ch == '\t' || ch == '\r')
           return;
@@ -182,7 +182,7 @@ shell_write_keycode (struct shell *shell, int mods, int keycode)
             shell->cursor++;
             buf[shell->len++] = ch;
             buf[shell->len + 1] = 0;
-            loom_printf ("%c", ch);
+            loomLog ("%c", ch);
           }
         else
           {
@@ -201,8 +201,8 @@ shell_write_keycode (struct shell *shell, int mods, int keycode)
             buf[shell->cursor++] = ch;
             buf[++shell->len] = 0;
 
-            loom_printf ("%c%s", ch, buf + shell->cursor);
-            loom_consoles_write_all (wbufs);
+            loomLog ("%c%s", ch, buf + shell->cursor);
+            loomConsolesWriteAll (wbufs);
           }
 
         break;
@@ -211,28 +211,28 @@ shell_write_keycode (struct shell *shell, int mods, int keycode)
 }
 
 void
-loom_shell_exec (void)
+loomShellExec (void)
 {
   struct shell shell = { 0 };
-  shell.buf = loom_malloc (CAP);
+  shell.buf = loomAlloc (CAP);
 
   if (!shell.buf)
-    loom_panic ("Out of memory.");
+    loomPanic ("Out of memory.");
 
   shell.buf[0] = 0;
 
-  shell_print_prompt ();
+  shellPrintPrompt ();
 
   for (;;)
     {
       loom_input_event evt;
 
-      if (loom_input_sources_poll (&evt))
+      if (loomInputSourcesPoll (&evt))
         {
           if (!evt.press)
             continue;
 
-          shell_write_keycode (&shell, evt.mods, evt.keycode);
+          shellWriteKeyCode (&shell, evt.mods, evt.keycode);
         }
     }
 }

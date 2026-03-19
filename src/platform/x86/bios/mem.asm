@@ -2,28 +2,28 @@ BITS 32
 
 SECTION .text
 
-GLOBAL loom_memcpy
-GLOBAL loom_memset
+GLOBAL loomMemCopy
+GLOBAL loomMemset
 
-EXTERN loom_panic
+EXTERN loomPanic
 
-s1: DB "loom_memcpy", 0
-s2: DB "loom_memset", 0
+s1: DB "loomMemCopy", 0
+s2: DB "loomMemSet", 0
 
-loom_memcpy:
+loomMemCopy:
     push esi
     push edi
     mov edi, [esp+12]
     cmp edi, 0
     jne .1
     push s1
-    call loom_panic
+    call loomPanic
 .1:
     mov esi, [esp+16]
     cmp esi, 0
     jne .2
     push s1
-    call loom_panic
+    call loomPanic
 .2:
     mov ecx, [esp+20]
     rep movsb
@@ -31,13 +31,13 @@ loom_memcpy:
     pop esi
     ret
 
-loom_memset:
+loomMemSet:
     push edi
     mov edi, [esp+8]
     cmp edi, 0
     jne .1
     push s2
-    call loom_panic
+    call loomPanic
 .1:
     mov eax, [esp+12]
     mov ecx, [esp+16]

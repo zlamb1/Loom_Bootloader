@@ -3,13 +3,12 @@
 #include "loom/types.h"
 
 void
-loom_list_prepend (loom_list *head, loom_list *node)
+loomListPrepend (loom_list *head, loom_list *node)
 {
-  loom_assert (head != NULL);
-  loom_assert (head->prev != NULL);
-  loom_assert (head->next != NULL);
-
-  loom_assert (node != NULL);
+  loomAssert (head != NULL);
+  loomAssert (head->prev != NULL);
+  loomAssert (head->next != NULL);
+  loomAssert (node != NULL);
 
   node->prev = head;
   node->next = head->next;
@@ -18,13 +17,12 @@ loom_list_prepend (loom_list *head, loom_list *node)
 }
 
 void
-loom_list_append (loom_list *head, loom_list *node)
+loomListAppend (loom_list *head, loom_list *node)
 {
-  loom_assert (head != NULL);
-  loom_assert (head->prev != NULL);
-  loom_assert (head->next != NULL);
-
-  loom_assert (node != NULL);
+  loomAssert (head != NULL);
+  loomAssert (head->prev != NULL);
+  loomAssert (head->next != NULL);
+  loomAssert (node != NULL);
 
   node->prev = head->prev;
   node->next = head;
@@ -33,11 +31,11 @@ loom_list_append (loom_list *head, loom_list *node)
 }
 
 void
-loom_list_remove (loom_list *node)
+loomListRemove (loom_list *node)
 {
-  loom_assert (node != NULL);
-  loom_assert (node->prev != NULL);
-  loom_assert (node->next != NULL);
+  loomAssert (node != NULL);
+  loomAssert (node->prev != NULL);
+  loomAssert (node->next != NULL);
 
   node->prev->next = node->next;
   node->next->prev = node->prev;
@@ -46,13 +44,13 @@ loom_list_remove (loom_list *node)
 }
 
 void
-loom_list_replace (loom_list *oldnode, loom_list *newnode)
+loomListReplace (loom_list *oldnode, loom_list *newnode)
 {
-  loom_assert (oldnode != NULL);
-  loom_assert (oldnode->prev != NULL);
-  loom_assert (oldnode->next != NULL);
+  loomAssert (oldnode != NULL);
+  loomAssert (oldnode->prev != NULL);
+  loomAssert (oldnode->next != NULL);
 
-  loom_assert (newnode != NULL);
+  loomAssert (newnode != NULL);
 
   newnode->prev = oldnode->prev;
   newnode->next = oldnode->next;
@@ -64,15 +62,15 @@ loom_list_replace (loom_list *oldnode, loom_list *newnode)
 }
 
 bool
-loom_list_is_empty (loom_list *head)
+loomListIsEmpty (loom_list *head)
 {
-  loom_assert (head != NULL);
-  loom_assert (head->prev != NULL);
-  loom_assert (head->next != NULL);
+  loomAssert (head != NULL);
+  loomAssert (head->prev != NULL);
+  loomAssert (head->next != NULL);
 
   if (head->prev == head)
     {
-      loom_assert (head->next == head);
+      loomAssert (head->next == head);
       return true;
     }
 

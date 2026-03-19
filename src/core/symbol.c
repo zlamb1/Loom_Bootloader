@@ -6,14 +6,14 @@
 loom_symbol_table loom_symtab;
 
 int
-loom_symbol_register (const char *name, bool is_fn, void *p)
+loomSymbolRegister (const char *name, bool is_fn, void *p)
 {
   loom_symbol *symbol;
 
   if (loom_symtab.length >= LOOM_SYMTAB_SIZE)
     return 0;
 
-  symbol = loom_malloc (sizeof (loom_symbol));
+  symbol = loomAlloc (sizeof (loom_symbol));
   if (!symbol)
     return 0;
 
@@ -27,7 +27,7 @@ loom_symbol_register (const char *name, bool is_fn, void *p)
 }
 
 loom_symbol *
-loom_symbol_find (void *p)
+loomSymbolFind (void *p)
 {
   loom_symbol *nearest = NULL;
 
@@ -46,13 +46,13 @@ loom_symbol_find (void *p)
 }
 
 loom_symbol *
-loom_symbol_lookup (const char *name)
+loomSymbolLookup (const char *name)
 {
   for (unsigned int i = 0; i < loom_symtab.length; ++i)
     {
       loom_symbol *symbol = loom_symtab.symbols[i];
 
-      if (!loom_strcmp (name, symbol->name))
+      if (!loomStrCmp (name, symbol->name))
         return symbol;
     }
 

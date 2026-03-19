@@ -28,7 +28,7 @@ const char *exc_messages[31] = {
 };
 
 void
-loom_exception_handler (u32 intno, u32 error_code)
+loomExceptionHandler (u32 intno, u32 error_code)
 {
   (void) intno;
   (void) error_code;
@@ -45,7 +45,7 @@ loom_exception_handler (u32 intno, u32 error_code)
     exc_message = "unknown";
 
   if (dummy)
-    loom_panic ("exception occurred: %s", exc_message);
+    loomPanic ("exception occurred: %s", exc_message);
 
   __asm__ volatile ("hlt" ::: "memory");
   for (;;)

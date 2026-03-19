@@ -8,11 +8,11 @@
 #include "loom/partition_scheme.h"
 #include "loom/string.h"
 
-int gpt_partition_scheme_iterate (loom_partition_scheme *, loom_block_dev *,
-                                  loom_partition_scheme_hook, void *);
+int gptPartionSchemeIterate (loom_partition_scheme *, loom_block_dev *,
+                             loom_partition_scheme_hook, void *);
 
 static loom_partition_scheme gpt_partition_scheme = {
-  .iterate = gpt_partition_scheme_iterate,
+  .iterate = gptPartionSchemeIterate,
 };
 
 typedef u64 lba;
@@ -57,9 +57,9 @@ typedef struct
 } packed gpt_partition_entry;
 
 int
-gpt_partition_scheme_iterate (loom_partition_scheme *partition_scheme,
-                              loom_block_dev *parent,
-                              loom_partition_scheme_hook hook, void *ctx)
+gptPartionSchemeIterate (loom_partition_scheme *partition_scheme,
+                         loom_block_dev *parent,
+                         loom_partition_scheme_hook hook, void *ctx)
 {
   int ret_val = -1;
   gpt_header *hdr = NULL;
@@ -69,20 +69,20 @@ gpt_partition_scheme_iterate (loom_partition_scheme *partition_scheme,
 
   (void) partition_scheme;
 
-  hdr = loom_malloc (sizeof (*hdr));
+  hdr = loomAlloc (sizeof (*hdr));
   if (hdr == NULL)
     goto out;
 
-  if ((error = loom_block_dev_read (parent, parent->block_size, sizeof (*hdr),
-                                    (char *) hdr)))
+  if ((error = loomBlockDevRead (parent, parent->block_size, sizeof (*hdr),
+                                 (char *) hdr)))
     {
-      loom_error_np (error);
+      loomError (error);
       goto out;
     }
 
-  if (loom_memcmp (&hdr->signature, GPT_SIGNATURE, 8))
+  if (loomMemCmp (&hdr->signature, GPT_SIGNATURE, 8))
     {
-      loom_fmt_error (LOOM_ERR_BAD_PART_SCHEME, "bad GPT signature");
+      loomErrorFmt (LOOM_ERR_BAD_PART_SCHEME, "bad GPT signature");
       goto out;
     }
 
@@ -90,7 +90,7 @@ gpt_partition_scheme_iterate (loom_partition_scheme *partition_scheme,
 
   if (hdr->hdr_sz < sizeof (*hdr))
     {
-      loom_fmt_error (LOOM_ERR_BAD_PART_SCHEME, "bad GPT header size");
+      loomErrorFmt (LOOM_ERR_BAD_PART_SCHEME, "bad GPT header size");
       goto out;
     }
 
@@ -100,35 +100,35 @@ gpt_partition_scheme_iterate (loom_partition_scheme *partition_scheme,
 
   if (hdr->ents_sz < sizeof (gpt_partition_entry))
     {
-      loom_fmt_error (LOOM_ERR_BAD_PART_SCHEME, "bad GPT entry size");
+      loomErrorFmt (LOOM_ERR_BAD_PART_SCHEME, "bad GPT entry size");
       goto out;
     }
 
   hdr->ents = loom_le32toh (hdr->ents);
 
-  if (loom_mul (hdr->ents, hdr->ents_sz, &size))
+  if (loomMul (hdr->ents, hdr->ents_sz, &size))
     {
-      loom_fmt_error (LOOM_ERR_BAD_PART_SCHEME, "GPT table entries overflow");
+      loomErrorFmt (LOOM_ERR_BAD_PART_SCHEME, "GPT table entries overflow");
       goto out;
     }
 
   hdr->ents_loc = loom_le64toh (hdr->ents_loc);
 
-  if (loom_mul (parent->block_size, hdr->ents_loc, &loc))
+  if (loomMul (parent->block_size, hdr->ents_loc, &loc))
     {
-      loom_fmt_error (LOOM_ERR_BAD_PART_SCHEME,
-                      "GPT table entries out of range");
+      loomErrorFmt (LOOM_ERR_BAD_PART_SCHEME,
+                    "GPT table entries out of range");
       goto out;
     }
 
-  ents = loom_malloc (size);
+  ents = loomAlloc (size);
 
   if (ents == NULL)
     goto out;
 
-  if ((error = loom_block_dev_read (parent, loc, size, ents)))
+  if ((error = loomBlockDevRead (parent, loc, size, ents)))
     {
-      loom_error_np (error);
+      loomError (error);
       goto out;
     }
 
@@ -141,8 +141,8 @@ gpt_partition_scheme_iterate (loom_partition_scheme *partition_scheme,
           = (gpt_partition_entry *) (ents + i * hdr->ents_sz);
       usize offset, blocks;
 
-      if (!loom_memcmp (ent->partition_type, gpt_part_type_unused,
-                        GPT_GUID_SIZE))
+      if (!loomMemCmp (ent->partition_type, gpt_part_type_unused,
+                       GPT_GUID_SIZE))
         continue;
 
       ent->range.start = loom_le64toh (ent->range.start);
@@ -150,38 +150,35 @@ gpt_partition_scheme_iterate (loom_partition_scheme *partition_scheme,
 
       if (ent->range.start > ent->range.end)
         {
-          loom_fmt_error (LOOM_ERR_BAD_PART_SCHEME,
-                          "bad GPT partition entry range");
+          loomErrorFmt (LOOM_ERR_BAD_PART_SCHEME,
+                        "bad GPT partition entry range");
           goto out;
         }
 
-      if (loom_checked_cast (ent->range.start, &offset)
-          || loom_add (ent->range.end - offset, 1, &blocks))
+      if (loomCheckedCast (ent->range.start, &offset)
+          || loomAdd (ent->range.end - offset, 1, &blocks))
         // FIXME: Emit warning for out of range partition.
         continue;
 
-      loom_partition_init (&partition, parent, offset, blocks);
+      loomPartitionInit (&partition, parent, offset, blocks);
 
       if ((ret_val = hook (parent, &partition, ctx)))
         {
-          loom_error_np (LOOM_ERR_HOOK);
+          loomError (LOOM_ERR_HOOK);
           goto out;
         }
     }
 
   ret_val = 0;
 out:
-  loom_free (ents);
-  loom_free (hdr);
+  loomFree (ents);
+  loomFree (hdr);
 
   return ret_val;
 }
 
 LOOM_MOD (gpt)
 
-LOOM_MOD_INIT () { loom_partition_scheme_register (&gpt_partition_scheme); }
+LOOM_MOD_INIT () { loomPartitionSchemeRegister (&gpt_partition_scheme); }
 
-LOOM_MOD_DEINIT ()
-{
-  loom_partition_scheme_unregister (&gpt_partition_scheme);
-}
+LOOM_MOD_DEINIT () { loomPartitionSchemeUnregister (&gpt_partition_scheme); }

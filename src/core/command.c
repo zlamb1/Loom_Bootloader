@@ -8,27 +8,27 @@
 loom_list loom_commands = LOOM_LIST_HEAD (loom_commands);
 
 void
-loom_command_register (loom_command *command)
+loomCommandRegister (loom_command *command)
 {
-  loom_assert (command != NULL);
-  loom_list_append (&loom_commands, &command->node);
+  loomAssert (command != NULL);
+  loomListAppend (&loom_commands, &command->node);
 }
 
 void
-loom_command_unregister (loom_command *command)
+loomCommandUnregister (loom_command *command)
 {
-  loom_assert (command != NULL);
-  loom_list_remove (&command->node);
+  loomAssert (command != NULL);
+  loomListRemove (&command->node);
 }
 
 loom_command *
-loom_command_find (const char *name)
+loomCommandFind (const char *name)
 {
   loom_command *command;
 
   loom_list_for_each_entry (&loom_commands, command, node)
   {
-    if (!loom_strcmp (command->name, name))
+    if (!loomStrCmp (command->name, name))
       return command;
   }
 

@@ -7,25 +7,25 @@
 loom_list loom_input_sources = LOOM_LIST_HEAD (loom_input_sources);
 
 void
-loom_input_source_register (loom_input_source *input_src)
+loomInputSourceRegister (loom_input_source *input_src)
 {
-  loom_assert (input_src != NULL);
-  loom_list_prepend (&loom_input_sources, &input_src->node);
+  loomAssert (input_src != NULL);
+  loomListAdd (&loom_input_sources, &input_src->node);
 }
 
 void
-loom_input_source_unregister (loom_input_source *input_src)
+loomInputSourceUnregister (loom_input_source *input_src)
 {
-  loom_assert (input_src != NULL);
-  loom_list_remove (&input_src->node);
+  loomAssert (input_src != NULL);
+  loomListRemove (&input_src->node);
 }
 
 int
-loom_input_source_poll (loom_input_source *input_src, loom_input_event *evt)
+loomInputSourcePoll (loom_input_source *input_src, loom_input_event *evt)
 {
-  loom_assert (input_src != NULL);
-  loom_assert (input_src->poll != NULL);
-  loom_assert (evt != NULL);
+  loomAssert (input_src != NULL);
+  loomAssert (input_src->poll != NULL);
+  loomAssert (evt != NULL);
 
   if (input_src->poll (input_src, evt))
     {
@@ -72,14 +72,14 @@ loom_input_source_poll (loom_input_source *input_src, loom_input_event *evt)
 }
 
 int
-loom_input_sources_poll (loom_input_event *evt)
+loomInputSourcesPoll (loom_input_event *evt)
 {
   loom_input_source *input_src;
 
   loom_list_for_each_entry (&loom_input_sources, input_src, node)
   {
     int retval;
-    if ((retval = loom_input_source_poll (input_src, evt)))
+    if ((retval = loomInputSourcePoll (input_src, evt)))
       return retval;
   }
 

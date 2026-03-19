@@ -6,7 +6,7 @@ extern char stage2s;
 extern char stage3e;
 
 void
-loom_panic (const char *fmt, ...)
+loomPanic (const char *fmt, ...)
 {
   static int count = 0;
   va_list args;
@@ -15,16 +15,16 @@ loom_panic (const char *fmt, ...)
     for (;;)
       ;
 
-  loom_consoles_clear ();
+  loomConsolesClear ();
 
-  loom_printf ("!!!PANIC!!!\n");
+  loomLogLn ("!!!PANIC!!!");
   va_start (args, fmt);
-  loom_vprintf (fmt, args);
+  loomLogV (fmt, args);
   va_end (args);
 
   void **ebp = (void **) __builtin_frame_address (0);
 
-  loom_printf ("\n\nBacktrace:\n");
+  loomLogLn ("\n\nBacktrace:");
 
   while (*ebp)
     {
@@ -37,8 +37,8 @@ loom_panic (const char *fmt, ...)
           || (uintptr_t) ebp > (uintptr_t) next)
         break;
 
-      symbol = loom_symbol_find (addr);
-      loom_printf ("%s() @ %p\n", symbol ? symbol->name : "???", addr);
+      symbol = loomSymbolFind (addr);
+      loomLogLn ("%s() @ %p", symbol ? symbol->name : "???", addr);
 
       ebp = next;
     }

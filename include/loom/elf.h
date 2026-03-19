@@ -116,29 +116,28 @@ typedef struct
   u32 info;
 } packed align (1) loom_elf32_rel;
 
-int export (loom_elf32_ehdr_load) (void *p, usize size,
-                                   loom_elf32_ehdr **ehdr);
+int export (loomELF32EhdrLoad) (void *p, usize size, loom_elf32_ehdr **ehdr);
 
-int export (loom_elf32_shdr_validate) (address addr, usize size,
-                                       loom_elf32_shdr *shdr);
+int export (loomELF32ShdrValidate) (address addr, usize size,
+                                    loom_elf32_shdr *shdr);
 
-int export (loom_elf32_strtab_validate) (loom_elf32_ehdr *ehdr, usize size,
-                                         loom_elf32_shdr *shdr);
+int export (loomELF32StrTabValidate) (loom_elf32_ehdr *ehdr, usize size,
+                                      loom_elf32_shdr *shdr);
 
-loom_elf32_shdr *export (loom_elf32_shdr_get) (loom_elf32_ehdr *ehdr,
-                                               usize shidx);
+loom_elf32_shdr *export (loomELF32ShdrGet) (loom_elf32_ehdr *ehdr,
+                                            usize shidx);
 
-int export (loom_elf32_shdr_iterate) (loom_elf32_ehdr *ehdr,
-                                      int (*hook) (usize, loom_elf32_shdr *,
-                                                   void *),
-                                      void *data);
+int export (loomELF32ShdrIterate) (loom_elf32_ehdr *ehdr,
+                                   int (*hook) (usize, loom_elf32_shdr *,
+                                                void *),
+                                   void *data);
 
-int export (loom_elf32_rel_iterate) (
+int export (loomELF32RelIterate) (
     loom_elf32_ehdr *ehdr,
     int (*hook) (loom_elf32_rel *rel, usize symtabidx, loom_elf32_shdr *symtab,
                  usize targetidx, loom_elf32_shdr *target, void *data),
     void *data);
 
-int loom_elf32_rel_fixup (loom_elf32_rel *rel, loom_elf32_sym *sym, void *b);
+int loomELF32RelFixup (loom_elf32_rel *rel, loom_elf32_sym *sym, void *b);
 
 #endif

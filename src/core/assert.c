@@ -3,7 +3,7 @@
 #include "loom/os.h"
 
 void
-_loom_assert (const char *cond, const char *file, uint line)
+_loomAssert (const char *cond, const char *file, uint line)
 {
   usize index = 0;
 
@@ -17,5 +17,5 @@ _loom_assert (const char *cond, const char *file, uint line)
 #endif
     }
 
-  loom_panic ("%s:%u: Assertion '%s' failed.", file + index, line, cond);
+  loomPanic ("%s:%u: Assertion '%s' failed.", file + index, line, cond);
 }

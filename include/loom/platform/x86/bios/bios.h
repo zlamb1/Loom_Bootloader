@@ -18,8 +18,8 @@ typedef struct
 } packed loom_bios_args;
 
 void export (loom_enter_rmode) (void);
-void export (loom_bios_int) (u8 intno, loom_bios_args *args);
+void export (loomBiosInt) (u8 intno, loom_bios_args *args);
 
-void loom_bios_disk_probe (void);
+void loomBiosDisksProbe (void);
 
 #endif

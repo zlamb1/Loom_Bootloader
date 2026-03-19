@@ -3,17 +3,16 @@
 #include "loom/math.h"
 
 loom_error
-loom_partition_read (loom_block_dev *block_dev, usize block, usize n,
-                     char *buf)
+loomPartitionRead (loom_block_dev *block_dev, usize block, usize n, char *buf)
 {
   loom_block_dev *parent;
   loom_partition *partition;
   usize end;
 
-  loom_assert (block_dev != NULL);
-  loom_assert (block_dev->parent != NULL);
-  loom_assert (block_dev->parent->read != NULL);
-  loom_assert (block_dev->data != NULL);
+  loomAssert (block_dev != NULL);
+  loomAssert (block_dev->parent != NULL);
+  loomAssert (block_dev->parent->read != NULL);
+  loomAssert (block_dev->data != NULL);
 
   parent = block_dev->parent;
   partition = block_dev->data;
@@ -21,13 +20,13 @@ loom_partition_read (loom_block_dev *block_dev, usize block, usize n,
   if (!n)
     return LOOM_ERR_NONE;
 
-  if (loom_add (block, n - 1, &end))
+  if (loomAdd (block, n - 1, &end))
     return LOOM_ERR_OVERFLOW;
 
   if (end >= block_dev->blocks)
     return LOOM_ERR_RANGE;
 
-  if (loom_add (end, partition->offset, &end))
+  if (loomAdd (end, partition->offset, &end))
     return LOOM_ERR_OVERFLOW;
 
   if (end >= parent->blocks)

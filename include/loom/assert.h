@@ -5,20 +5,20 @@
 
 #ifdef LOOM_DEBUG
 
-#define loom_assert(COND)                                                     \
+#define loomAssert(COND)                                                      \
   do                                                                          \
     {                                                                         \
       if (!(COND))                                                            \
-        _loom_assert (#COND, __FILE__, __LINE__);                             \
+        _loomAssert (#COND, __FILE__, __LINE__);                              \
     }                                                                         \
   while (0)
 
 #else
 
-#define loom_assert(COND)
+#define loomAssert(COND)
 
 #endif
 
-void export (_loom_assert) (const char *cond, const char *file, uint line);
+void export (_loomAssert) (const char *cond, const char *file, uint line);
 
 #endif

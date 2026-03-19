@@ -42,30 +42,30 @@ typedef struct loom_list
                  *prev = VARNAME->prev;                                       \
        VARNAME != _head; (VARNAME = prev, prev = VARNAME->prev))
 
-#define loom_list_add loom_list_prepend
+#define loomListAdd loomListPrepend
 
-#define loom_list_add_by_field(head, elem, field)                             \
+#define loomListAddByField(head, elem, field)                                 \
   do                                                                          \
     {                                                                         \
-      loom_assert (elem != NULL);                                             \
-      loom_list_add (head, &elem->field);                                     \
+      loomAssert (elem != NULL);                                              \
+      loomListAdd (head, &elem->field);                                       \
     }                                                                         \
   while (0)
 
 #define loom_list_remove_by_field(elem, field)                                \
   do                                                                          \
     {                                                                         \
-      loom_assert (elem != NULL);                                             \
-      loom_list_remove (&elem->field);                                        \
+      loomAssert (elem != NULL);                                              \
+      loomListRemove (&elem->field);                                          \
     }                                                                         \
   while (0)
 
-void export (loom_list_prepend) (loom_list *head, loom_list *node);
-void export (loom_list_append) (loom_list *head, loom_list *node);
+void export (loomListPrepend) (loom_list *head, loom_list *node);
+void export (loomListAppend) (loom_list *head, loom_list *node);
 
-void export (loom_list_remove) (loom_list *node);
-void export (loom_list_replace) (loom_list *oldnode, loom_list *newnode);
+void export (loomListRemove) (loom_list *node);
+void export (loomListReplace) (loom_list *oldnode, loom_list *newnode);
 
-bool export (loom_list_is_empty) (loom_list *head);
+bool export (loomListIsEmpty) (loom_list *head);
 
 #endif

@@ -11,10 +11,10 @@ typedef struct
   u32 type;
 } packed e820_t;
 
-void loom_vga_con_register (void);
+void loomRegisterEarlyVgaConsole (void);
 
 void
-mmap_mm_hook (u64 addr, u64 length, loom_memory_type type, unused void *data)
+mmapMMHook (u64 addr, u64 length, loom_memory_type type, unused void *data)
 {
   if (addr >= 0xffffffff || addr >= USIZE_MAX || type != LOOM_MEMORY_TYPE_FREE)
     return;
@@ -27,26 +27,26 @@ mmap_mm_hook (u64 addr, u64 length, loom_memory_type type, unused void *data)
       addr = 0x100000;
     }
 
-  loom_mm_add_region ((usize) addr, (usize) length);
+  loomMMAddRegion ((usize) addr, (usize) length);
 }
 
 void
-loom_platform_init (void)
+loomPlatformInit (void)
 {
   // Note: Save BIOS PIC mask state before any BIOS interrupt calls.
-  loom_pic_bios_save_masks ();
-  loom_vga_con_register ();
-  loom_platform_mmap_iterate (mmap_mm_hook, NULL);
-  loom_bios_disk_probe ();
-  loom_pic_remap (0x20, 0x28);
-  loom_pic_disable ();
-  loom_idt_init ();
-  loom_idtr_load ();
-  loom_sti ();
+  loomPICSaveBiosDefaults ();
+  loomRegisterEarlyVgaConsole ();
+  loomPlatformMmapIterate (mmapMMHook, NULL);
+  loomBiosDisksProbe ();
+  loomPICRemap (0x20, 0x28);
+  loomPICDisable ();
+  loomIdtInit ();
+  loomIdtrLoad ();
+  loomSti ();
 }
 
 void
-loom_platform_mmap_iterate (mmap_hook hook, void *data)
+loomPlatformMmapIterate (mmap_hook hook, void *data)
 {
   loom_bios_args args = { 0 };
   volatile e820_t e820;
@@ -62,7 +62,7 @@ loom_platform_mmap_iterate (mmap_hook hook, void *data)
       args.edi = (uintptr) &e820;
       args.ds = 0;
 
-      loom_bios_int (0x15, &args);
+      loomBiosInt (0x15, &args);
 
       if (args.flags & 1 || args.eax != 0x534D4150 || !args.ebx
           || args.ecx < 20)
@@ -94,19 +94,19 @@ loom_platform_mmap_iterate (mmap_hook hook, void *data)
 }
 
 void
-loom_sti (void)
+loomSti (void)
 {
   __asm__ volatile ("sti" ::: "memory");
 }
 
 void
-loom_cli (void)
+loomCli (void)
 {
   __asm__ volatile ("cli" ::: "memory");
 }
 
 int
-loom_irq_save (void)
+loomIrqSave (void)
 {
   int flags;
   __asm__ volatile ("pushf; pop %0; cli" : "=r"(flags)::"memory");
@@ -114,8 +114,8 @@ loom_irq_save (void)
 }
 
 void
-loom_irq_restore (int flags)
+loomIrqRestore (int flags)
 {
   if (flags & 0x200)
-    loom_sti ();
+    loomSti ();
 }

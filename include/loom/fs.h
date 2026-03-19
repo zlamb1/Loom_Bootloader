@@ -47,12 +47,11 @@ typedef struct loom_fs_type
 extern loom_list export_var (loom_fs_list);
 extern loom_list export_var (loom_fs_types);
 
-#define loom_fs_register(fs) loom_list_add_by_field (&loom_fs_list, fs, node)
-#define loom_fs_type_register(fs_type)                                        \
-  loom_list_add_by_field (&loom_fs_types, fs_type, node)
+#define loomFsRegister(fs) loomListAddByField (&loom_fs_list, fs, node)
+#define loomFsTypeRegister(fs_type)                                           \
+  loomListAddByField (&loom_fs_types, fs_type, node)
 
-#define loom_fs_unregister(fs) loom_list_remove_by_field (fs, node)
-#define loom_fs_type_unregister(fs_type)                                      \
-  loom_list_remove_by_field (fs_type, node)
+#define loomFsUnregister(fs)          loom_list_remove_by_field (fs, node)
+#define loomFsTypeUnregister(fs_type) loom_list_remove_by_field (fs_type, node)
 
 #endif

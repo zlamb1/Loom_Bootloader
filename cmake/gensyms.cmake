@@ -14,7 +14,7 @@ foreach (HEADER ${HEADERS})
     file(APPEND ${OUTFILE} "#include \"${HEADER}\"\n")
 endforeach()
 
-file(APPEND ${OUTFILE} "\nvoid loom_register_export_symbols (void) {\n")
+file(APPEND ${OUTFILE} "\nvoid loomRegisterExportSymbols (void) {\n")
 
 set(I 0)
 
@@ -42,7 +42,7 @@ foreach (HEADER ${HEADERS})
             file(
                 APPEND 
                 ${OUTFILE} 
-                "\tloom_symbol_register(\"${EXPORT_NAME}\", ${KIND}, ${TAKE}${EXPORT_NAME});\n"
+                "\tloomSymbolRegister(\"${EXPORT_NAME}\", ${KIND}, ${TAKE}${EXPORT_NAME});\n"
             )
 
             math(EXPR I "${I}+1")

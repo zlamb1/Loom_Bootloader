@@ -5,6 +5,7 @@
 #include "loom/list.h"
 #include "loom/math.h"
 #include "loom/mm.h"
+#include "loom/mmap.h"
 #include "loom/module.h"
 #include "loom/platform.h"
 #include "loom/print.h"
@@ -17,17 +18,17 @@ typedef struct
 } color_map;
 
 static int
-rmmod_task (unused loom_command *cmd, usize argc, char *argv[])
+rmmodTask (unused loom_command *cmd, usize argc, char *argv[])
 {
   if (argc <= 1)
     {
-      loom_fmt_error (LOOM_ERR_BAD_ARG, "expected module name");
+      loomErrorFmt (LOOM_ERR_BAD_ARG, "expected module name");
       return -1;
     }
 
-  if (!loom_module_remove (argv[1]))
+  if (!loomModuleRemove (argv[1]))
     {
-      loom_fmt_error (LOOM_ERR_BAD_ARG, "module %s not found", argv[1]);
+      loomErrorFmt (LOOM_ERR_BAD_ARG, "module %s not found", argv[1]);
       return -1;
     }
 
@@ -35,52 +36,52 @@ rmmod_task (unused loom_command *cmd, usize argc, char *argv[])
 }
 
 static int
-lsmod_task (unused loom_command *cmd, unused usize argc, unused char *argv[])
+lsmodTask (unused loom_command *cmd, unused usize argc, unused char *argv[])
 {
   loom_module *module;
 
   loom_list_for_each_entry (&loom_modules, module, node)
   {
-    loom_printf ("%s\n", module->name);
+    loomLogLn ("%s", module->name);
   }
 
   return 0;
 }
 
 static int
-reboot_task (unused loom_command *cmd, unused usize argc, unused char *argv[])
+rebootTask (unused loom_command *cmd, unused usize argc, unused char *argv[])
 {
-  loom_reboot ();
+  loomReboot ();
   return 0;
 }
 
 static int
-mmap_print_hook (loom_mmap_entry *entry, unused void *data)
+mmapPrintHook (loom_mmap_entry *entry, unused void *data)
 {
-  loom_printf ("%-#12llx%-#12llx%-12s\n", entry->addr, entry->length,
-               loom_memory_type_str (entry->type));
+  loomLogLn ("%-#12llx%-#12llx%-12s", entry->addr, entry->length,
+             loomMemoryTypeString (entry->type));
   return 0;
 }
 
 static int
-mmap_task (unused loom_command *cmd, unused usize argc, unused char *argv[])
+mmapTask (unused loom_command *cmd, unused usize argc, unused char *argv[])
 {
-  loom_consoles_set_fg (LOOM_CONSOLE_COLOR_YELLOW);
+  loomConsolesSetFg (LOOM_CONSOLE_COLOR_YELLOW);
 
-  loom_printf ("%-12s%-12s%-12s\n", "ADDRESS", "LENGTH", "TYPE");
+  loomLogLn ("%-12s%-12s%-12s", "ADDRESS", "LENGTH", "TYPE");
 
-  loom_consoles_set_fg (LOOM_CONSOLE_DEFAULT_FG);
+  loomConsolesSetFg (LOOM_CONSOLE_DEFAULT_FG);
 
   if (loom_mmap.count)
-    loom_mmap_iterate (mmap_print_hook, NULL);
+    loomMmapIterate (mmapPrintHook, NULL);
   else
-    loom_printf ("No Entries\n");
+    loomLogLn ("No Entries");
 
   return 0;
 }
 
 static bool
-parse_console_color (usize argc, char *argv[], loom_console_color *color)
+parseConsoleColor (usize argc, char *argv[], loom_console_color *color)
 {
   int c;
   char *color_arg;
@@ -104,7 +105,7 @@ parse_console_color (usize argc, char *argv[], loom_console_color *color)
 
   color_arg = argv[1];
 
-  if (loom_strtoi (color_arg, &c) == LOOM_ERR_NONE)
+  if (loomParseInt (color_arg, &c) == LOOM_ERR_NONE)
     {
       if (c < 0 || c > LOOM_CONSOLE_COLOR_MAX)
         return 0;
@@ -112,21 +113,21 @@ parse_console_color (usize argc, char *argv[], loom_console_color *color)
       return 1;
     }
 
-  loom_strlower (color_arg);
+  loomStrLower (color_arg);
 
-  if (!loom_strcmp (color_arg, "bright") || !loom_strcmp (color_arg, "light"))
+  if (!loomStrCmp (color_arg, "bright") || !loomStrCmp (color_arg, "light"))
     {
       if (argc < 3)
         return 0;
 
       bright = 1;
       color_arg = argv[2];
-      loom_strlower (color_arg);
+      loomStrLower (color_arg);
     }
 
   for (unsigned int i = 0; i < sizeof (map) / sizeof (*map); ++i)
     {
-      if (!loom_strcmp (color_arg, map[i].key))
+      if (!loomStrCmp (color_arg, map[i].key))
         {
           *color = bright ? LOOM_CONSOLE_COLOR_BRIGHT (map[i].color)
                           : map[i].color;
@@ -138,20 +139,20 @@ parse_console_color (usize argc, char *argv[], loom_console_color *color)
 }
 
 static int
-fg_task (unused loom_command *cmd, usize argc, char *argv[])
+fgTask (unused loom_command *cmd, usize argc, char *argv[])
 {
   loom_console *console;
   loom_console_color color = LOOM_CONSOLE_DEFAULT_FG;
 
-  if (argc > 1 && !parse_console_color (argc, argv, &color))
+  if (argc > 1 && !parseConsoleColor (argc, argv, &color))
     {
-      loom_fmt_error (LOOM_ERR_BAD_ARG, "bad color '%s'", argv[1]);
+      loomErrorFmt (LOOM_ERR_BAD_ARG, "bad color '%s'", argv[1]);
       return -1;
     }
 
   loom_list_for_each_entry (&loom_consoles, console, node)
   {
-    loom_assert (console->set_fg != NULL);
+    loomAssert (console->set_fg != NULL);
     console->set_fg (console, color);
   }
 
@@ -159,20 +160,20 @@ fg_task (unused loom_command *cmd, usize argc, char *argv[])
 }
 
 static int
-bg_task (unused loom_command *cmd, usize argc, char *argv[])
+bgTask (unused loom_command *cmd, usize argc, char *argv[])
 {
   loom_console *console;
   loom_console_color color = LOOM_CONSOLE_DEFAULT_BG;
 
-  if (argc > 1 && !parse_console_color (argc, argv, &color))
+  if (argc > 1 && !parseConsoleColor (argc, argv, &color))
     {
-      loom_fmt_error (LOOM_ERR_BAD_ARG, "bad color '%s'", argv[1]);
+      loomErrorFmt (LOOM_ERR_BAD_ARG, "bad color '%s'", argv[1]);
       return -1;
     }
 
   loom_list_for_each_entry (&loom_consoles, console, node)
   {
-    loom_assert (console->set_bg != NULL);
+    loomAssert (console->set_bg != NULL);
     console->set_bg (console, color);
   }
 
@@ -180,9 +181,9 @@ bg_task (unused loom_command *cmd, usize argc, char *argv[])
 }
 
 static int
-clear_task (unused loom_command *cmd, unused usize argc, unused char *argv[])
+clearTask (unused loom_command *cmd, unused usize argc, unused char *argv[])
 {
-  loom_consoles_clear ();
+  loomConsolesClear ();
   return 0;
 }
 
@@ -193,11 +194,11 @@ typedef struct
 } mm_iterate_context;
 
 static int
-mm_iterate_hook (unused address p, usize n, bool isfree, void *data)
+mmIterateHook (unused address p, usize n, bool is_free, void *data)
 {
   mm_iterate_context *ctx = data;
 
-  if (isfree == ctx->is_free && loom_add (ctx->c, n, &ctx->c))
+  if (is_free == ctx->is_free && loomAdd (ctx->c, n, &ctx->c))
     {
       ctx->c = USIZE_MAX;
       return 1;
@@ -207,34 +208,34 @@ mm_iterate_hook (unused address p, usize n, bool isfree, void *data)
 }
 
 static int
-memory_task (unused loom_command *cmd, usize argc, char *argv[])
+memoryTask (unused loom_command *cmd, usize argc, char *argv[])
 {
   mm_iterate_context ctx = { .c = 0, .is_free = 1 };
 
   if (argc > 1
-      && (!loom_strcmp (argv[1], "0") || !loom_strcmp (argv[1], "a")
-          || !loom_strcmp (argv[1], "allocated")))
+      && (!loomStrCmp (argv[1], "0") || !loomStrCmp (argv[1], "a")
+          || !loomStrCmp (argv[1], "allocated")))
     ctx.is_free = 0;
 
-  loom_mm_iterate (mm_iterate_hook, &ctx);
-  loom_printf ("%lu bytes %s\n", (unsigned long) ctx.c,
-               ctx.is_free ? "free" : "allocated");
+  loomMMIterate (mmIterateHook, &ctx);
+  loomLogLn ("%lu bytes %s", (unsigned long) ctx.c,
+             ctx.is_free ? "free" : "allocated");
 
   return 0;
 }
 
 static int
-boot_task (unused loom_command *cmd, unused usize argc, unused char *argv[])
+bootTask (unused loom_command *cmd, unused usize argc, unused char *argv[])
 {
-  loom_kernel_loader_boot ();
-  loom_fmt_error (LOOM_ERR_BAD_ARG, "no kernel loaded");
+  loomKernelLoaderBoot ();
+  loomErrorFmt (LOOM_ERR_BAD_ARG, "no kernel loaded");
   return -1;
 }
 
 static void
-command_register (const char *name, loom_task task)
+registerCommand (const char *name, loom_task task)
 {
-  loom_command *cmd = loom_malloc (sizeof (loom_command));
+  loom_command *cmd = loomAlloc (sizeof (loom_command));
 
   if (!cmd)
     return;
@@ -242,19 +243,19 @@ command_register (const char *name, loom_task task)
   cmd->name = name;
   cmd->task = task;
 
-  loom_command_register (cmd);
+  loomCommandRegister (cmd);
 }
 
 void
-loom_init_core_cmds (void)
+loomCoreCommandsInit (void)
 {
-  command_register ("rmmod", rmmod_task);
-  command_register ("lsmod", lsmod_task);
-  command_register ("reboot", reboot_task);
-  command_register ("mmap", mmap_task);
-  command_register ("fg", fg_task);
-  command_register ("bg", bg_task);
-  command_register ("clear", clear_task);
-  command_register ("memory", memory_task);
-  command_register ("boot", boot_task);
+  registerCommand ("rmmod", rmmodTask);
+  registerCommand ("lsmod", lsmodTask);
+  registerCommand ("reboot", rebootTask);
+  registerCommand ("mmap", mmapTask);
+  registerCommand ("fg", fgTask);
+  registerCommand ("bg", bgTask);
+  registerCommand ("clear", clearTask);
+  registerCommand ("memory", memoryTask);
+  registerCommand ("boot", bootTask);
 }

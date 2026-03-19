@@ -7,8 +7,8 @@
 
 #ifdef LOOM_MODULE
 #define LOOM_MOD(NAME)    const char used *loom_mod_name = #NAME;
-#define LOOM_MOD_INIT()   void used loom_mod_init (void)
-#define LOOM_MOD_DEINIT() void used loom_mod_deinit (void)
+#define LOOM_MOD_INIT()   void used loomModInit (void)
+#define LOOM_MOD_DEINIT() void used loomModDeinit (void)
 #endif
 
 typedef struct
@@ -51,11 +51,11 @@ extern address export_var (loom_modend);
 
 extern loom_list export_var (loom_modules);
 
-address loom_modend_get (void);
-void loom_core_modules_load (void);
+address loomModEndGet (void);
+void loomCoreModulesLoad (void);
 
-void export (loom_module_add) (loom_module *mod);
-bool export (loom_module_remove) (const char *name);
-void export (loom_module_unload) (loom_module *mod);
+void export (loomModuleAdd) (loom_module *mod);
+bool export (loomModuleRemove) (const char *name);
+void export (loomModuleUnload) (loom_module *mod);
 
 #endif

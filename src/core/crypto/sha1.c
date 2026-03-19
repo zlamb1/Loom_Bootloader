@@ -10,7 +10,7 @@ typedef struct
 } sha1_context;
 
 static void
-sha1_process_chunk (sha1_context *ctx)
+processChunk (sha1_context *ctx)
 {
   u32 *w = ctx->w, a, b, c, d, e, f, k, tmp;
 
@@ -20,7 +20,7 @@ sha1_process_chunk (sha1_context *ctx)
   for (unsigned int i = 16; i < 80; ++i)
     {
       w[i] = (w[i - 3] ^ w[i - 8] ^ w[i - 14] ^ w[i - 16]);
-      w[i] = loom_rotate_left (w[i], 1u);
+      w[i] = loomRotateLeft (w[i], 1u);
     }
 
   a = ctx->h[0];
@@ -52,10 +52,10 @@ sha1_process_chunk (sha1_context *ctx)
           k = 0xCA62C1D6;
         }
 
-      tmp = loom_rotate_left (a, 5u) + f + e + k + w[i];
+      tmp = loomRotateLeft (a, 5u) + f + e + k + w[i];
       e = d;
       d = c;
-      c = loom_rotate_left (b, 30u);
+      c = loomRotateLeft (b, 30u);
       b = a;
       a = tmp;
     }
@@ -68,7 +68,7 @@ sha1_process_chunk (sha1_context *ctx)
 }
 
 void
-loom_sha1_hash (usize length, const char *buf, loom_digest digest[20])
+loomSHA1Hash (usize length, const char *buf, loom_digest digest[20])
 {
   // See: https://en.wikipedia.org/wiki/SHA-1#SHA-1_pseudocode
 
@@ -85,13 +85,13 @@ loom_sha1_hash (usize length, const char *buf, loom_digest digest[20])
 
   while (length >= 64)
     {
-      loom_memcpy ((void *) ctx.w, buf, 64);
-      sha1_process_chunk (&ctx);
+      loomMemCopy ((void *) ctx.w, buf, 64);
+      processChunk (&ctx);
       length -= 64;
       buf += 64;
     }
 
-  loom_memcpy ((void *) ctx.w, buf, length);
+  loomMemCopy ((void *) ctx.w, buf, length);
   w_bytes = (unsigned char *) ctx.w;
   w_bytes[length] = 0x80;
 
@@ -100,7 +100,7 @@ loom_sha1_hash (usize length, const char *buf, loom_digest digest[20])
 
   if (length >= 56)
     {
-      sha1_process_chunk (&ctx);
+      processChunk (&ctx);
       for (int i = 0; i < 14; ++i)
         ctx.w[i] = 0;
     }
@@ -108,11 +108,11 @@ loom_sha1_hash (usize length, const char *buf, loom_digest digest[20])
   u64 message_length = original_length * 8;
   ctx.w[14] = loom_htobe32 ((u32) (message_length >> 32));
   ctx.w[15] = loom_htobe32 ((u32) message_length);
-  sha1_process_chunk (&ctx);
+  processChunk (&ctx);
 
   for (unsigned int i = 0; i < 5; ++i)
     {
       u32 h = loom_htobe32 (ctx.h[i]);
-      loom_memcpy (digest + i * 4, &h, 4);
+      loomMemCopy (digest + i * 4, &h, 4);
     }
 }

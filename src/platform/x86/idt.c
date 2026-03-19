@@ -22,24 +22,24 @@ idtr _idtr;
 
 extern void *loom_vectors[SIZE];
 
-extern void loom_exception_handler (u32 intno, u32 error_code);
+extern void loomExceptionHandler (u32 intno, u32 error_code);
 
 void
-loom_idt_init (void)
+loomIdtInit (void)
 {
   for (int i = 0; i < SIZE; ++i)
     {
       // The isr stubs are initially stored in loom_vectors.
-      loom_idt_vector_map ((u8) i, loom_vectors[i]);
-      loom_isr_vector_map ((u8) i, NULL);
+      loomIdtVectorMap ((u8) i, loom_vectors[i]);
+      loomIsrVectorMap ((u8) i, NULL);
     }
 
   for (u8 i = 0; i < 32; ++i)
-    loom_isr_vector_map (i, loom_exception_handler);
+    loomIsrVectorMap (i, loomExceptionHandler);
 }
 
 void
-loom_idtr_load (void)
+loomIdtrLoad (void)
 {
   _idtr.size = sizeof (idt) - 1;
   _idtr.offset = (uintptr) idt;
@@ -47,13 +47,13 @@ loom_idtr_load (void)
 }
 
 void
-loom_isr_vector_map (u8 entry, void *isr)
+loomIsrVectorMap (u8 entry, void *isr)
 {
   loom_vectors[entry] = isr;
 }
 
 void
-loom_idt_vector_map (u8 entry_nr, void *isr)
+loomIdtVectorMap (u8 entry_nr, void *isr)
 {
   idt_entry entry = { 0 };
   uintptr addr;
@@ -69,7 +69,7 @@ loom_idt_vector_map (u8 entry_nr, void *isr)
 }
 
 void
-loom_idt_vector_unmap (u8 entry_nr)
+loomIdtVectorUnmap (u8 entry_nr)
 {
   idt[entry_nr] = (idt_entry) { 0 };
 }

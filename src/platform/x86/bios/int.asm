@@ -2,13 +2,13 @@ BITS 32
 
 SECTION .stage2.int EXEC
 
-GLOBAL loom_bios_int
+GLOBAL loomBiosInt
 
 EXTERN loom_enter_rmode
 EXTERN _enter_pmode
 
-EXTERN loom_pic_bios_reset
-EXTERN loom_pic_bios_restore
+EXTERN loomPICResetBiosDefaults
+EXTERN loomPICRestoreMasks
 
 ALIGN 4
 
@@ -20,7 +20,7 @@ _idtr: DQ 0
 ; This should not be called after reconfiguring any hardware
 ; the BIOS needs without resetting it to an the default state.
 
-loom_bios_int:
+loomBiosInt:
     push ebp
 
     pushfd
@@ -35,7 +35,7 @@ loom_bios_int:
     ; Save protected mode IDTR.
     sidt [_idtr]
 
-    call loom_pic_bios_reset
+    call loomPICResetBiosDefaults
 
     mov DWORD [_stack], esp
 
@@ -128,7 +128,7 @@ BITS 32
     ; restore protected mode IDTR
     lidt [_idtr]
 
-    call loom_pic_bios_restore
+    call loomPICRestoreMasks
 
     pop edi
     pop esi

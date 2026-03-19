@@ -10,7 +10,7 @@ typedef struct
 } md5_context;
 
 static void
-md5_process_chunk (md5_context *ctx)
+processChunk (md5_context *ctx)
 {
   u32 s[64] = {
     7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22,
@@ -66,7 +66,7 @@ md5_process_chunk (md5_context *ctx)
       a = d;
       d = c;
       c = b;
-      b += loom_rotate_left (f, s[i]);
+      b += loomRotateLeft (f, s[i]);
     }
 
   ctx->h[0] += a;
@@ -76,7 +76,7 @@ md5_process_chunk (md5_context *ctx)
 }
 
 void
-loom_md5_hash (usize length, const char *buf, loom_digest digest[16])
+loomMD5Hash (usize length, const char *buf, loom_digest digest[16])
 {
   // See: https://en.wikipedia.org/wiki/MD5#Algorithm
 
@@ -93,13 +93,13 @@ loom_md5_hash (usize length, const char *buf, loom_digest digest[16])
 
   while (length >= 64)
     {
-      loom_memcpy ((void *) ctx.M, buf, 64);
-      md5_process_chunk (&ctx);
+      loomMemCopy ((void *) ctx.M, buf, 64);
+      processChunk (&ctx);
       length -= 64;
       buf += 64;
     }
 
-  loom_memcpy ((void *) ctx.M, buf, length);
+  loomMemCopy ((void *) ctx.M, buf, length);
 
   M_bytes = (unsigned char *) ctx.M;
   M_bytes[length] = 0x80;
@@ -109,7 +109,7 @@ loom_md5_hash (usize length, const char *buf, loom_digest digest[16])
 
   if (length >= 56)
     {
-      md5_process_chunk (&ctx);
+      processChunk (&ctx);
       for (int i = 0; i < 14; ++i)
         ctx.M[i] = 0;
     }
@@ -117,11 +117,11 @@ loom_md5_hash (usize length, const char *buf, loom_digest digest[16])
   u64 message_length = original_length * 8;
   ctx.M[14] = loom_htole32 ((u32) message_length);
   ctx.M[15] = loom_htole32 ((u32) (message_length >> 32));
-  md5_process_chunk (&ctx);
+  processChunk (&ctx);
 
   for (unsigned int i = 0; i < 4; ++i)
     {
       u32 h = loom_htole32 (ctx.h[i]);
-      loom_memcpy (digest + i * 4, &h, 4);
+      loomMemCopy (digest + i * 4, &h, 4);
     }
 }

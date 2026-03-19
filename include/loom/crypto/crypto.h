@@ -4,7 +4,7 @@
 #include "loom/print.h"
 #include "loom/types.h"
 
-#define loom_rotate_left(N, S)                                                \
+#define loomRotateLeft(N, S)                                                  \
   ({                                                                          \
     __auto_type __n = (N);                                                    \
     __auto_type __s = (S);                                                    \
@@ -22,10 +22,10 @@
 typedef unsigned char loom_digest;
 
 static inline void
-loom_print_hash (usize length, const loom_digest *digest)
+loomPrintHash (usize length, const loom_digest *digest)
 {
   for (usize i = 0; i < length; ++i)
-    loom_printf ("%02hhx", digest[i]);
+    loomLog ("%02hhx", digest[i]);
 }
 
 #endif
