@@ -19,7 +19,6 @@
 
 #endif
 
-void LOOM_EXPORT (_loom_assert) (const char *cond, const char *file,
-                                 uint line);
+void export (_loom_assert) (const char *cond, const char *file, uint line);
 
 #endif

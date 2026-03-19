@@ -21,7 +21,7 @@ typedef struct loom_block_dev
   loom_list children, child_node, node;
 } loom_block_dev;
 
-extern loom_list LOOM_EXPORT_VAR (loom_block_devs);
+extern loom_list export_var (loom_block_devs);
 
 typedef struct
 {
@@ -50,14 +50,12 @@ loom_block_dev_init (loom_block_dev *block_dev, loom_block_dev_init_t *init)
   block_dev->child_node = LOOM_LIST_HEAD (block_dev->child_node);
 }
 
-void LOOM_EXPORT (loom_block_dev_register) (loom_block_dev *block_dev);
-void LOOM_EXPORT (loom_block_dev_unregister) (loom_block_dev *block_dev);
+void export (loom_block_dev_register) (loom_block_dev *block_dev);
+void export (loom_block_dev_unregister) (loom_block_dev *block_dev);
 
-loom_error LOOM_EXPORT (loom_block_dev_read) (loom_block_dev *block_dev,
-                                              usize offset, usize size,
-                                              char *buf);
+loom_error export (loom_block_dev_read) (loom_block_dev *block_dev,
+                                         usize offset, usize size, char *buf);
 
-void LOOM_EXPORT (loom_block_dev_probe) (loom_block_dev *block_dev,
-                                         bool force);
+void export (loom_block_dev_probe) (loom_block_dev *block_dev, bool force);
 
 #endif

@@ -1,6 +1,7 @@
 #include "loom/platform/x86/bios/bios.h"
 #include "loom/assert.h"
 #include "loom/block_dev.h"
+#include "loom/compiler.h"
 #include "loom/mm.h"
 #include "loom/string.h"
 
@@ -19,7 +20,7 @@ typedef struct
   u32 spt; // sectors per track
   u64 sectors;
   u16 bps; // bytes per sector
-} LOOM_PACKED bios_disk_params;
+} packed bios_disk_params;
 
 typedef struct
 {
@@ -29,7 +30,7 @@ typedef struct
   u16 offset;
   u16 segment;
   u64 start_block;
-} LOOM_PACKED bios_disk_read_packet;
+} packed bios_disk_read_packet;
 
 static loom_error
 bios_disk_read (loom_block_dev *block_dev, usize block, usize count, char *buf)
@@ -70,8 +71,8 @@ bios_disk_read (loom_block_dev *block_dev, usize block, usize count, char *buf)
       args.esi = (address) &read_packet;
       args.ds = 0;
 
-      loom_compile_assert (sizeof (bios_disk_read_packet) >= 0x10,
-                           "bios_disk_read_t must be at least 16 bytes.");
+      compile_assert (sizeof (bios_disk_read_packet) >= 0x10,
+                      "bios_disk_read_t must be at least 16 bytes.");
       read_packet.size = 0x10;
 
       read_packet.blocks = (u16) read;
@@ -147,8 +148,8 @@ loom_bios_disk_probe (void)
       args.esi = (address) &params;
       args.ds = 0;
 
-      loom_compile_assert (sizeof (bios_disk_params) >= 0x1A,
-                           "bios_disk_params_t must be at least 26 bytes.");
+      compile_assert (sizeof (bios_disk_params) >= 0x1A,
+                      "bios_disk_params_t must be at least 26 bytes.");
       params.size = 0x1A;
 
       loom_bios_int (0x13, &args);

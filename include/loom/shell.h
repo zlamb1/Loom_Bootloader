@@ -3,6 +3,6 @@
 
 #include "loom/compiler.h"
 
-void LOOM_EXPORT (loom_shell_exec) (void);
+void export (loom_shell_exec) (void);
 
 #endif

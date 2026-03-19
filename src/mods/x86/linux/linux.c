@@ -55,7 +55,7 @@ typedef struct setup_header
   u32 init_size;
   u32 handover_offset;
   u32 kernel_info_offset;
-} LOOM_PACKED setup_header;
+} packed setup_header;
 
 static loom_kernel_loader linux_loader = { 0 };
 
@@ -92,8 +92,7 @@ linux_boot (loom_kernel_loader *kernel_loader)
 }
 
 static int
-linux_task (LOOM_UNUSED loom_command *cmd, LOOM_UNUSED usize argc,
-            LOOM_UNUSED char *argv[])
+linux_task (unused loom_command *cmd, unused usize argc, unused char *argv[])
 {
   loom_module_header hdr;
   loom_block_dev *block_dev;
@@ -129,7 +128,7 @@ linux_task (LOOM_UNUSED loom_command *cmd, LOOM_UNUSED usize argc,
       goto out;
     }
 
-  block_dev = loom_container_of (loom_block_devs.next, loom_block_dev, node);
+  block_dev = container_of (loom_block_devs.next, loom_block_dev, node);
 
   if (loom_block_dev_read (block_dev, offset, kernel_size, kbuf))
     goto out;

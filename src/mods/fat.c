@@ -12,7 +12,7 @@ typedef struct
 #define FAT_EBPB_SIG1 0x28
 #define FAT_EBPB_SIG2 0x29
   FAT_EBPB16
-} LOOM_PACKED fat_ebpb16;
+} packed fat_ebpb16;
 
 typedef struct
 {
@@ -24,7 +24,7 @@ typedef struct
   u16 backup_sect;
   char res1[12];
   FAT_EBPB16
-} LOOM_PACKED fat_ebpb32;
+} packed fat_ebpb32;
 
 typedef struct
 {
@@ -48,7 +48,7 @@ typedef struct
     fat_ebpb16 ebpb16;
     fat_ebpb32 ebpb32;
   };
-} LOOM_PACKED fat_bpb;
+} packed fat_bpb;
 
 typedef struct
 {
@@ -62,7 +62,7 @@ typedef struct
   byte res2[12];
 #define FAT_FSINFO_SIG3 0xAA550000
   u32 sig3;
-} LOOM_PACKED fat_fsinfo;
+} packed fat_fsinfo;
 
 typedef struct
 {
@@ -93,7 +93,7 @@ typedef struct
   u16 mdate;
   u16 cluster_lo;
   u32 file_size;
-} LOOM_PACKED fat_dirent;
+} packed fat_dirent;
 
 LOOM_MOD (fat)
 

@@ -6,9 +6,9 @@
 #include "loom/types.h"
 
 #ifdef LOOM_MODULE
-#define LOOM_MOD(NAME)    const char LOOM_USED *loom_mod_name = #NAME;
-#define LOOM_MOD_INIT()   void LOOM_USED loom_mod_init (void)
-#define LOOM_MOD_DEINIT() void LOOM_USED loom_mod_deinit (void)
+#define LOOM_MOD(NAME)    const char used *loom_mod_name = #NAME;
+#define LOOM_MOD_INIT()   void used loom_mod_init (void)
+#define LOOM_MOD_DEINIT() void used loom_mod_deinit (void)
 #endif
 
 typedef struct
@@ -21,7 +21,7 @@ typedef struct
   u32 size;
   u32 kernel_size;
   u32 initrdsize;
-} LOOM_PACKED loom_module_header;
+} packed loom_module_header;
 
 typedef struct loom_module_section
 {
@@ -46,16 +46,16 @@ typedef struct loom_module
   loom_list node;
 } loom_module;
 
-extern address LOOM_EXPORT_VAR (loom_modbase);
-extern address LOOM_EXPORT_VAR (loom_modend);
+extern address export_var (loom_modbase);
+extern address export_var (loom_modend);
 
-extern loom_list LOOM_EXPORT_VAR (loom_modules);
+extern loom_list export_var (loom_modules);
 
 address loom_modend_get (void);
 void loom_core_modules_load (void);
 
-void LOOM_EXPORT (loom_module_add) (loom_module *mod);
-bool LOOM_EXPORT (loom_module_remove) (const char *name);
-void LOOM_EXPORT (loom_module_unload) (loom_module *mod);
+void export (loom_module_add) (loom_module *mod);
+bool export (loom_module_remove) (const char *name);
+void export (loom_module_unload) (loom_module *mod);
 
 #endif

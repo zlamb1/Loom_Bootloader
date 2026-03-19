@@ -172,7 +172,7 @@ typedef struct
 } rel_iterate_hook_context;
 
 static int
-rel_iterate_hook (LOOM_UNUSED usize shidx, loom_elf32_shdr *shdr, void *data)
+rel_iterate_hook (unused usize shidx, loom_elf32_shdr *shdr, void *data)
 {
   rel_iterate_hook_context *ctx = data;
   int retval;

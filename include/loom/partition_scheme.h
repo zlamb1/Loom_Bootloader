@@ -18,9 +18,9 @@ typedef struct loom_partition_scheme
   loom_list node;
 } loom_partition_scheme;
 
-extern loom_list LOOM_EXPORT_VAR (loom_partition_schemes);
+extern loom_list export_var (loom_partition_schemes);
 
-void LOOM_EXPORT (loom_partition_scheme_register) (loom_partition_scheme *);
-void LOOM_EXPORT (loom_partition_scheme_unregister) (loom_partition_scheme *);
+void export (loom_partition_scheme_register) (loom_partition_scheme *);
+void export (loom_partition_scheme_unregister) (loom_partition_scheme *);
 
 #endif

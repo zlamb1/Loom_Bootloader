@@ -44,8 +44,8 @@ typedef struct loom_fs_type
   loom_list node;
 } loom_fs_type;
 
-extern loom_list LOOM_EXPORT_VAR (loom_fs_list);
-extern loom_list LOOM_EXPORT_VAR (loom_fs_types);
+extern loom_list export_var (loom_fs_list);
+extern loom_list export_var (loom_fs_types);
 
 #define loom_fs_register(fs) loom_list_add_by_field (&loom_fs_list, fs, node)
 #define loom_fs_type_register(fs_type)                                        \

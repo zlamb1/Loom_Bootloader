@@ -7,7 +7,7 @@
 
 #define LOOM_SHA1_DIGEST_SIZE 20
 
-void LOOM_EXPORT (loom_sha1_hash) (usize length, const char *buf,
-                                   loom_digest digest[LOOM_SHA1_DIGEST_SIZE]);
+void export (loom_sha1_hash) (usize length, const char *buf,
+                              loom_digest digest[LOOM_SHA1_DIGEST_SIZE]);
 
 #endif

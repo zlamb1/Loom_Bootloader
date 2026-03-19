@@ -5,20 +5,20 @@
 #include "loom/error.h"
 #include "loom/types.h"
 
-void LOOM_WEAK LOOM_EXPORT (loom_memcpy) (void *restrict dst,
-                                          const void *restrict src, usize n);
+void weak export (loom_memcpy) (void *restrict dst, const void *restrict src,
+                                usize n);
 
-void LOOM_EXPORT (loom_memmove) (void *dst, const void *src, usize n);
+void export (loom_memmove) (void *dst, const void *src, usize n);
 
-int LOOM_EXPORT (loom_memcmp) (const void *lhs, const void *rhs, usize n);
+int export (loom_memcmp) (const void *lhs, const void *rhs, usize n);
 
-void LOOM_WEAK LOOM_EXPORT (loom_memset) (void *dst, int v, usize n);
+void weak export (loom_memset) (void *dst, int v, usize n);
 
-usize LOOM_EXPORT (loom_strlen) (const char *s);
-int LOOM_EXPORT (loom_strcmp) (const char *s1, const char *s2);
-void LOOM_EXPORT (loom_strlower) (char *s);
-loom_error LOOM_EXPORT (loom_strtoi) (char *s, int *out);
+usize export (loom_strlen) (const char *s);
+int export (loom_strcmp) (const char *s1, const char *s2);
+void export (loom_strlower) (char *s);
+loom_error export (loom_strtoi) (char *s, int *out);
 
-char *LOOM_EXPORT (loom_strdup) (const char *s);
+char *export (loom_strdup) (const char *s);
 
 #endif

@@ -23,9 +23,13 @@ foreach (HEADER ${HEADERS})
 
     foreach (LINE ${LINES})
 
-        if ("${LINE}" MATCHES "^[^#].*EXPORT(_VAR)? *\\(([A-Za-z0-9_]+)\\)")
+        if ("${LINE}" MATCHES "^#")
+            continue()
+        endif()
 
-            if ("${CMAKE_MATCH_1}" STREQUAL "_VAR")
+        if ("${LINE}" MATCHES "(^|[ \t*]+)export(_var)? *\\(([A-Za-z0-9_]+)\\)")
+
+            if ("${CMAKE_MATCH_2}" STREQUAL "_var")
                 set(KIND "0")
                 set(TAKE "&")
             else()
@@ -33,7 +37,7 @@ foreach (HEADER ${HEADERS})
                 set(TAKE)
             endif()
 
-            set(EXPORT_NAME "${CMAKE_MATCH_2}")
+            set(EXPORT_NAME "${CMAKE_MATCH_3}")
 
             file(
                 APPEND 
@@ -52,5 +56,5 @@ endforeach()
 file(
     APPEND
     ${OUTFILE}
-    "\tloom_compile_assert(${I} <= LOOM_SYMTAB_SIZE, \"Symbol table full.\");\n}"
+    "\tcompile_assert(${I} <= LOOM_SYMTAB_SIZE, \"Symbol table full.\");\n}"
 )

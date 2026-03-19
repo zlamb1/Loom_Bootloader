@@ -28,7 +28,7 @@ typedef struct
 
 extern loom_memory_map loom_mmap;
 
-static LOOM_UNUSED const char *
+static unused const char *
 loom_memory_type_str (loom_memory_type type)
 {
   if (type == LOOM_MEMORY_TYPE_FREE)
@@ -45,8 +45,8 @@ loom_memory_type_str (loom_memory_type type)
 
 void loom_mmap_init (void);
 
-int LOOM_EXPORT (loom_mmap_iterate) (int (*hook) (loom_mmap_entry *entry,
-                                                  void *data),
-                                     void *data);
+int export (loom_mmap_iterate) (int (*hook) (loom_mmap_entry *entry,
+                                             void *data),
+                                void *data);
 
 #endif

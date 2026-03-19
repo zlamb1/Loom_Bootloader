@@ -63,7 +63,7 @@ set_baud_rate (u16 port, u16 baud_rate)
   loom_outb (port + SERIAL_LINE_CTRL_PORT, (u8) (line_ctrl & ~0x80));
 }
 
-static LOOM_USED void
+static used void
 serial_irq_4 ()
 {
   if (loom_inb (COM1 + SERIAL_LINE_STATUS_PORT) & 1)
@@ -84,7 +84,7 @@ serial_write_fn (loom_write_buffer wbufs[], void *data)
   serial_write_all (data, wbufs);
 }
 
-static usize LOOM_PRINTF (2, 3)
+static usize printf_func (2, 3)
     serial_printf (serial_console *console, const char *fmt, ...)
 {
   usize ret_val;

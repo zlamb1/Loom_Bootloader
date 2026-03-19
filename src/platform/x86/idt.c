@@ -9,13 +9,13 @@ typedef struct
   u8 reserved;
   u8 flags;
   u16 offset_hi;
-} LOOM_PACKED idt_entry;
+} packed idt_entry;
 
 typedef struct
 {
   u16 size;
   u32 offset;
-} LOOM_PACKED idtr;
+} packed idtr;
 
 idt_entry idt[SIZE];
 idtr _idtr;

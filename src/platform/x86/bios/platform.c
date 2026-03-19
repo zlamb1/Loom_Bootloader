@@ -9,13 +9,12 @@ typedef struct
   u64 address;
   u64 length;
   u32 type;
-} LOOM_PACKED e820_t;
+} packed e820_t;
 
 void loom_vga_con_register (void);
 
 void
-mmap_mm_hook (u64 addr, u64 length, loom_memory_type type,
-              LOOM_UNUSED void *data)
+mmap_mm_hook (u64 addr, u64 length, loom_memory_type type, unused void *data)
 {
   if (addr >= 0xffffffff || addr >= USIZE_MAX || type != LOOM_MEMORY_TYPE_FREE)
     return;
@@ -52,8 +51,8 @@ loom_platform_mmap_iterate (mmap_hook hook, void *data)
   loom_bios_args args = { 0 };
   volatile e820_t e820;
 
-  loom_compile_assert (sizeof (e820_t) >= 20,
-                       "E820 struct must be at least 20 bytes.");
+  compile_assert (sizeof (e820_t) >= 20,
+                  "E820 struct must be at least 20 bytes.");
 
   while (1)
     {

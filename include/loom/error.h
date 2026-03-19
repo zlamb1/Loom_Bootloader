@@ -31,17 +31,16 @@
 
 typedef uint loom_error;
 
-extern loom_error LOOM_EXPORT_VAR (loom_errno);
+extern loom_error export_var (loom_errno);
 
-loom_error LOOM_PRINTF (2, 3)
-    LOOM_EXPORT (loom_fmt_error) (loom_error, const char *fmt, ...);
-const char *LOOM_EXPORT (loom_error_get) (void);
-void LOOM_EXPORT (loom_error_clear) (void);
+loom_error printf_func (2, 3) export (loom_fmt_error) (loom_error,
+                                                       const char *fmt, ...);
+const char *export (loom_error_get) (void);
+void export (loom_error_clear) (void);
 
-const char *LOOM_EXPORT (loom_strerror) (loom_error);
+const char *export (loom_strerror) (loom_error);
 
-void LOOM_NORETURN LOOM_PRINTF (1, 2)
-    LOOM_EXPORT (loom_panic) (const char *fmt, ...);
+void noreturn printf_func (1, 2) export (loom_panic) (const char *fmt, ...);
 
 static inline loom_error
 loom_error_np (loom_error error)

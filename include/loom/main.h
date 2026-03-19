@@ -3,6 +3,6 @@
 
 #include "loom/compiler.h"
 
-void LOOM_NORETURN LOOM_EXPORT (loom_main) (void);
+void noreturn export (loom_main) (void);
 
 #endif

@@ -25,7 +25,7 @@ typedef struct loom_list
 #define loom_list_for_each_entry(head, var, member)                           \
   for (loom_list *_node = (head)->next;                                       \
        _node != (head)                                                        \
-       && (var = loom_container_of (_node, typeof (*var), member), 1);        \
+       && (var = container_of (_node, typeof (*var), member), 1);             \
        _node = _node->next)
 
 #define loom_list_for_each_rev(HEAD, VARNAME)                                 \
@@ -60,12 +60,12 @@ typedef struct loom_list
     }                                                                         \
   while (0)
 
-void LOOM_EXPORT (loom_list_prepend) (loom_list *head, loom_list *node);
-void LOOM_EXPORT (loom_list_append) (loom_list *head, loom_list *node);
+void export (loom_list_prepend) (loom_list *head, loom_list *node);
+void export (loom_list_append) (loom_list *head, loom_list *node);
 
-void LOOM_EXPORT (loom_list_remove) (loom_list *node);
-void LOOM_EXPORT (loom_list_replace) (loom_list *oldnode, loom_list *newnode);
+void export (loom_list_remove) (loom_list *node);
+void export (loom_list_replace) (loom_list *oldnode, loom_list *newnode);
 
-bool LOOM_EXPORT (loom_list_is_empty) (loom_list *head);
+bool export (loom_list_is_empty) (loom_list *head);
 
 #endif

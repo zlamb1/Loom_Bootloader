@@ -6,7 +6,7 @@
 loom_symbol_table loom_symtab;
 
 int
-LOOM_EXPORT (loom_symbol_register) (const char *name, bool is_fn, void *p)
+loom_symbol_register (const char *name, bool is_fn, void *p)
 {
   loom_symbol *symbol;
 

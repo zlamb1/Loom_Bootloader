@@ -27,12 +27,12 @@ typedef struct loom_input_source
 
 extern loom_list loom_input_sources;
 
-void LOOM_EXPORT (loom_input_source_register) (loom_input_source *input_src);
+void export (loom_input_source_register) (loom_input_source *input_src);
 
-void LOOM_EXPORT (loom_input_source_unregister) (loom_input_source *input_src);
+void export (loom_input_source_unregister) (loom_input_source *input_src);
 
-int LOOM_EXPORT (loom_input_source_poll) (loom_input_source *input_src,
-                                          loom_input_event *evt);
+int export (loom_input_source_poll) (loom_input_source *input_src,
+                                     loom_input_event *evt);
 
 int loom_input_sources_poll (loom_input_event *evt);
 

@@ -4,20 +4,20 @@
 #include "loom/compiler.h"
 #include "loom/mmap.h"
 
-extern char LOOM_EXPORT_VAR (stage1s);
-extern char LOOM_EXPORT_VAR (stage3e);
+extern char export_var (stage1s);
+extern char export_var (stage3e);
 
 typedef void (*mmap_hook) (u64, u64, loom_memory_type, void *);
 
-void LOOM_EXPORT (loom_platform_init) (void);
-void LOOM_EXPORT (loom_platform_mmap_iterate) (mmap_hook hook, void *);
+void export (loom_platform_init) (void);
+void export (loom_platform_mmap_iterate) (mmap_hook hook, void *);
 
-void LOOM_EXPORT (loom_sti) (void);
-void LOOM_EXPORT (loom_cli) (void);
+void export (loom_sti) (void);
+void export (loom_cli) (void);
 
-int LOOM_EXPORT (loom_irq_save) (void);
-void LOOM_EXPORT (loom_irq_restore) (int);
+int export (loom_irq_save) (void);
+void export (loom_irq_restore) (int);
 
-void LOOM_NORETURN LOOM_EXPORT (loom_reboot) (void);
+void noreturn export (loom_reboot) (void);
 
 #endif

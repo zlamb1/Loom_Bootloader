@@ -6,16 +6,15 @@
 loom_memory_map loom_mmap;
 
 static void
-mmap_count_hook (LOOM_UNUSED u64 addr, LOOM_UNUSED u64 length,
-                 LOOM_UNUSED loom_memory_type type, void *data)
+mmap_count_hook (unused u64 addr, unused u64 length,
+                 unused loom_memory_type type, void *data)
 {
   usize *count = data;
   (*count)++;
 }
 
 static void
-mmap_fill_hook (u64 addr, u64 length, loom_memory_type type,
-                LOOM_UNUSED void *data)
+mmap_fill_hook (u64 addr, u64 length, loom_memory_type type, unused void *data)
 {
   usize count = *(usize *) data;
 

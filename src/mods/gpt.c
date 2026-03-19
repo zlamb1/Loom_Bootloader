@@ -21,7 +21,7 @@ typedef struct
 {
   lba start;
   lba end;
-} LOOM_PACKED range;
+} packed range;
 
 typedef struct
 {
@@ -40,7 +40,7 @@ typedef struct
   u32 ents;
   u32 ents_sz;
   u32 ents_crc32;
-} LOOM_PACKED gpt_header;
+} packed gpt_header;
 
 static char gpt_part_type_unused[GPT_GUID_SIZE] = { 0 };
 
@@ -54,7 +54,7 @@ typedef struct
 #define GPT_PART_BIOS_BOOTABLE (1 << 2)
   u64 attributes;
   char name[72]; // UTF-16LE
-} LOOM_PACKED gpt_partition_entry;
+} packed gpt_partition_entry;
 
 int
 gpt_partition_scheme_iterate (loom_partition_scheme *partition_scheme,

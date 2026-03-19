@@ -24,9 +24,9 @@ typedef struct loom_kernel_loader
   void *data;
 } loom_kernel_loader;
 
-void LOOM_EXPORT (loom_kernel_loader_add) (loom_kernel_loader *kernel_loader);
-int LOOM_EXPORT (loom_kernel_loader_remove) (bool free);
+void export (loom_kernel_loader_add) (loom_kernel_loader *kernel_loader);
+int export (loom_kernel_loader_remove) (bool free);
 
-int LOOM_EXPORT (loom_kernel_loader_boot) (void);
+int export (loom_kernel_loader_boot) (void);
 
 #endif

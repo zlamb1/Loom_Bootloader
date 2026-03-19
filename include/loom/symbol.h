@@ -23,9 +23,9 @@ extern loom_symbol_table loom_symtab;
 // This function's source is generated at compile time by gensym.sh.
 void loom_register_export_symbols (void);
 
-int LOOM_EXPORT (loom_symbol_register) (const char *name, bool is_fn, void *p);
+int export (loom_symbol_register) (const char *name, bool is_fn, void *p);
 
-loom_symbol *LOOM_EXPORT (loom_symbol_find) (void *p);
-loom_symbol *LOOM_EXPORT (loom_symbol_lookup) (const char *name);
+loom_symbol *export (loom_symbol_find) (void *p);
+loom_symbol *export (loom_symbol_lookup) (const char *name);
 
 #endif

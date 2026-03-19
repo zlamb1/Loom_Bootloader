@@ -5,8 +5,7 @@
 LOOM_MOD (hello)
 
 static int
-hello_task (LOOM_UNUSED loom_command *cmd, LOOM_UNUSED usize argc,
-            LOOM_UNUSED char *argv[])
+hello_task (unused loom_command *cmd, unused usize argc, unused char *argv[])
 {
   loom_printf ("Hello!\n");
   return 0;

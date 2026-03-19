@@ -19,9 +19,9 @@ typedef struct loom_command
 
 extern loom_list loom_commands;
 
-void LOOM_EXPORT (loom_command_register) (loom_command *command);
-void LOOM_EXPORT (loom_command_unregister) (loom_command *command);
+void export (loom_command_register) (loom_command *command);
+void export (loom_command_unregister) (loom_command *command);
 
-loom_command *LOOM_EXPORT (loom_command_find) (const char *name);
+loom_command *export (loom_command_find) (const char *name);
 
 #endif

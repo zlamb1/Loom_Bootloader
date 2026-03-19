@@ -187,8 +187,8 @@ symbol_validate (const char *name, loom_elf32_sym *sym, u8 type,
 
 static int
 rel_iterate (loom_elf32_rel *rel, usize symtabidx,
-             LOOM_UNUSED loom_elf32_shdr *symtab, usize targetidx,
-             LOOM_UNUSED loom_elf32_shdr *target, void *data)
+             unused loom_elf32_shdr *symtab, usize targetidx,
+             unused loom_elf32_shdr *target, void *data)
 {
   usize symidx;
   address addr;

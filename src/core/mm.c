@@ -1,5 +1,6 @@
 #include <stddef.h>
 
+#include "loom/compiler.h"
 #include "loom/error.h"
 #include "loom/list.h"
 #include "loom/math.h"
@@ -48,26 +49,24 @@ typedef struct free_chunk
   struct free_chunk *prev, *next;
 } free_chunk_t;
 
-loom_compile_assert (
-    CHUNK_SIZE >= loom_alignof (arena_t),
-    "arena_t alignment must be less than or equal to CHUNK_SIZE.");
+compile_assert (CHUNK_SIZE >= alignof (arena_t),
+                "arena_t alignment must be less than or equal to CHUNK_SIZE.");
 
-loom_compile_assert (MIN_ALLOC >= sizeof (arena_t),
-                     "arena_t must fit within MIN_ALLOC.");
+compile_assert (MIN_ALLOC >= sizeof (arena_t),
+                "arena_t must fit within MIN_ALLOC.");
 
-loom_compile_assert (
-    CHUNK_SIZE >= loom_alignof (chunk_t),
-    "chunk_t alignment must be less than or equal to CHUNK_SIZE.");
+compile_assert (CHUNK_SIZE >= alignof (chunk_t),
+                "chunk_t alignment must be less than or equal to CHUNK_SIZE.");
 
-loom_compile_assert (CHUNK_SIZE >= sizeof (chunk_t),
-                     "chunk_t must fit within CHUNK_SIZE.");
+compile_assert (CHUNK_SIZE >= sizeof (chunk_t),
+                "chunk_t must fit within CHUNK_SIZE.");
 
-loom_compile_assert (
-    CHUNK_SIZE >= loom_alignof (free_chunk_t),
+compile_assert (
+    CHUNK_SIZE >= alignof (free_chunk_t),
     "free_chunk_t alignment must be less than or equal to CHUNK_SIZE.");
 
-loom_compile_assert (MIN_ALLOC >= sizeof (free_chunk_t),
-                     "free_chunk_t must fit within MIN_ALLOC.");
+compile_assert (MIN_ALLOC >= sizeof (free_chunk_t),
+                "free_chunk_t must fit within MIN_ALLOC.");
 
 static arena_t *arenas = NULL;
 
@@ -229,8 +228,8 @@ free_chunk_split (arena_t *arena, free_chunk_t *fchunk, usize offset,
 
   if (offset)
     {
-      new_chunk = (chunk_t *) loom_assume_aligned ((char *) fchunk + offset,
-                                                   loom_alignof (chunk_t));
+      new_chunk = (chunk_t *) assume_aligned ((char *) fchunk + offset,
+                                              alignof (chunk_t));
 
       chunk_size -= offset;
 
@@ -249,8 +248,8 @@ free_chunk_split (arena_t *arena, free_chunk_t *fchunk, usize offset,
 
   if (chunk_size - size >= MIN_ALLOC)
     {
-      free_chunk_t *nfchunk = (free_chunk_t *) loom_assume_aligned (
-          (char *) new_chunk + size, loom_alignof (free_chunk_t));
+      free_chunk_t *nfchunk = (free_chunk_t *) assume_aligned (
+          (char *) new_chunk + size, alignof (free_chunk_t));
 
       new_chunk->size = size | flags | CHUNK_FLAG_INUSE;
 
@@ -356,8 +355,8 @@ loom_realloc (void *p, usize n)
 
   // This is undefined behavior if p
   // is misaligned or is an invalid pointer.
-  chunk = (chunk_t *) loom_assume_aligned ((char *) p - CHUNK_SIZE,
-                                           loom_alignof (chunk_t));
+  chunk = (chunk_t *) assume_aligned ((char *) p - CHUNK_SIZE,
+                                      alignof (chunk_t));
 
   // Note: Some garbage might get copied if the old allocation contained an end
   // chunk that couldn't fit a free chunk. Shouldn't matter.

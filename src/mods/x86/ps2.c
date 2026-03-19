@@ -13,8 +13,8 @@
 #define PS2_STATUS 0x64
 #define PS2_CMD    0x65
 
-loom_compile_assert ((CAP & (CAP - 1)) == 0 && CAP != 0,
-                     "CAP must be a power of 2.");
+compile_assert ((CAP & (CAP - 1)) == 0 && CAP != 0,
+                "CAP must be a power of 2.");
 
 LOOM_MOD (ps2)
 
@@ -86,7 +86,7 @@ static int sc1_e0_to_kc[128] = {
 static loom_ps2_keyboard kb = { 0 };
 
 static void
-ps2_isr (LOOM_UNUSED u32 intno, LOOM_UNUSED u32 error_code)
+ps2_isr (unused u32 intno, unused u32 error_code)
 {
   if (kb.buf)
     {

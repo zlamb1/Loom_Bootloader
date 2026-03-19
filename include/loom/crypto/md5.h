@@ -5,7 +5,7 @@
 #include "loom/crypto/crypto.h"
 #include "loom/types.h"
 
-void LOOM_EXPORT (loom_md5_hash) (usize length, const char *buf,
-                                  loom_digest digest[16]);
+void export (loom_md5_hash) (usize length, const char *buf,
+                             loom_digest digest[16]);
 
 #endif

@@ -4,8 +4,8 @@
 #include "loom/compiler.h"
 #include "loom/types.h"
 
-extern uintptr LOOM_EXPORT_VAR (__stack_chk_guard);
+extern uintptr export_var (__stack_chk_guard);
 
-void LOOM_NORETURN LOOM_EXPORT (__stack_chk_fail) (void);
+void noreturn export (__stack_chk_fail) (void);
 
 #endif

@@ -17,9 +17,9 @@ typedef struct
   char chs_end[3];
   u32 lba_start;
   u32 sectors;
-} LOOM_PACKED mbr_partition_entry;
+} packed mbr_partition_entry;
 
-struct LOOM_PACKED mbr
+struct packed mbr
 {
 #define MBR_SIZE 512
   char pad[446];
@@ -44,7 +44,7 @@ mbr_partition_scheme_iterate (loom_partition_scheme *partition_scheme,
   struct mbr *mbr = loom_malloc (sizeof (struct mbr));
   loom_error error;
 
-  loom_compile_assert (sizeof (struct mbr) == MBR_SIZE, "bad size for mbr_t");
+  compile_assert (sizeof (struct mbr) == MBR_SIZE, "bad size for mbr_t");
 
   (void) partition_scheme;
 

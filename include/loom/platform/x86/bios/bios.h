@@ -15,10 +15,10 @@ typedef struct
   u16 flags;
   u16 ds;
   u16 es;
-} LOOM_PACKED loom_bios_args;
+} packed loom_bios_args;
 
-void LOOM_EXPORT (loom_enter_rmode) (void);
-void LOOM_EXPORT (loom_bios_int) (u8 intno, loom_bios_args *args);
+void export (loom_enter_rmode) (void);
+void export (loom_bios_int) (u8 intno, loom_bios_args *args);
 
 void loom_bios_disk_probe (void);
 
