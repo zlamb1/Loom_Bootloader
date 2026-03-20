@@ -10,6 +10,10 @@ set(
 	 -mno-red-zone"
 )
 
+set(INSTALL_SRCS install.c osdep.c host_impl.c 
+                 ${LOOM_SRC_DIR}/mods/mbr.c ${LOOM_SRC_DIR}/core/partition.c 
+                 ${LOOM_SRC_DIR}/core/list.c ${LOOM_SRC_DIR}/core/block_dev.c)
+set(INSTALL_BIN "loom-install")
 set(MKIMAGE_SRCS mkimage.c osdep.c)
 set(MKIMAGE_BIN "loom-mkimage")
 
@@ -18,6 +22,16 @@ add_executable(
     ${MKIMAGE_SRCS}
 )
 
+add_executable(
+    ${INSTALL_BIN}
+    ${INSTALL_SRCS}
+)
+
+target_compile_definitions(${INSTALL_BIN} PRIVATE LOOM_UTIL)
+target_compile_definitions(${MKIMAGE_BIN} PRIVATE LOOM_UTIL)
+
+target_include_directories(${INSTALL_BIN} PRIVATE ${LOOM_INCLUDE_DIRS})
 target_include_directories(${MKIMAGE_BIN} PRIVATE ${LOOM_INCLUDE_DIRS})
 
+install(TARGETS ${INSTALL_BIN} RUNTIME DESTINATION bin)
 install(TARGETS ${MKIMAGE_BIN} RUNTIME DESTINATION bin)

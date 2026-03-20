@@ -25,16 +25,20 @@ typedef struct
   void *buf;
 } loom_slice_t;
 
-loom_error loom_file_open (const char *path, uint oflags, loom_file *file);
-loom_error loom_file_get_meta (loom_file file, loom_file_meta *meta);
-loom_error loom_file_sync (loom_file file);
-loom_error loom_file_close (loom_file file);
+loom_error loomFileOpen (const char *path, uint oflags, loom_file *file);
+loom_error loomFileGetMeta (loom_file file, loom_file_meta *meta);
+loom_error loomFileSync (loom_file file);
+loom_error loomFileClose (loom_file file);
 
-loom_error loom_file_read (loom_file file, void *buf, usize nbytes);
-loom_error loom_file_read_all (loom_file file, loom_slice_t *slice);
+loom_error loomFileRead (loom_file file, void *buf, usize nbytes);
+loom_error loomFileReadAt (loom_file file, void *buf, usize offset,
+                           usize nbytes);
+loom_error loomFileReadAll (loom_file file, loom_slice_t *slice);
 
-loom_error loom_file_write (loom_file file, void *buf, usize nbytes);
-loom_error loom_file_write_exact (loom_file file, void *buf, usize off,
-                                  usize nbytes);
+loom_error loomFileWrite (loom_file file, void *buf, usize nbytes);
+loom_error loomFileWriteAt (loom_file file, void *buf, usize offset,
+                            usize nbytes);
+
+const char *loomOsError ();
 
 #endif

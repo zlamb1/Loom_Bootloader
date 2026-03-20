@@ -144,7 +144,7 @@ typedef struct
   usize count;
 } partition_hook_ctx;
 
-static int
+static used int
 partitionHook (loom_block_dev *parent, loom_partition *partition, void *p)
 {
   partition_hook_ctx *ctx = p;
@@ -169,6 +169,9 @@ loomBlockDevProbe (loom_block_dev *block_dev, bool force)
   loom_partition_scheme *partition_scheme;
   loom_fs_type *fs_type;
 
+  (void) partition_scheme;
+  (void) fs_type;
+
   loomAssert (block_dev != NULL);
 
   if (force)
@@ -179,6 +182,7 @@ loomBlockDevProbe (loom_block_dev *block_dev, bool force)
 
   block_dev->flags |= LOOM_BLOCK_DEVICE_FLAG_PROBED;
 
+#ifndef LOOM_UTIL
   partition_hook_ctx ctx = { 0 };
 
   loom_list_for_each_entry (&loom_partition_schemes, partition_scheme, node)
@@ -206,4 +210,6 @@ loomBlockDevProbe (loom_block_dev *block_dev, bool force)
 
     loomErrorClear ();
   }
+
+#endif
 }

@@ -1,6 +1,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -10,7 +11,7 @@
 #include "loom/error.h"
 
 loom_error
-loom_file_open (const char *path, uint oflags, loom_file *file)
+loomFileOpen (const char *path, uint oflags, loom_file *file)
 {
   int flags = 0;
   uint access;
@@ -51,7 +52,7 @@ loom_file_open (const char *path, uint oflags, loom_file *file)
 }
 
 loom_error
-loom_file_get_meta (loom_file file, loom_file_meta *meta)
+loomFileGetMeta (loom_file file, loom_file_meta *meta)
 {
   struct stat buf;
 
@@ -67,7 +68,7 @@ loom_file_get_meta (loom_file file, loom_file_meta *meta)
 }
 
 loom_error
-loom_file_sync (loom_file file)
+loomFileSync (loom_file file)
 {
   if (fsync (file) < 0)
     return LOOM_ERR_PLATFORM;
@@ -75,7 +76,7 @@ loom_file_sync (loom_file file)
 }
 
 loom_error
-loom_file_close (loom_file file)
+loomFileClose (loom_file file)
 {
   if (close (file) < 0)
     return LOOM_ERR_PLATFORM;
@@ -83,7 +84,7 @@ loom_file_close (loom_file file)
 }
 
 loom_error
-loom_file_read (loom_file file, void *buf, usize nbytes)
+loomFileRead (loom_file file, void *buf, usize nbytes)
 {
   while (nbytes)
     {
@@ -106,7 +107,28 @@ loom_file_read (loom_file file, void *buf, usize nbytes)
 }
 
 loom_error
-loom_file_read_all (loom_file file, loom_slice_t *slice)
+loomFileReadAt (loom_file file, void *buf, usize offset, usize nbytes)
+{
+  while (nbytes)
+    {
+      ssize_t read
+          = pread (file, (char *) buf + offset, nbytes, (__off_t) offset);
+
+      if (read < 0 && errno == EINTR)
+        continue;
+
+      if (read <= 0 || (usize) read > nbytes)
+        return LOOM_ERR_PLATFORM;
+
+      offset += (usize) read;
+      nbytes -= (usize) read;
+    }
+
+  return LOOM_ERR_NONE;
+}
+
+loom_error
+loomFileReadAll (loom_file file, loom_slice_t *slice)
 {
   struct stat buf;
   usize size;
@@ -160,7 +182,7 @@ fail:
 }
 
 loom_error
-loom_file_write (loom_file file, void *buf, usize nbytes)
+loomFileWrite (loom_file file, void *buf, usize nbytes)
 {
   while (nbytes)
     {
@@ -183,11 +205,11 @@ loom_file_write (loom_file file, void *buf, usize nbytes)
 }
 
 loom_error
-loom_file_write_exact (loom_file file, void *buf, usize off, usize nbytes)
+loomFileWriteAt (loom_file file, void *buf, usize offset, usize nbytes)
 {
   while (nbytes)
     {
-      ssize_t write = pwrite (file, (char *) buf + off, nbytes, (__off_t) off);
+      ssize_t write = pwrite (file, (char *) buf, nbytes, (__off_t) offset);
 
       if (write < 0 && errno == EINTR)
         continue;
@@ -195,9 +217,17 @@ loom_file_write_exact (loom_file file, void *buf, usize off, usize nbytes)
       if (write <= 0 || (usize) write > nbytes)
         return LOOM_ERR_PLATFORM;
 
-      off += (usize) write;
-      nbytes -= (usize) write;
+      usize uwrite = (usize) write;
+      buf = (char *) buf + uwrite;
+      offset += uwrite;
+      nbytes -= uwrite;
     }
 
   return LOOM_ERR_NONE;
+}
+
+const char *
+loomOsError ()
+{
+  return strerror (errno);
 }

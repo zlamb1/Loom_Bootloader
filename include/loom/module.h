@@ -9,6 +9,10 @@
 #define LOOM_MOD(NAME)    const char used *loom_mod_name = #NAME;
 #define LOOM_MOD_INIT()   void used loomModInit (void)
 #define LOOM_MOD_DEINIT() void used loomModDeinit (void)
+#elif defined(LOOM_UTIL)
+#define LOOM_MOD(NAME)
+#define LOOM_MOD_INIT()   static unused void loomModInit (void)
+#define LOOM_MOD_DEINIT() static unused void loomModDeinit (void)
 #endif
 
 typedef struct

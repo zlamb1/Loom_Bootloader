@@ -20,7 +20,7 @@ loomErrorFmt (loom_error error, const char *fmt, ...)
       va_end (args);
     }
   else
-    error_buf[0] = 0;
+    error_buf[0] = '\0';
 
   return error;
 }
@@ -28,7 +28,7 @@ loomErrorFmt (loom_error error, const char *fmt, ...)
 const char *
 loomErrorGet (void)
 {
-  if (!error_buf[0])
+  if (error_buf[0] == '\0')
     loomBufferFormat (error_buf, ERROR_BUF_SIZE, "%s",
                       loomStringError (loom_errno));
 
@@ -39,32 +39,4 @@ void
 loomErrorClear (void)
 {
   loomErrorFmt (LOOM_ERR_NONE, NULL);
-}
-
-const char *
-loomStringError (loom_error error)
-{
-  switch (error)
-    {
-    case LOOM_ERR_NONE:
-      return "Success";
-    case LOOM_ERR_BAD_ARG:
-      return "Bad argument";
-    case LOOM_ERR_ALLOC:
-      return "Out of memory";
-    case LOOM_ERR_OVERFLOW:
-      return "Value overflowed";
-    case LOOM_ERR_RANGE:
-      return "Value out of range";
-    case LOOM_ERR_IO:
-      return "I/O error";
-    case LOOM_ERR_BAD_BLOCK_SIZE:
-      return "Bad block size";
-    case LOOM_ERR_BAD_PART_SCHEME:
-      return "Bad partition scheme";
-    case LOOM_ERR_HOOK:
-      return "Bad hook";
-    default:
-      return "Unknown error";
-    }
 }

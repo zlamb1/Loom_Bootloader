@@ -34,7 +34,7 @@ error ()
 }
 
 static void
-error_with (const char *fmt, ...)
+errorWith (const char *fmt, ...)
 {
   va_list args;
   va_start (args, fmt);
@@ -67,7 +67,7 @@ main (int argc, char *argv[])
       if (!strncmp (argv[i], "-i", 3))
         {
           if (i == argc - 1)
-            error_with ("Expected binary name after -i");
+            errorWith ("Expected binary name after -i");
           in_path = argv[i + 1];
           ++i;
           continue;
@@ -76,7 +76,7 @@ main (int argc, char *argv[])
       if (!strncmp (argv[i], "-o", 3))
         {
           if (i == argc - 1)
-            error_with ("Expected binary name after -o");
+            errorWith ("Expected binary name after -o");
           out_path = argv[i + 1];
           ++i;
           continue;
@@ -85,7 +85,7 @@ main (int argc, char *argv[])
       if (!strncmp (argv[i], "-k", 3))
         {
           if (i == argc - 1)
-            error_with ("Expected kernel name after -k");
+            errorWith ("Expected kernel name after -k");
           kernel_path = argv[i + 1];
           ++i;
           continue;
@@ -94,7 +94,7 @@ main (int argc, char *argv[])
       if (!strncmp (argv[i], "-d", 3))
         {
           if (i == argc - 1)
-            error_with ("Expected initrd name after -d");
+            errorWith ("Expected initrd name after -d");
           initrd_path = argv[i + 1];
           ++i;
           continue;
@@ -117,14 +117,14 @@ main (int argc, char *argv[])
     }
 
   if (in_path == NULL)
-    error_with ("Expected input binary (specify one with -i <binary>)");
+    errorWith ("Expected input binary (specify one with -i <binary>)");
 
   if (kernel_path)
     {
-      if (loom_file_open (kernel_path, LOOM_O_RDONLY, &kernel))
+      if (loomFileOpen (kernel_path, LOOM_O_RDONLY, &kernel))
         error ();
 
-      if (loom_file_get_meta (kernel, &file_meta))
+      if (loomFileGetMeta (kernel, &file_meta))
         error ();
 
       kernel_size = file_meta.size;
@@ -132,33 +132,33 @@ main (int argc, char *argv[])
 
   if (initrd_path)
     {
-      if (loom_file_open (initrd_path, LOOM_O_RDONLY, &initrd))
+      if (loomFileOpen (initrd_path, LOOM_O_RDONLY, &initrd))
         error ();
 
-      if (loom_file_get_meta (initrd, &file_meta))
+      if (loomFileGetMeta (initrd, &file_meta))
         error ();
 
       initrd_size = file_meta.size;
     }
 
   if (out_path == NULL)
-    error_with ("Expected output name (specify one with -o <name>)");
+    errorWith ("Expected output name (specify one with -o <name>)");
 
-  if (loom_file_open (in_path, LOOM_O_RDONLY, &bin))
+  if (loomFileOpen (in_path, LOOM_O_RDONLY, &bin))
     error ();
 
-  if (loom_file_get_meta (bin, &file_meta))
+  if (loomFileGetMeta (bin, &file_meta))
     error ();
 
   if (!file_meta.size)
-    error_with ("Input binary '%s' is empty", in_path);
+    errorWith ("Input binary '%s' is empty", in_path);
 
   bin_size = file_meta.size;
 
-  if (loom_file_open (out_path,
-                      LOOM_O_WRONLY | LOOM_O_TRUNC | LOOM_O_APPEND
-                          | LOOM_O_CREAT,
-                      &new_bin))
+  if (loomFileOpen (out_path,
+                    LOOM_O_WRONLY | LOOM_O_TRUNC | LOOM_O_APPEND
+                        | LOOM_O_CREAT,
+                    &new_bin))
     error ();
 
   table_size = mod_args.count;
@@ -178,16 +178,16 @@ main (int argc, char *argv[])
       const char *mod_path = mod_args.buf[i];
       usize mod_size, req_size;
 
-      if (loom_file_open (mod_path, LOOM_O_RDONLY, &mod))
+      if (loomFileOpen (mod_path, LOOM_O_RDONLY, &mod))
         error ();
 
-      if (loom_file_get_meta (mod, &file_meta))
+      if (loomFileGetMeta (mod, &file_meta))
         error ();
 
       mod_size = file_meta.size;
 
       if (!mod_size)
-        error_with ("Input module '%s' is empty", mod_path);
+        errorWith ("Input module '%s' is empty", mod_path);
 
       req_size = mods.size + mod_size;
 
@@ -208,19 +208,19 @@ main (int argc, char *argv[])
         }
 
       if (mod_index >= table_size)
-        error_with ("Module table ran out of entries?");
+        errorWith ("Module table ran out of entries?");
 
-      if (loom_file_read (mod, mods.data + mods.size, mod_size))
+      if (loomFileRead (mod, mods.data + mods.size, mod_size))
         error ();
 
       if (mod_size > UINT32_MAX)
-        error_with ("Module size %lu exceeds 32-bit address space.",
-                    (unsigned long) mod_size);
+        errorWith ("Module size %lu exceeds 32-bit address space.",
+                   (unsigned long) mod_size);
 
       mods.size += mod_size;
       table[mod_index++] = htole32 ((uint32_t) mod_size);
 
-      if (loom_file_close (mod))
+      if (loomFileClose (mod))
         error ();
     }
 
@@ -237,19 +237,19 @@ main (int argc, char *argv[])
     error ();
 
   // Read input binary and copy to new binary.
-  if (loom_file_read (bin, bin_data, bin_size)
-      || loom_file_write (new_bin, bin_data, bin_size))
+  if (loomFileRead (bin, bin_data, bin_size)
+      || loomFileWrite (new_bin, bin_data, bin_size))
     error ();
 
   // Write the header to new binary.
-  if (loom_file_write (new_bin, &hdr, sizeof (hdr)))
+  if (loomFileWrite (new_bin, &hdr, sizeof (hdr)))
     error ();
 
   // Write the module length table.
-  if (loom_file_write (new_bin, table, table_bytes))
+  if (loomFileWrite (new_bin, table, table_bytes))
     error ();
 
-  if (loom_file_write (new_bin, mods.data, mods.size))
+  if (loomFileWrite (new_bin, mods.data, mods.size))
     error ();
 
   // Write the kernel.
@@ -258,9 +258,9 @@ main (int argc, char *argv[])
       kernel_data = malloc (kernel_size);
       if (kernel_data == NULL)
         error ();
-      if (loom_file_read (kernel, kernel_data, kernel_size))
+      if (loomFileRead (kernel, kernel_data, kernel_size))
         error ();
-      if (loom_file_write (new_bin, kernel_data, kernel_size))
+      if (loomFileWrite (new_bin, kernel_data, kernel_size))
         error ();
     }
 
@@ -270,13 +270,13 @@ main (int argc, char *argv[])
       initrd_data = malloc (initrd_size);
       if (initrd_data == NULL)
         error ();
-      if (loom_file_read (initrd, initrd_data, initrd_size))
+      if (loomFileRead (initrd, initrd_data, initrd_size))
         error ();
-      if (loom_file_write (new_bin, initrd_data, initrd_size))
+      if (loomFileWrite (new_bin, initrd_data, initrd_size))
         error ();
     }
 
-  if (loom_file_get_meta (new_bin, &file_meta))
+  if (loomFileGetMeta (new_bin, &file_meta))
     error ();
 
   {
@@ -284,12 +284,12 @@ main (int argc, char *argv[])
     if (align)
       {
         char tmp[512] = { 0 };
-        if (loom_file_write (new_bin, tmp, 512 - align))
+        if (loomFileWrite (new_bin, tmp, 512 - align))
           error ();
       }
   }
 
-  if (loom_file_sync (new_bin))
+  if (loomFileSync (new_bin))
     error ();
 
   return 0;

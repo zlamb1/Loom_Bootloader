@@ -3,6 +3,8 @@
 
 #include "loom/types.h"
 
+#if !defined(LOOM_UTIL)
+
 #if defined(LOOM_LITTLE_ENDIAN) && defined(LOOM_BIG_ENDIAN)
 #error "Either little or big endian support must be enabled. Not both."
 #endif
@@ -18,6 +20,7 @@ static inline u64 loom_htobe64 (u64 n);
 #define loom_le16toh loom_htole16
 #define loom_le32toh loom_htole32
 #define loom_le64toh loom_htole64
+
 #define loom_be16toh loom_htobe16
 #define loom_be32toh loom_htobe32
 #define loom_be64toh loom_htobe64
@@ -179,6 +182,28 @@ loom_htobe64 (loom_uint64_t n)
 #else
 
 #error Unknown Endianness
+
+#endif
+
+#else
+
+#include <endian.h>
+
+#define loom_htole16 htole16
+#define loom_htole32 htole32
+#define loom_htole64 htole64
+
+#define loom_htobe16 htobe16
+#define loom_htobe32 htobe32
+#define loom_htobe64 htobe64
+
+#define loom_le16toh loom_htole16
+#define loom_le32toh loom_htole32
+#define loom_le64toh loom_htole64
+
+#define loom_be16toh loom_htobe16
+#define loom_be32toh loom_htobe32
+#define loom_be64toh loom_htobe64
 
 #endif
 

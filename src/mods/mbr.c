@@ -40,7 +40,7 @@ mbrPartitionSchemeIterate (loom_partition_scheme *partition_scheme,
                            loom_block_dev *parent,
                            loom_partition_scheme_hook hook, void *ctx)
 {
-  int retval = -1;
+  int ret_val = -1;
   struct mbr *mbr = loomAlloc (sizeof (struct mbr));
   loom_error error;
 
@@ -52,16 +52,13 @@ mbrPartitionSchemeIterate (loom_partition_scheme *partition_scheme,
     goto out;
 
   if ((error = loomBlockDevRead (parent, 0, MBR_SIZE, (char *) mbr)))
-    {
-      loomError (error);
-      goto out;
-    }
+    goto out;
 
   mbr->signature = loom_le16toh (mbr->signature);
 
   if (mbr->signature != 0xAA55)
     {
-      loomErrorFmt (LOOM_ERR_BAD_PART_SCHEME, "bad MBR signature '%lx'",
+      loomErrorFmt (LOOM_ERR_BAD_PART_SCHEME, "bad MBR signature '0x%.4lx'",
                     (unsigned long) mbr->signature);
       goto out;
     }
@@ -97,18 +94,18 @@ mbrPartitionSchemeIterate (loom_partition_scheme *partition_scheme,
 
       loomPartitionInit (&partition, parent, entry->lba_start, entry->sectors);
 
-      if ((retval = hook (parent, &partition, ctx)))
+      if ((ret_val = hook (parent, &partition, ctx)))
         {
           loomError (LOOM_ERR_HOOK);
           goto out;
         }
     }
 
-  retval = 0;
+  ret_val = 0;
 
 out:
   loomFree (mbr);
-  return retval;
+  return ret_val;
 }
 
 LOOM_MOD (mbr)
