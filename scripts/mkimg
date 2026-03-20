@@ -1,0 +1,18 @@
+TMP=$(mktemp)
+IMG=$1
+
+rm -f $IMG
+
+touch $TMP
+fallocate -zl 64MiB $TMP
+mkfs.fat -F 32 $TMP
+
+touch $IMG
+fallocate -zl 64MiB $IMG
+cat $TMP >> $IMG
+rm $TMP
+
+parted -s -- $IMG mklabel msdos mkpart primary fat32 64MiB 100% \
+                  set 1 esp on
+
+./host/bin/loom-install core.img $IMG
