@@ -34,13 +34,6 @@ set(LOOM_HOST_DIR ${CMAKE_BINARY_DIR}/host)
 set(LOOM_MKIMAGE ${LOOM_HOST_DIR}/bin/loom-mkimage)
 set(CORE_IMG "${CMAKE_BINARY_DIR}/core.img")
 
-set(RUN_SCRIPT "${CMAKE_BINARY_DIR}/run")
-set(DBG_SCRIPT "${CMAKE_BINARY_DIR}/dbg")
-set(GDB_SCRIPT "${CMAKE_CURRENT_LIST_DIR}/gdb/config")
-set(SCRIPT_PERMS OWNER_WRITE OWNER_READ OWNER_EXECUTE 
-                 GROUP_READ GROUP_EXECUTE)
-set(QEMU_COMMON "-drive format=raw,file=${CORE_IMG} -nic none -m 512M")
-
 list(APPEND LOOM_C_FLAGS
     -Wall -Wextra -Wundef -Wshadow 
     -Wpointer-arith -Wcast-align -Wconversion 
@@ -172,16 +165,7 @@ add_custom_command(
 
 add_custom_target("core_img" ALL DEPENDS ${CORE_IMG})
 
-file(WRITE ${RUN_SCRIPT}
-    "make -C ${CMAKE_BINARY_DIR}\n"
-    "${RUN_QEMU} ${QEMU_COMMON}\n"
-)
-
-file(CHMOD ${RUN_SCRIPT} FILE_PERMISSIONS ${SCRIPT_PERMS})
-
-file(GENERATE OUTPUT ${DBG_SCRIPT} CONTENT 
-"make -C ${CMAKE_BINARY_DIR}\n\
-${DBG_QEMU} ${QEMU_COMMON} -s -S &\n\
-gdb -q ${LOOM_CORE_ELF_ABS} -ex \"source ${CMAKE_CURRENT_LIST_DIR}/gdb/mod.py\" -ex \"set \\$moddir = \\\"${LOOM_MOD_BIN_DIR}\\\"\" -x ${GDB_SCRIPT}\n"
-FILE_PERMISSIONS ${SCRIPT_PERMS}
-)
+file(COPY_FILE "gdb/gdb.conf" "${CMAKE_BINARY_DIR}/gdb.conf" ONLY_IF_DIFFERENT)
+file(COPY_FILE "gdb/gdb-mod.py" "${CMAKE_BINARY_DIR}/gdb-mod.py" ONLY_IF_DIFFERENT)
+file(COPY_FILE "scripts/run" "${CMAKE_BINARY_DIR}/run" ONLY_IF_DIFFERENT)
+file(COPY_FILE "scripts/dbg" "${CMAKE_BINARY_DIR}/dbg" ONLY_IF_DIFFERENT)

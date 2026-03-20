@@ -1,0 +1,14 @@
+ELF=core-elf
+IMG=core.img
+
+while getopts "e:i:" opt; do
+    case "$opt" in
+        e)  ELF=$OPTARG
+            ;;
+        i)  IMG=$OPTARG
+            ;;
+    esac
+done
+
+./run -i $IMG -a "-s -S" -p -q 'qemu-system-i386'
+gdb $ELF -q -ex 'source gdb-mod.py' -x 'gdb.conf'

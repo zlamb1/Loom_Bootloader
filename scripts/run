@@ -1,0 +1,36 @@
+ARGS_OVERRIDE=0
+ARGS=''
+ASYNC=0
+IMG='core.img'
+OPTIND=1
+QEMU='qemu-system-x86_64'
+
+while getopts "opi:a:q:" opt; do
+    case "$opt" in
+        o)  ARGS_OVERRIDE=1
+            ;;
+        p)  ASYNC=1
+            ;;
+        i)  IMG=$OPTARG
+            ;;
+        a)  ARGS=$OPTARG
+            ;;
+        q)  QEMU=$OPTARG
+            ;;
+    esac
+done
+
+DEFAULT_ARGS="-drive format=raw,file=$IMG -nic none -m 512M"
+FINAL_ARGS="$DEFAULT_ARGS $ARGS"
+
+if [ "$ARGS_OVERRIDE" -eq 1 ]; then
+    FINAL_ARGS="$ARGS"
+fi
+
+make
+
+if [ "$ASYNC" -eq 1 ]; then
+    $QEMU $FINAL_ARGS &
+else
+    $QEMU $FINAL_ARGS
+fi

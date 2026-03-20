@@ -18,7 +18,7 @@ class LoadModule(gdb.Command):
         if mod_dir is None:
             print('Set $moddir to load symbols.')
             return
-
+        
         mod_dir = mod_dir.string()
 
         symbol_file = f'{mod_dir}/{mod_name}.lib'
