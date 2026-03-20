@@ -1,4 +1,5 @@
 #include "loom/assert.h"
+#include "loom/block_dev.h"
 #include "loom/command.h"
 #include "loom/console.h"
 #include "loom/kernel_loader.h"
@@ -232,6 +233,19 @@ bootTask (unused loom_command *cmd, unused usize argc, unused char *argv[])
   return -1;
 }
 
+static int
+searchTask (unused loom_command *cmd, unused usize argc, unused char *argv[])
+{
+  loom_block_dev *block_dev;
+
+  loom_list_for_each_entry (&loom_block_devs, block_dev, node)
+  {
+    loomBlockDevProbe (block_dev, false, true);
+  }
+
+  return 0;
+}
+
 static void
 registerCommand (const char *name, loom_task task)
 {
@@ -258,4 +272,5 @@ loomCoreCommandsInit (void)
   registerCommand ("clear", clearTask);
   registerCommand ("memory", memoryTask);
   registerCommand ("boot", bootTask);
+  registerCommand ("search", searchTask);
 }

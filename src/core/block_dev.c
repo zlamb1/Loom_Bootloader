@@ -7,6 +7,7 @@
 #include "loom/mm.h"
 #include "loom/partition.h"
 #include "loom/partition_scheme.h"
+#include "loom/print.h"
 #include "loom/string.h"
 #include "loom/types.h"
 
@@ -142,9 +143,11 @@ done:
 typedef struct
 {
   usize count;
+  bool log;
 } partition_hook_ctx;
 
-static used int
+#ifndef LOOM_UTIL
+static int
 partitionHook (loom_block_dev *parent, loom_partition *partition, void *p)
 {
   partition_hook_ctx *ctx = p;
@@ -157,14 +160,22 @@ partitionHook (loom_block_dev *parent, loom_partition *partition, void *p)
   if (n == NULL)
     return -1;
 
+  usize block_size = partition->base.block_size;
+
+  if (ctx->log)
+    loomLogLn ("Found partition [offset=0x%lx,size=0x%lx]",
+               (ulong) (partition->offset * block_size),
+               (ulong) (partition->base.blocks * block_size));
+
   loomMemCopy (n, partition, sizeof (*n));
   loomBlockDevRegister (&n->base);
 
   return 0;
 }
+#endif
 
 void
-loomBlockDevProbe (loom_block_dev *block_dev, bool force)
+loomBlockDevProbe (loom_block_dev *block_dev, bool force, unused bool log)
 {
   loom_partition_scheme *partition_scheme;
   loom_fs_type *fs_type;
@@ -183,7 +194,7 @@ loomBlockDevProbe (loom_block_dev *block_dev, bool force)
   block_dev->flags |= LOOM_BLOCK_DEVICE_FLAG_PROBED;
 
 #ifndef LOOM_UTIL
-  partition_hook_ctx ctx = { 0 };
+  partition_hook_ctx ctx = { .log = log };
 
   loom_list_for_each_entry (&loom_partition_schemes, partition_scheme, node)
   {

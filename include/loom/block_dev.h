@@ -56,6 +56,7 @@ void export (loomBlockDevUnregister) (loom_block_dev *block_dev);
 loom_error export (loomBlockDevRead) (loom_block_dev *block_dev, usize offset,
                                       usize size, char *buf);
 
-void export (loomBlockDevProbe) (loom_block_dev *block_dev, bool force);
+void export (loomBlockDevProbe) (loom_block_dev *block_dev, bool force,
+                                 bool log);
 
 #endif
