@@ -23,7 +23,7 @@ typedef struct
   char *data;
 } modules;
 
-static loom_file bin, kernel, initrd, new_bin, mod;
+static loom_file bin, new_bin, mod;
 static modules mods;
 
 static void
@@ -51,14 +51,12 @@ main (int argc, char *argv[])
   loom_module_header hdr;
   loom_file_meta file_meta;
 
-  usize mod_index = 0, table_bytes, table_size, bin_size, kernel_size = 0,
-        initrd_size = 0;
+  usize mod_index = 0, table_bytes, table_size, bin_size;
 
   u32 *table;
-  byte *bin_data, *kernel_data, *initrd_data;
+  byte *bin_data;
 
-  const char *in_path = NULL, *kernel_path = NULL, *initrd_path = NULL,
-             *out_path = NULL;
+  const char *in_path = NULL, *out_path = NULL;
 
   module_args mod_args = { 0 };
 
@@ -82,24 +80,6 @@ main (int argc, char *argv[])
           continue;
         }
 
-      if (!strncmp (argv[i], "-k", 3))
-        {
-          if (i == argc - 1)
-            errorWith ("Expected kernel name after -k");
-          kernel_path = argv[i + 1];
-          ++i;
-          continue;
-        }
-
-      if (!strncmp (argv[i], "-d", 3))
-        {
-          if (i == argc - 1)
-            errorWith ("Expected initrd name after -d");
-          initrd_path = argv[i + 1];
-          ++i;
-          continue;
-        }
-
       if (mod_args.count >= mod_args.cap)
         {
           if (!mod_args.cap)
@@ -118,28 +98,6 @@ main (int argc, char *argv[])
 
   if (in_path == NULL)
     errorWith ("Expected input binary (specify one with -i <binary>)");
-
-  if (kernel_path)
-    {
-      if (loomFileOpen (kernel_path, LOOM_O_RDONLY, &kernel))
-        error ();
-
-      if (loomFileGetMeta (kernel, &file_meta))
-        error ();
-
-      kernel_size = file_meta.size;
-    }
-
-  if (initrd_path)
-    {
-      if (loomFileOpen (initrd_path, LOOM_O_RDONLY, &initrd))
-        error ();
-
-      if (loomFileGetMeta (initrd, &file_meta))
-        error ();
-
-      initrd_size = file_meta.size;
-    }
 
   if (out_path == NULL)
     errorWith ("Expected output name (specify one with -o <name>)");
@@ -229,15 +187,12 @@ main (int argc, char *argv[])
   hdr.modoff = htole32 (sizeof (hdr) + (uint32_t) table_bytes);
   hdr.size = htole32 ((uint32_t) sizeof (hdr) + (uint32_t) table_bytes
                       + (uint32_t) mods.size);
-  hdr.kernel_size = htole32 ((uint32_t) kernel_size);
-  hdr.initrdsize = htole32 ((uint32_t) initrd_size);
 
   bin_data = malloc (bin_size);
   if (bin_data == NULL)
     error ();
 
-  usize append_size = (usize) sizeof (hdr) + table_bytes + mods.size
-                      + kernel_size + initrd_size;
+  usize append_size = (usize) sizeof (hdr) + table_bytes + mods.size;
   append_size = (append_size + 511) / 512 * 512;
 
   // Read input binary.
@@ -265,30 +220,6 @@ main (int argc, char *argv[])
 
   if (loomFileWrite (new_bin, mods.data, mods.size))
     error ();
-
-  // Write the kernel.
-  if (kernel_size)
-    {
-      kernel_data = malloc (kernel_size);
-      if (kernel_data == NULL)
-        error ();
-      if (loomFileRead (kernel, kernel_data, kernel_size))
-        error ();
-      if (loomFileWrite (new_bin, kernel_data, kernel_size))
-        error ();
-    }
-
-  // Write the initrd.
-  if (initrd_size)
-    {
-      initrd_data = malloc (initrd_size);
-      if (initrd_data == NULL)
-        error ();
-      if (loomFileRead (initrd, initrd_data, initrd_size))
-        error ();
-      if (loomFileWrite (new_bin, initrd_data, initrd_size))
-        error ();
-    }
 
   if (loomFileGetMeta (new_bin, &file_meta))
     error ();

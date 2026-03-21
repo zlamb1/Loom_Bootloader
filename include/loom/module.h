@@ -23,8 +23,6 @@ typedef struct
   u32 modoff;
 #define LOOM_MODULE_HEADER_MIN_SIZE sizeof (loom_module_header) + 4
   u32 size;
-  u32 kernel_size;
-  u32 initrdsize;
 } packed loom_module_header;
 
 typedef struct loom_module_section
