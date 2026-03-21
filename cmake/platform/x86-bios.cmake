@@ -14,13 +14,14 @@ list(
 list(
     APPEND 
     LOOM_SRCS
+    "${LOOM_PLATFORM_SRC_DIR}/a20.S"
     "${LOOM_PLATFORM_SRC_DIR}/bios.c"
+    "${LOOM_PLATFORM_SRC_DIR}/boot.S"
     "${LOOM_PLATFORM_SRC_DIR}/exception.c"
     "${LOOM_PLATFORM_SRC_DIR}/int.S"
+    "${LOOM_PLATFORM_SRC_DIR}/isr.S"
     "${LOOM_PLATFORM_SRC_DIR}/platform.c"
     "${LOOM_PLATFORM_SRC_DIR}/reboot.S"
-    "${LOOM_PLATFORM_SRC_DIR}/boot.S"
     "${LOOM_PLATFORM_SRC_DIR}/stage1_5.S"
-    "${LOOM_PLATFORM_SRC_DIR}/isr.S"
     "${LOOM_PLATFORM_SRC_DIR}/vga.c"
 )

@@ -14,12 +14,7 @@ SECTION(.stage1_5)
 
 _start1_5:
     PRINT(_msg)
-
-    # Try to enable A20.
-    mov $0x2401, %ax
-    int $0x15
-    jnc 1f
-    ERROR(_a20)
+    call loomEnableA20
 1:
     call loomEnterProtectedMode
 .code32
@@ -120,9 +115,6 @@ _flush_prot:
 
 _msg:
     .asciz "Stage 1.5"
-
-_a20:
-    .asciz "Could not enable A20."
 
 _gdt_start:
     .quad 0x0
