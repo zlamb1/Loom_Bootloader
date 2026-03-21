@@ -17,7 +17,9 @@ typedef struct
   u16 es;
 } packed loom_bios_args;
 
-void export (loom_enter_rmode) (void);
+void export (loomEnterRealMode) (void);
+void export (loomEnterProtectedMode) (void);
+
 void export (loomBiosInt) (u8 intno, loom_bios_args *args);
 
 void loomBiosDisksProbe (void);

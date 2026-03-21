@@ -443,6 +443,8 @@ address
 loomModEndGet (void)
 {
   loom_module_header hdr;
+  if (loom_modbase == null)
+    return 0;
   loomMemCopy (&hdr, (void *) loom_modbase, sizeof (hdr));
   return loom_modbase + loom_le32toh (hdr.size);
 }
@@ -455,8 +457,11 @@ loomCoreModulesLoad (void)
 
   usize addr;
 
-  if (!loom_modbase)
-    loomPanic ("loom_modbase not initialized");
+  if (loom_modbase == null)
+    {
+      loomLogLn ("warning: no core modules found");
+      return;
+    }
 
   loomMemCopy (&hdr, (void *) loom_modbase, sizeof (hdr));
 

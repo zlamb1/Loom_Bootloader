@@ -55,7 +55,7 @@ main (int argc, char *argv[])
         initrd_size = 0;
 
   u32 *table;
-  char *bin_data, *kernel_data, *initrd_data;
+  byte *bin_data, *kernel_data, *initrd_data;
 
   const char *in_path = NULL, *kernel_path = NULL, *initrd_path = NULL,
              *out_path = NULL;
@@ -236,9 +236,23 @@ main (int argc, char *argv[])
   if (bin_data == NULL)
     error ();
 
-  // Read input binary and copy to new binary.
-  if (loomFileRead (bin, bin_data, bin_size)
-      || loomFileWrite (new_bin, bin_data, bin_size))
+  usize append_size = (usize) sizeof (hdr) + table_bytes + mods.size
+                      + kernel_size + initrd_size;
+  append_size = (append_size + 511) / 512 * 512;
+
+  // Read input binary.
+  if (loomFileRead (bin, bin_data, bin_size))
+    error ();
+
+  // Write load sectors.
+  u32 load_sectors = append_size / 512;
+  bin_data[416] = (byte) load_sectors;
+  bin_data[417] = (byte) (load_sectors >> 8);
+  bin_data[418] = (byte) (load_sectors >> 16);
+  bin_data[419] = (byte) (load_sectors >> 24);
+
+  // Copy the to the new binary.
+  if (loomFileWrite (new_bin, bin_data, bin_size))
     error ();
 
   // Write the header to new binary.

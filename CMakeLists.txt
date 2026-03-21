@@ -16,7 +16,7 @@ if (NOT DEFINED CMAKE_TOOLCHAIN_FILE)
     set(CMAKE_TOOLCHAIN_FILE "${X86_GCC_TC}")
 endif()
 
-project(Loom_Bootloader LANGUAGES ASM_NASM C)
+project(Loom_Bootloader LANGUAGES ASM C)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 

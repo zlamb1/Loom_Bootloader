@@ -1,61 +1,43 @@
 ENTRY(_start)
 
-SECTIONS {
+SECTIONS
+{
     . = 0x7C00;
-    stage1s = .;
 
+    _sboot = .;
+    
     .stage1 : {
+        _sstage1 = .;
         *(.stage1)
+        _estage1 = .;
     }
 
-    . = ALIGN(512);
-    stage1e = .;
-
-    stage2s = .;
-
-    .stage2 : {
-        *(.stage2)
-        *(.stage2.*)
+    .stage1_5 : {
+        _sstage1_5 = .;
+        *(.stage1_5)
+        _estage1_5 = .;
     }
 
-    . = ALIGN(512);
-
-    stage2e = .;
-
-    stage3s = .;
-
-    .stage3.text : {
-        stext = .;
-        *(.text)
-        *(.text.*)
-        etext = .;
+    .text : {
+        *(.text*)
     }
 
-    .stage3.data : {
-        sdata = .;
-        *(.data)
-        *(.data.*)
-        edata = .;
+    .data : {
+        *(.data*)
     }
 
-    .stage3.rodata : {
-        srodata = .;
-        *(.rodata)
-        *(.rodata.*)
-        erodata = .;
-        . = ALIGN(512);
+    .rodata : {
+        *(.rodata*)
+        . = ALIGN(0x200);
     }
 
-    stage3e = .;
+    _eboot = .;
 
-    .stage3.bss (NOLOAD) : {
-        sbss = .;
-        *(.bss)
-        *(.bss.*)
-        *(COMMON)
-        ebss = .;
+    .bss : {
+        _sbss = .;
+        *(.bss*)
+        _ebss = .;
     }
 
-    s2_sectors = (stage2e - stage2s) / 0x200;
-    s3_sectors = (stage3e - stage3s) / 0x200;
+    _sectors = (_eboot - _sboot) / 0x200;
 }

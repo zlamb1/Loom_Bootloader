@@ -2,8 +2,8 @@
 #include "loom/print.h"
 #include "loom/symbol.h"
 
-extern char stage2s;
-extern char stage3e;
+extern char _sboot;
+extern char _eboot;
 
 void
 loomPanic (const char *fmt, ...)
@@ -32,9 +32,9 @@ loomPanic (const char *fmt, ...)
       void **next = ebp[0];
       void *addr = ebp[1];
 
-      if ((uintptr_t) addr < (uintptr_t) &stage2s
-          || (uintptr_t) addr > (uintptr_t) &stage3e
-          || (uintptr_t) ebp > (uintptr_t) next)
+      if ((uintptr) addr < (uintptr) &_sboot
+          || (uintptr) addr > (uintptr) &_eboot
+          || (uintptr) ebp > (uintptr) next)
         break;
 
       symbol = loomSymbolFind (addr);
