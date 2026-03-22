@@ -20,6 +20,7 @@
 
 #define alias(NAME)       __attribute__ ((alias (#NAME)))
 #define align(N)          __attribute__ ((aligned (N)))
+#define auto              __auto_type
 #define export(NAME)      NAME
 #define export_var(NAME)  NAME
 #define force_inline      __attribute__ ((always_inline))

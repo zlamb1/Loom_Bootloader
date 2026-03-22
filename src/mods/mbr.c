@@ -15,8 +15,8 @@ typedef struct
 #define PART_TYPE_GPT   0xEE
   u8 partition_type;
   char chs_end[3];
-  u32 lba_start;
-  u32 sectors;
+  u32le start;
+  u32le sectors;
 } packed mbr_partition_entry;
 
 struct packed mbr
@@ -24,7 +24,7 @@ struct packed mbr
 #define MBR_SIZE 512
   char pad[446];
   mbr_partition_entry entries[4];
-  u16 signature;
+  u16le signature;
 };
 
 static int mbrPartitionSchemeIterate (loom_partition_scheme *,
@@ -54,12 +54,12 @@ mbrPartitionSchemeIterate (loom_partition_scheme *partition_scheme,
   if ((error = loomBlockDevRead (parent, 0, MBR_SIZE, (char *) mbr)))
     goto out;
 
-  mbr->signature = le16toh (mbr->signature);
+  auto signature = endianLoad (mbr->signature);
 
-  if (mbr->signature != 0xAA55)
+  if (signature != 0xAA55)
     {
       loomErrorFmt (LOOM_ERR_BAD_PART_SCHEME, "bad MBR signature '0x%.4lx'",
-                    (unsigned long) mbr->signature);
+                    (unsigned long) signature);
       goto out;
     }
 
@@ -89,10 +89,8 @@ mbrPartitionSchemeIterate (loom_partition_scheme *partition_scheme,
           goto out;
         }
 
-      entry->lba_start = le32toh (entry->lba_start);
-      entry->sectors = le32toh (entry->sectors);
-
-      loomPartitionInit (&partition, parent, entry->lba_start, entry->sectors);
+      loomPartitionInit (&partition, parent, endianLoad (entry->start),
+                         endianLoad (entry->sectors));
 
       if ((ret_val = hook (parent, &partition, ctx)))
         {

@@ -36,7 +36,7 @@ processChunk (md5_context *ctx)
   u32 *M = ctx->M, a = ctx->h[0], b = ctx->h[1], c = ctx->h[2], d = ctx->h[3];
 
   for (unsigned int i = 0; i < 16; ++i)
-    M[i] = loom_le32toh (M[i]);
+    M[i] = le32toh (M[i]);
 
   for (unsigned int i = 0; i < 64; ++i)
     {
@@ -115,13 +115,13 @@ loomMD5Hash (usize length, const char *buf, loom_digest digest[16])
     }
 
   u64 message_length = original_length * 8;
-  ctx.M[14] = loom_htole32 ((u32) message_length);
-  ctx.M[15] = loom_htole32 ((u32) (message_length >> 32));
+  ctx.M[14] = htole32 ((u32) message_length);
+  ctx.M[15] = htole32 ((u32) (message_length >> 32));
   processChunk (&ctx);
 
   for (unsigned int i = 0; i < 4; ++i)
     {
-      u32 h = loom_htole32 (ctx.h[i]);
+      u32 h = htole32 (ctx.h[i]);
       loomMemCopy (digest + i * 4, &h, 4);
     }
 }

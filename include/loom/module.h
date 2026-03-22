@@ -1,9 +1,8 @@
 #ifndef LOOM_MODULE_H
 #define LOOM_MODULE_H 1
 
-#include "loom/compiler.h"
+#include "loom/endian.h"
 #include "loom/list.h"
-#include "loom/types.h"
 
 #ifdef LOOM_MODULE
 #define LOOM_MOD(NAME)    const char used *loom_mod_name = #NAME;
@@ -18,11 +17,11 @@
 typedef struct
 {
 #define LOOM_MODULE_HEADER_MAGIC 0x70D61E9C
-  u32 magic;
-  u32 taboff;
-  u32 modoff;
+  u32le magic;
+  u32le taboff;
+  u32le modoff;
 #define LOOM_MODULE_HEADER_MIN_SIZE sizeof (loom_module_header) + 4
-  u32 size;
+  u32le size;
 } packed loom_module_header;
 
 typedef struct loom_module_section

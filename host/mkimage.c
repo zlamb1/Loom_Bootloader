@@ -1,4 +1,3 @@
-#include <endian.h>
 #include <errno.h>
 #include <limits.h>
 #include <stdarg.h>
@@ -182,11 +181,11 @@ main (int argc, char *argv[])
         error ();
     }
 
-  hdr.magic = htole32 (LOOM_MODULE_HEADER_MAGIC);
-  hdr.taboff = htole32 (sizeof (hdr));
-  hdr.modoff = htole32 (sizeof (hdr) + (uint32_t) table_bytes);
-  hdr.size = htole32 ((uint32_t) sizeof (hdr) + (uint32_t) table_bytes
-                      + (uint32_t) mods.size);
+  endianStore (hdr.magic, LOOM_MODULE_HEADER_MAGIC);
+  endianStore (hdr.taboff, sizeof (hdr));
+  endianStore (hdr.modoff, sizeof (hdr) + (u32) table_bytes);
+  endianStore (hdr.size,
+               (u32) sizeof (hdr) + (u32) table_bytes + (u32) mods.size);
 
   bin_data = malloc (bin_size);
   if (bin_data == NULL)

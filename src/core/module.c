@@ -442,17 +442,17 @@ error:
 address
 loomModEndGet (void)
 {
-  loom_module_header hdr;
+  loom_module_header header;
   if (loom_modbase == null)
     return 0;
-  loomMemCopy (&hdr, (void *) loom_modbase, sizeof (hdr));
-  return loom_modbase + le32toh (hdr.size);
+  loomMemCopy (&header, (void *) loom_modbase, sizeof (header));
+  return loom_modbase + endianLoad (header.size);
 }
 
 void
 loomCoreModulesLoad (void)
 {
-  loom_module_header hdr;
+  loom_module_header header;
   u32 *modtab, modsize;
 
   usize addr;
@@ -463,32 +463,31 @@ loomCoreModulesLoad (void)
       return;
     }
 
-  loomMemCopy (&hdr, (void *) loom_modbase, sizeof (hdr));
+  loomMemCopy (&header, (void *) loom_modbase, sizeof (header));
 
-  hdr.magic = le32toh (hdr.magic);
-  hdr.taboff = le32toh (hdr.taboff);
-  hdr.modoff = le32toh (hdr.modoff);
-  hdr.size = le32toh (hdr.size);
+  auto magic = endianLoad (header.magic);
+  if (magic != LOOM_MODULE_HEADER_MAGIC)
+    loomPanic ("bad module header magic: 0x%lx", (unsigned long) magic);
 
-  if (hdr.magic != LOOM_MODULE_HEADER_MAGIC)
-    loomPanic ("bad module header magic: 0x%lx", (unsigned long) hdr.magic);
+  auto size = endianLoad (header.size);
+  if (size < LOOM_MODULE_HEADER_MIN_SIZE
+      || loomAdd (loom_modbase, size, &loom_modend))
+    loomPanic ("bad module header size: %lu", (unsigned long) size);
 
-  if (hdr.size < LOOM_MODULE_HEADER_MIN_SIZE
-      || loomAdd (loom_modbase, hdr.size, &loom_modend))
-    loomPanic ("bad module header size: %lu", (unsigned long) hdr.size);
+  auto taboff = endianLoad (header.taboff);
+  if (taboff >= size)
+    loomPanic ("bad module header taboff: %lu", (unsigned long) taboff);
 
-  if (hdr.taboff >= hdr.size)
-    loomPanic ("bad module header taboff: %lu", (unsigned long) hdr.taboff);
-
-  if (hdr.taboff >= hdr.modoff)
+  auto modoff = endianLoad (header.modoff);
+  if (taboff >= modoff)
     loomPanic ("bad module header taboff: must be less than modoff");
 
-  modtab = (u32 *) (loom_modbase + hdr.taboff);
-  addr = loom_modbase + hdr.modoff;
+  modtab = (u32 *) (loom_modbase + taboff);
+  addr = loom_modbase + modoff;
 
   while (1)
     {
-      if ((address) modtab + sizeof (*modtab) > loom_modbase + hdr.modoff)
+      if ((address) modtab + sizeof (*modtab) > loom_modbase + modoff)
         loomPanic ("bad module header table: overflows modules");
 
       loomMemCopy (&modsize, modtab, sizeof (u32));
