@@ -86,7 +86,7 @@ gptPartionSchemeIterate (loom_partition_scheme *partition_scheme,
       goto out;
     }
 
-  hdr->hdr_sz = loom_le32toh (hdr->hdr_sz);
+  hdr->hdr_sz = le32toh (hdr->hdr_sz);
 
   if (hdr->hdr_sz < sizeof (*hdr))
     {
@@ -96,7 +96,7 @@ gptPartionSchemeIterate (loom_partition_scheme *partition_scheme,
 
   // FIXME: validate header CRC32
 
-  hdr->ents_sz = loom_le32toh (hdr->ents_sz);
+  hdr->ents_sz = le32toh (hdr->ents_sz);
 
   if (hdr->ents_sz < sizeof (gpt_partition_entry))
     {
@@ -104,7 +104,7 @@ gptPartionSchemeIterate (loom_partition_scheme *partition_scheme,
       goto out;
     }
 
-  hdr->ents = loom_le32toh (hdr->ents);
+  hdr->ents = le32toh (hdr->ents);
 
   if (loomMul (hdr->ents, hdr->ents_sz, &size))
     {
@@ -112,7 +112,7 @@ gptPartionSchemeIterate (loom_partition_scheme *partition_scheme,
       goto out;
     }
 
-  hdr->ents_loc = loom_le64toh (hdr->ents_loc);
+  hdr->ents_loc = le64toh (hdr->ents_loc);
 
   if (loomMul (parent->block_size, hdr->ents_loc, &loc))
     {
@@ -145,8 +145,8 @@ gptPartionSchemeIterate (loom_partition_scheme *partition_scheme,
                        GPT_GUID_SIZE))
         continue;
 
-      ent->range.start = loom_le64toh (ent->range.start);
-      ent->range.end = loom_le64toh (ent->range.end);
+      ent->range.start = le64toh (ent->range.start);
+      ent->range.end = le64toh (ent->range.end);
 
       if (ent->range.start > ent->range.end)
         {

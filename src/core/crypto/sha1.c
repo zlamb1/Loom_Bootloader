@@ -15,7 +15,7 @@ processChunk (sha1_context *ctx)
   u32 *w = ctx->w, a, b, c, d, e, f, k, tmp;
 
   for (unsigned int i = 0; i < 16; ++i)
-    w[i] = loom_be32toh (w[i]);
+    w[i] = be32toh (w[i]);
 
   for (unsigned int i = 16; i < 80; ++i)
     {
@@ -106,13 +106,13 @@ loomSHA1Hash (usize length, const char *buf, loom_digest digest[20])
     }
 
   u64 message_length = original_length * 8;
-  ctx.w[14] = loom_htobe32 ((u32) (message_length >> 32));
-  ctx.w[15] = loom_htobe32 ((u32) message_length);
+  ctx.w[14] = htobe32 ((u32) (message_length >> 32));
+  ctx.w[15] = htobe32 ((u32) message_length);
   processChunk (&ctx);
 
   for (unsigned int i = 0; i < 5; ++i)
     {
-      u32 h = loom_htobe32 (ctx.h[i]);
+      u32 h = htobe32 (ctx.h[i]);
       loomMemCopy (digest + i * 4, &h, 4);
     }
 }

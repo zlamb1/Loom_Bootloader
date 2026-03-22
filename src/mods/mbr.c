@@ -54,7 +54,7 @@ mbrPartitionSchemeIterate (loom_partition_scheme *partition_scheme,
   if ((error = loomBlockDevRead (parent, 0, MBR_SIZE, (char *) mbr)))
     goto out;
 
-  mbr->signature = loom_le16toh (mbr->signature);
+  mbr->signature = le16toh (mbr->signature);
 
   if (mbr->signature != 0xAA55)
     {
@@ -89,8 +89,8 @@ mbrPartitionSchemeIterate (loom_partition_scheme *partition_scheme,
           goto out;
         }
 
-      entry->lba_start = loom_le32toh (entry->lba_start);
-      entry->sectors = loom_le32toh (entry->sectors);
+      entry->lba_start = le32toh (entry->lba_start);
+      entry->sectors = le32toh (entry->sectors);
 
       loomPartitionInit (&partition, parent, entry->lba_start, entry->sectors);
 

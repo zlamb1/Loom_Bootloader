@@ -446,7 +446,7 @@ loomModEndGet (void)
   if (loom_modbase == null)
     return 0;
   loomMemCopy (&hdr, (void *) loom_modbase, sizeof (hdr));
-  return loom_modbase + loom_le32toh (hdr.size);
+  return loom_modbase + le32toh (hdr.size);
 }
 
 void
@@ -465,10 +465,10 @@ loomCoreModulesLoad (void)
 
   loomMemCopy (&hdr, (void *) loom_modbase, sizeof (hdr));
 
-  hdr.magic = loom_le32toh (hdr.magic);
-  hdr.taboff = loom_le32toh (hdr.taboff);
-  hdr.modoff = loom_le32toh (hdr.modoff);
-  hdr.size = loom_le32toh (hdr.size);
+  hdr.magic = le32toh (hdr.magic);
+  hdr.taboff = le32toh (hdr.taboff);
+  hdr.modoff = le32toh (hdr.modoff);
+  hdr.size = le32toh (hdr.size);
 
   if (hdr.magic != LOOM_MODULE_HEADER_MAGIC)
     loomPanic ("bad module header magic: 0x%lx", (unsigned long) hdr.magic);
@@ -492,7 +492,7 @@ loomCoreModulesLoad (void)
         loomPanic ("bad module header table: overflows modules");
 
       loomMemCopy (&modsize, modtab, sizeof (u32));
-      modsize = loom_le32toh (modsize);
+      modsize = le32toh (modsize);
 
       if (!modsize)
         break;

@@ -1,210 +1,218 @@
 #ifndef LOOM_ENDIAN_H
 #define LOOM_ENDIAN_H 1
 
+#include "loom/compiler.h"
 #include "loom/types.h"
 
-#if !defined(LOOM_UTIL)
+#ifdef LOOM_UTIL
+#ifndef __BYTE_ORDER__
+#error "Define byte order for host via __BYTE_ORDER__"
+#endif
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+#define LOOM_LITTLE_ENDIAN
+#elif __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+#define LOOM_BIG_ENDIAN
+#else
+#error "Unsupported host byte order."
+#endif
+#endif
+
+#if !defined(LOOM_LITTLE_ENDIAN) && !defined(LOOM_BIG_ENDIAN)
+#error "Endianness must be defined."
+#endif
 
 #if defined(LOOM_LITTLE_ENDIAN) && defined(LOOM_BIG_ENDIAN)
 #error "Either little or big endian support must be enabled. Not both."
 #endif
 
-static inline u16 loom_htole16 (u16 n);
-static inline u32 loom_htole32 (u32 n);
-static inline u64 loom_htole64 (u64 n);
+#define _ENDIAN_STRUCTS_EXT(X1, X2)                                           \
+  X1 (u16le, u16, htole16)                                                    \
+  X1 (u32le, u32, htole32)                                                    \
+  X1 (u64le, u64, htole64)                                                    \
+  X1 (u16be, u16, htobe16)                                                    \
+  X1 (u32be, u32, htobe32)                                                    \
+  X2 (u64be, u64, htobe64)
 
-static inline u16 loom_htobe16 (u16 n);
-static inline u32 loom_htobe32 (u32 n);
-static inline u64 loom_htobe64 (u64 n);
+#define _ENDIAN_STRUCTS _ENDIAN_STRUCTS_EXT (X, X)
 
-#define loom_le16toh loom_htole16
-#define loom_le32toh loom_htole32
-#define loom_le64toh loom_htole64
-
-#define loom_be16toh loom_htobe16
-#define loom_be32toh loom_htobe32
-#define loom_be64toh loom_htobe64
-
-static inline i16
-loom_le16toh_s (i16 v)
-{
-  return (i16) loom_le16toh ((u16) v);
-}
-
-static inline i32
-loom_le32toh_s (i32 v)
-{
-  return (i32) loom_le32toh ((u32) v);
-}
-
-static inline i64
-loom_le64toh_s (i64 v)
-{
-  return (i64) loom_le64toh ((u64) v);
-}
-
-static inline i16
-loom_be16toh_s (i16 v)
-{
-  return (i16) loom_be16toh ((u16) v);
-}
-
-static inline i32
-loom_be32toh_s (i32 v)
-{
-  return (i32) loom_be32toh ((u32) v);
-}
-
-static inline i64
-loom_be64toh_s (i64 v)
-{
-  return (i64) loom_be64toh ((u64) v);
-}
-
-#define ENDIAN_TYPE(name, type)                                               \
+#define X(name, type, conv)                                                   \
   typedef struct                                                              \
   {                                                                           \
     type v;                                                                   \
-  } name;
+  } name;                                                                     \
+  compile_assert (sizeof (name) == sizeof (type),                             \
+                  "endian struct size mismatch for " #name);                  \
+  compile_assert (alignof (name) == alignof (type),                           \
+                  "endian struct alignment mismatch for " #name);
 
-ENDIAN_TYPE (u16le, u16);
-ENDIAN_TYPE (u32le, u32);
-ENDIAN_TYPE (u64le, u64);
+_ENDIAN_STRUCTS
 
-ENDIAN_TYPE (i16le, i16);
-ENDIAN_TYPE (i32le, i32);
-ENDIAN_TYPE (i64le, i64);
+#undef X
 
-ENDIAN_TYPE (u16be, u16);
-ENDIAN_TYPE (u32be, u32);
-ENDIAN_TYPE (u64be, u64);
+#ifdef LOOM_LITTLE_ENDIAN
 
-ENDIAN_TYPE (i16be, i16);
-ENDIAN_TYPE (i32be, i32);
-ENDIAN_TYPE (i64be, i64);
-
-#define loom_letoh(x)                                                         \
-  _Generic ((x),                                                              \
-      u16le: loom_letoh16,                                                    \
-      u32le: loom_letoh32,                                                    \
-      u64le: loom_letoh64,                                                    \
-      i16le: loom_letoh16_s,                                                  \
-      i32le: loom_letoh32_s,                                                  \
-      i64le: loom_letoh64_s) ((x).v)
-
-#define loom_betoh(x)                                                         \
-  _Generic ((x),                                                              \
-      u16be: loom_betoh16,                                                    \
-      u32be: loom_betoh32,                                                    \
-      u64be: loom_betoh64,                                                    \
-      i16be: loom_betoh16_s,                                                  \
-      i32be: loom_betoh32_s,                                                  \
-      i64be: loom_betoh64_s) ((x).v)
-
-#undef ENDIAN_TYPE
-
-#if defined(LOOM_LITTLE_ENDIAN)
-
-static inline u16
-loom_htole16 (u16 n)
+static inline u16 force_inline
+htole16 (u16 u)
 {
-  return n;
+  return u;
 }
 
-static inline u32
-loom_htole32 (u32 n)
+static inline u32 force_inline
+htole32 (u32 u)
 {
-  return n;
+  return u;
 }
 
-static inline u64
-loom_htole64 (u64 n)
+static inline u64 force_inline
+htole64 (u64 u)
 {
-  return n;
+  return u;
 }
 
-static inline u16
-loom_htobe16 (u16 n)
+static inline u16 force_inline
+htobe16 (u16 u)
 {
-  return __builtin_bswap16 (n);
+  return __builtin_bswap16 (u);
 }
 
-static inline u32
-loom_htobe32 (u32 n)
+static inline u32 force_inline
+htobe32 (u32 u)
 {
-  return __builtin_bswap32 (n);
+  return __builtin_bswap32 (u);
 }
 
-static inline u64
-loom_htobe64 (u64 n)
+static inline u64 force_inline
+htobe64 (u64 u)
 {
-  return __builtin_bswap64 (n);
+  return __builtin_bswap64 (u);
 }
-
-#elif defined(LOOM_BIG_ENDIAN)
-
-static inline loom_uint16_t
-loom_htole16 (loom_uint16_t n)
-{
-  return __builtin_bswap16 (n);
-}
-
-static inline loom_uint32_t
-loom_htole32 (loom_uint32_t n)
-{
-  return __builtin_bswap32 (n);
-}
-
-static inline loom_uint64_t
-loom_htole64 (loom_uint64_t n)
-{
-  return __builtin_bswap64 (n);
-}
-
-static inline loom_uint16_t
-loom_htobe16 (loom_uint16_t n)
-{
-  return n;
-}
-
-static inline loom_uint32_t
-loom_htobe32 (loom_uint32_t n)
-{
-  return n;
-}
-
-static inline loom_uint64_t
-loom_htobe64 (loom_uint64_t n)
-{
-  return n;
-}
-
-#else
-
-#error Unknown Endianness
 
 #endif
 
-#else
+#ifdef LOOM_BIG_ENDIAN
 
-#include <endian.h>
+static inline u16 force_inline
+htole16 (u16 u)
+{
+  return __builtin_bswap16 (u);
+}
 
-#define loom_htole16 htole16
-#define loom_htole32 htole32
-#define loom_htole64 htole64
+static inline u32 force_inline
+htole32 (u32 u)
+{
+  return __builtin_bswap32 (u);
+}
 
-#define loom_htobe16 htobe16
-#define loom_htobe32 htobe32
-#define loom_htobe64 htobe64
+static inline u64 force_inline
+htole64 (u64 u)
+{
+  return __builtin_bswap64 (u);
+}
 
-#define loom_le16toh loom_htole16
-#define loom_le32toh loom_htole32
-#define loom_le64toh loom_htole64
+static inline u16 force_inline
+htobe16 (u16 u)
+{
+  return u;
+}
 
-#define loom_be16toh loom_htobe16
-#define loom_be32toh loom_htobe32
-#define loom_be64toh loom_htobe64
+static inline u32 force_inline
+htobe32 (u32 u)
+{
+  return u;
+}
+
+static inline u64 force_inline
+htobe64 (u64 u)
+{
+  return u;
+}
 
 #endif
+
+static inline u16 force_inline
+le16toh (u16 u)
+{
+  return htole16 (u);
+}
+
+static inline u32 force_inline
+le32toh (u32 u)
+{
+  return htole32 (u);
+}
+
+static inline u64 force_inline
+le64toh (u64 u)
+{
+  return htole64 (u);
+}
+
+static inline u16 force_inline
+be16toh (u16 u)
+{
+  return htobe16 (u);
+}
+
+static inline u32 force_inline
+be32toh (u32 u)
+{
+  return htobe32 (u);
+}
+
+static inline u64 force_inline
+be64toh (u64 u)
+{
+  return htobe64 (u);
+}
+
+#define X(name, type, conv)                                                   \
+  static inline type force_inline name##Load (name s) { return conv (s.v); }  \
+  static inline type force_inline name##LoadP (const name *s)                 \
+  {                                                                           \
+    return conv (s->v);                                                       \
+  }                                                                           \
+  static inline type force_inline name##LoadPV (const volatile name *s)       \
+  {                                                                           \
+    return conv (s->v);                                                       \
+  }                                                                           \
+  static inline void force_inline name##Store (name *s, type v)               \
+  {                                                                           \
+    s->v = conv (v);                                                          \
+  }                                                                           \
+  static inline void force_inline name##StoreV (volatile name *s, type v)     \
+  {                                                                           \
+    s->v = conv (v);                                                          \
+  }
+
+_ENDIAN_STRUCTS
+
+#undef X
+
+// clang-format off
+
+#define _ENDIAN_LOAD_GEN1(name, type, conv) \
+  name: name##Load, \
+  name *: name##LoadP, \
+  const name *: name##LoadP, \
+  volatile name *: name##LoadPV, \
+  const volatile name *: name##LoadPV
+
+#define _ENDIAN_LOAD_GEN2(name, type, conv) _ENDIAN_LOAD_GEN1(name),
+
+#define _ENDIAN_STORE_GEN1(name, type, conv) \
+  name *: name##Store, \
+  volatile name *: name##StoreV
+
+#define _ENDIAN_STORE_GEN2(name, type, conv) _ENDIAN_STORE_GEN1(name, type, conv),
+
+// clang-format on
+
+#define endianLoad(x)                                                         \
+  _Generic ((x),                                                              \
+      _ENDIAN_STRUCTS_EXT (_ENDIAN_LOAD_GEN2, _ENDIAN_LOAD_GEN1)) (x)
+
+#define endianStore(x, v)                                                     \
+  _Generic (&(x),                                                             \
+      _ENDIAN_STRUCTS_EXT (_ENDIAN_STORE_GEN2, _ENDIAN_STORE_GEN1)) (&(x), v)
 
 #endif
