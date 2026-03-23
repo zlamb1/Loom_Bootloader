@@ -137,7 +137,7 @@ fat_probe (loom_block_dev *block_dev)
   if (loomBlockDevRead (block_dev, 0, sizeof (bpb), (char *) &bpb))
     goto out;
 
-  auto signature = endianLoad (bpb.signature);
+  auto signature = loomEndianLoad (bpb.signature);
   if (signature != FAT_BOOT_SIGNATURE)
     {
       loomErrorFmt (LOOM_ERR_BAD_FS, "bad boot signature 0x%.4lx",
@@ -145,7 +145,7 @@ fat_probe (loom_block_dev *block_dev)
       goto out;
     }
 
-  auto bytes_per_sect = endianLoad (bpb.bytes_per_sect);
+  auto bytes_per_sect = loomEndianLoad (bpb.bytes_per_sect);
   if (bytes_per_sect != 512 && bytes_per_sect != 1024 && bytes_per_sect != 2048
       && bytes_per_sect != 4096)
     {
@@ -171,7 +171,7 @@ fat_probe (loom_block_dev *block_dev)
       goto out;
     }
 
-  auto reserved_sects = endianLoad (bpb.reserved_sects);
+  auto reserved_sects = loomEndianLoad (bpb.reserved_sects);
   if (reserved_sects == 0)
     {
       loomErrorFmt (LOOM_ERR_BAD_FS, "bad number of reserved sectors %lu",
@@ -187,9 +187,9 @@ fat_probe (loom_block_dev *block_dev)
       goto out;
     }
 
-  auto root_entry_count = endianLoad (bpb.root_entry_count);
-  auto fatsz16 = endianLoad (bpb.fatsz16);
-  auto sects16 = endianLoad (bpb.sects16);
+  auto root_entry_count = loomEndianLoad (bpb.root_entry_count);
+  auto fatsz16 = loomEndianLoad (bpb.fatsz16);
+  auto sects16 = loomEndianLoad (bpb.sects16);
 
   u32 root_dir_sects = (((u32) root_entry_count * 32) + (bytes_per_sect - 1))
                        / bytes_per_sect;
@@ -199,7 +199,7 @@ fat_probe (loom_block_dev *block_dev)
   if (fatsz16)
     fatsz = fatsz16;
   else
-    fatsz = endianLoad (bpb.ebpb32.fatsz32);
+    fatsz = loomEndianLoad (bpb.ebpb32.fatsz32);
 
   if (!fatsz)
     {
@@ -210,7 +210,7 @@ fat_probe (loom_block_dev *block_dev)
   if (sects16)
     sects = sects16;
   else
-    sects = endianLoad (bpb.sects32);
+    sects = loomEndianLoad (bpb.sects32);
 
   if (!sects)
     {

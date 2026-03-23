@@ -312,11 +312,11 @@ _ENDIAN_STRUCTS
 
 // clang-format on
 
-#define endianLoad(x)                                                         \
+#define loomEndianLoad(x)                                                     \
   _Generic ((x),                                                              \
       _ENDIAN_STRUCTS_EXT (_ENDIAN_LOAD_GEN2, _ENDIAN_LOAD_GEN1)) (x)
 
-#define endianStore(x, _v)                                                    \
+#define loomEndianStore(x, _v)                                                \
   x.v = _Generic ((x),                                                        \
       _ENDIAN_STRUCTS_EXT (_ENDIAN_STORE2, _ENDIAN_STORE1)) (_v)
 

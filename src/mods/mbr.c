@@ -54,7 +54,7 @@ mbrPartitionSchemeIterate (loom_partition_scheme *partition_scheme,
   if ((error = loomBlockDevRead (parent, 0, MBR_SIZE, (char *) mbr)))
     goto out;
 
-  auto signature = endianLoad (mbr->signature);
+  auto signature = loomEndianLoad (mbr->signature);
 
   if (signature != 0xAA55)
     {
@@ -89,8 +89,8 @@ mbrPartitionSchemeIterate (loom_partition_scheme *partition_scheme,
           goto out;
         }
 
-      loomPartitionInit (&partition, parent, endianLoad (entry->start),
-                         endianLoad (entry->sectors));
+      loomPartitionInit (&partition, parent, loomEndianLoad (entry->start),
+                         loomEndianLoad (entry->sectors));
 
       if ((ret_val = hook (parent, &partition, ctx)))
         {

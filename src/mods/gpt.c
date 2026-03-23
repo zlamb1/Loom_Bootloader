@@ -86,7 +86,7 @@ gptPartionSchemeIterate (loom_partition_scheme *partition_scheme,
       goto out;
     }
 
-  if (endianLoad (header->size) < sizeof (*header))
+  if (loomEndianLoad (header->size) < sizeof (*header))
     {
       loomErrorFmt (LOOM_ERR_BAD_PART_SCHEME, "bad GPT header size");
       goto out;
@@ -94,7 +94,7 @@ gptPartionSchemeIterate (loom_partition_scheme *partition_scheme,
 
   // FIXME: validate header CRC32
 
-  auto entry_size = endianLoad (header->entry_size);
+  auto entry_size = loomEndianLoad (header->entry_size);
 
   if (entry_size < sizeof (gpt_partition_entry))
     {
@@ -102,7 +102,7 @@ gptPartionSchemeIterate (loom_partition_scheme *partition_scheme,
       goto out;
     }
 
-  auto entry_count = endianLoad (header->entry_count);
+  auto entry_count = loomEndianLoad (header->entry_count);
 
   if (loomMul (entry_count, entry_size, &entry_table_size))
     {
@@ -110,7 +110,7 @@ gptPartionSchemeIterate (loom_partition_scheme *partition_scheme,
       goto out;
     }
 
-  if (loomMul (parent->block_size, endianLoad (header->entry_loc), &loc))
+  if (loomMul (parent->block_size, loomEndianLoad (header->entry_loc), &loc))
     {
       loomErrorFmt (LOOM_ERR_BAD_PART_SCHEME,
                     "GPT table entries out of range");
@@ -141,8 +141,8 @@ gptPartionSchemeIterate (loom_partition_scheme *partition_scheme,
                        GPT_GUID_SIZE))
         continue;
 
-      auto start = endianLoad (ent->range.start);
-      auto end = endianLoad (ent->range.end);
+      auto start = loomEndianLoad (ent->range.start);
+      auto end = loomEndianLoad (ent->range.end);
 
       if (start > end)
         {

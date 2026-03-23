@@ -181,11 +181,11 @@ main (int argc, char *argv[])
         error ();
     }
 
-  endianStore (hdr.magic, LOOM_MODULE_HEADER_MAGIC);
-  endianStore (hdr.taboff, sizeof (hdr));
-  endianStore (hdr.modoff, sizeof (hdr) + (u32) table_bytes);
-  endianStore (hdr.size,
-               (u32) sizeof (hdr) + (u32) table_bytes + (u32) mods.size);
+  loomEndianStore (hdr.magic, LOOM_MODULE_HEADER_MAGIC);
+  loomEndianStore (hdr.taboff, sizeof (hdr));
+  loomEndianStore (hdr.modoff, sizeof (hdr) + (u32) table_bytes);
+  loomEndianStore (hdr.size,
+                   (u32) sizeof (hdr) + (u32) table_bytes + (u32) mods.size);
 
   bin_data = malloc (bin_size);
   if (bin_data == NULL)

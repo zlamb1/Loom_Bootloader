@@ -446,7 +446,7 @@ loomModEndGet (void)
   if (loom_modbase == null)
     return 0;
   loomMemCopy (&header, (void *) loom_modbase, sizeof (header));
-  return loom_modbase + endianLoad (header.size);
+  return loom_modbase + loomEndianLoad (header.size);
 }
 
 void
@@ -465,20 +465,20 @@ loomCoreModulesLoad (void)
 
   loomMemCopy (&header, (void *) loom_modbase, sizeof (header));
 
-  auto magic = endianLoad (header.magic);
+  auto magic = loomEndianLoad (header.magic);
   if (magic != LOOM_MODULE_HEADER_MAGIC)
     loomPanic ("bad module header magic: 0x%lx", (unsigned long) magic);
 
-  auto size = endianLoad (header.size);
+  auto size = loomEndianLoad (header.size);
   if (size < LOOM_MODULE_HEADER_MIN_SIZE
       || loomAdd (loom_modbase, size, &loom_modend))
     loomPanic ("bad module header size: %lu", (unsigned long) size);
 
-  auto taboff = endianLoad (header.taboff);
+  auto taboff = loomEndianLoad (header.taboff);
   if (taboff >= size)
     loomPanic ("bad module header taboff: %lu", (unsigned long) taboff);
 
-  auto modoff = endianLoad (header.modoff);
+  auto modoff = loomEndianLoad (header.modoff);
   if (taboff >= modoff)
     loomPanic ("bad module header taboff: must be less than modoff");
 
