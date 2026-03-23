@@ -15,7 +15,7 @@ _start:
     jmp _setup
     nop
 
-.fill 80 - (. - _start), 1, 0
+.fill 90 - (. - _start), 1, 0
 
 _setup:
     # Don't interrupt us.

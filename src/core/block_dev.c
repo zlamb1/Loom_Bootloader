@@ -168,6 +168,9 @@ partitionHook (loom_block_dev *parent, loom_partition *partition, void *p)
                (ulong) (partition->base.blocks * block_size));
 
   loomMemCopy (n, partition, sizeof (*n));
+  // Note: Make sure to update data to point to the new allocation.
+  n->base.data = n;
+
   loomBlockDevRegister (&n->base);
 
   return 0;
@@ -213,12 +216,15 @@ loomBlockDevProbe (loom_block_dev *block_dev, bool force, unused bool log)
 
     if ((fs = fs_type->probe (block_dev)) != NULL)
       {
+        if (log)
+          loomLogLn ("Found filesystem [type=%s]", fs_type->name);
         fs->parent = block_dev;
         fs->fs_type = fs_type;
         loomFsRegister (fs);
         return;
       }
 
+    loomLogLn ("%s", loomErrorGet ());
     loomErrorClear ();
   }
 

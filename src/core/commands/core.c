@@ -237,11 +237,20 @@ static int
 searchTask (unused loom_command *cmd, unused usize argc, unused char *argv[])
 {
   loom_block_dev *block_dev;
+  bool retry = true;
 
-  loom_list_for_each_entry (&loom_block_devs, block_dev, node)
-  {
-    loomBlockDevProbe (block_dev, false, true);
-  }
+  while (retry)
+    {
+      retry = false;
+      loom_list_for_each_entry (&loom_block_devs, block_dev, node)
+      {
+        if (!(block_dev->flags & LOOM_BLOCK_DEVICE_FLAG_PROBED))
+          retry = true;
+        else
+          continue;
+        loomBlockDevProbe (block_dev, false, true);
+      }
+    }
 
   return 0;
 }

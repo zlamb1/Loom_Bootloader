@@ -51,7 +51,7 @@ extern loom_list export_var (loom_fs_types);
 #define loomFsTypeRegister(fs_type)                                           \
   loomListAddByField (&loom_fs_types, fs_type, node)
 
-#define loomFsUnregister(fs)          loom_list_remove_by_field (fs, node)
-#define loomFsTypeUnregister(fs_type) loom_list_remove_by_field (fs_type, node)
+#define loomFsUnregister(fs)          loomListRemoveByField (fs, node)
+#define loomFsTypeUnregister(fs_type) loomListRemoveByField (fs_type, node)
 
 #endif

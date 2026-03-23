@@ -47,16 +47,16 @@ typedef struct loom_list
 #define loomListAddByField(head, elem, field)                                 \
   do                                                                          \
     {                                                                         \
-      loomAssert (elem != NULL);                                              \
-      loomListAdd (head, &elem->field);                                       \
+      loomAssert ((elem) != NULL);                                            \
+      loomListAdd (head, &(elem)->field);                                     \
     }                                                                         \
   while (0)
 
-#define loom_list_remove_by_field(elem, field)                                \
+#define loomListRemoveByField(elem, field)                                    \
   do                                                                          \
     {                                                                         \
-      loomAssert (elem != NULL);                                              \
-      loomListRemove (&elem->field);                                          \
+      loomAssert ((elem) != NULL);                                            \
+      loomListRemove (&(elem)->field);                                        \
     }                                                                         \
   while (0)
 

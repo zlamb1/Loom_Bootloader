@@ -1,6 +1,9 @@
 TMP=$(mktemp)
 IMG=$1
 
+make clean
+make
+
 rm -f $IMG
 
 touch $TMP

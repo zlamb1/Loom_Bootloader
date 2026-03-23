@@ -5,8 +5,8 @@ in
 pkgs.mkShell {
     nativeBuildInputs = with pkgs.buildPackages; [
         cmake
-        nasm
         gdb
+        parted
         cross.buildPackages.binutils
         cross.buildPackages.gcc
     ];
