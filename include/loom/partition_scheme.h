@@ -14,6 +14,7 @@ typedef struct loom_partition_scheme
 {
   int (*iterate) (struct loom_partition_scheme *, loom_block_dev *,
                   loom_partition_scheme_hook, void *);
+  const char *name;
   void *data;
   loom_list node;
 } loom_partition_scheme;

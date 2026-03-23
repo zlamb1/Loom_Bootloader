@@ -33,6 +33,7 @@ static int mbrPartitionSchemeIterate (loom_partition_scheme *,
 
 loom_partition_scheme mbr_partition_scheme = {
   .iterate = mbrPartitionSchemeIterate,
+  .name = "mbr",
 };
 
 int

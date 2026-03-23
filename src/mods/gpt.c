@@ -13,6 +13,7 @@ int gptPartionSchemeIterate (loom_partition_scheme *, loom_block_dev *,
 
 static loom_partition_scheme gpt_partition_scheme = {
   .iterate = gptPartionSchemeIterate,
+  .name = "gpt",
 };
 
 typedef u64le lba;

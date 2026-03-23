@@ -2,12 +2,14 @@
 #include "loom/block_dev.h"
 #include "loom/command.h"
 #include "loom/console.h"
+#include "loom/fs.h"
 #include "loom/kernel_loader.h"
 #include "loom/list.h"
 #include "loom/math.h"
 #include "loom/mm.h"
 #include "loom/mmap.h"
 #include "loom/module.h"
+#include "loom/partition_scheme.h"
 #include "loom/platform.h"
 #include "loom/print.h"
 #include "loom/string.h"
@@ -18,8 +20,10 @@ typedef struct
   loom_console_color color;
 } color_map;
 
+#define ARGS unused loom_command *cmd, unused usize argc, unused char *argv[]
+
 static int
-rmmodTask (unused loom_command *cmd, usize argc, char *argv[])
+rmmodTask (ARGS)
 {
   if (argc <= 1)
     {
@@ -37,7 +41,7 @@ rmmodTask (unused loom_command *cmd, usize argc, char *argv[])
 }
 
 static int
-lsmodTask (unused loom_command *cmd, unused usize argc, unused char *argv[])
+lsmodTask (ARGS)
 {
   loom_module *module;
 
@@ -50,7 +54,7 @@ lsmodTask (unused loom_command *cmd, unused usize argc, unused char *argv[])
 }
 
 static int
-rebootTask (unused loom_command *cmd, unused usize argc, unused char *argv[])
+rebootTask (ARGS)
 {
   loomReboot ();
   return 0;
@@ -65,7 +69,7 @@ mmapPrintHook (loom_mmap_entry *entry, unused void *data)
 }
 
 static int
-mmapTask (unused loom_command *cmd, unused usize argc, unused char *argv[])
+mmapTask (ARGS)
 {
   loomConsolesSetFg (LOOM_CONSOLE_COLOR_YELLOW);
 
@@ -140,7 +144,7 @@ parseConsoleColor (usize argc, char *argv[], loom_console_color *color)
 }
 
 static int
-fgTask (unused loom_command *cmd, usize argc, char *argv[])
+fgTask (ARGS)
 {
   loom_console *console;
   loom_console_color color = LOOM_CONSOLE_DEFAULT_FG;
@@ -161,7 +165,7 @@ fgTask (unused loom_command *cmd, usize argc, char *argv[])
 }
 
 static int
-bgTask (unused loom_command *cmd, usize argc, char *argv[])
+bgTask (ARGS)
 {
   loom_console *console;
   loom_console_color color = LOOM_CONSOLE_DEFAULT_BG;
@@ -182,7 +186,7 @@ bgTask (unused loom_command *cmd, usize argc, char *argv[])
 }
 
 static int
-clearTask (unused loom_command *cmd, unused usize argc, unused char *argv[])
+clearTask (ARGS)
 {
   loomConsolesClear ();
   return 0;
@@ -209,7 +213,7 @@ mmIterateHook (unused address p, usize n, bool is_free, void *data)
 }
 
 static int
-memoryTask (unused loom_command *cmd, usize argc, char *argv[])
+memoryTask (ARGS)
 {
   mm_iterate_context ctx = { .c = 0, .is_free = 1 };
 
@@ -226,7 +230,7 @@ memoryTask (unused loom_command *cmd, usize argc, char *argv[])
 }
 
 static int
-bootTask (unused loom_command *cmd, unused usize argc, unused char *argv[])
+bootTask (ARGS)
 {
   loomKernelLoaderBoot ();
   loomErrorFmt (LOOM_ERR_BAD_ARG, "no kernel loaded");
@@ -234,7 +238,7 @@ bootTask (unused loom_command *cmd, unused usize argc, unused char *argv[])
 }
 
 static int
-searchTask (unused loom_command *cmd, unused usize argc, unused char *argv[])
+searchTask (ARGS)
 {
   loom_block_dev *block_dev;
   bool retry = true;
@@ -251,6 +255,46 @@ searchTask (unused loom_command *cmd, unused usize argc, unused char *argv[])
         loomBlockDevProbe (block_dev, false, true);
       }
     }
+
+  return 0;
+}
+
+static int
+partschemesTask (unused loom_command *cmd, unused usize argc,
+                 unused char *argv[])
+{
+  loom_partition_scheme *partition_scheme;
+
+  loom_list_for_each_entry (&loom_partition_schemes, partition_scheme, node)
+  {
+    loomLogLn ("%s", partition_scheme->name);
+  }
+
+  return 0;
+}
+
+static int
+fstypesTask (ARGS)
+{
+  loom_fs_type *fs_type;
+
+  loom_list_for_each_entry (&loom_fs_types, fs_type, node)
+  {
+    loomLogLn ("%s", fs_type->name);
+  }
+
+  return 0;
+}
+
+static int
+helpTask (ARGS)
+{
+  loom_command *_cmd;
+
+  loom_list_for_each_entry (&loom_commands, _cmd, node)
+  {
+    loomLogLn ("%s", _cmd->name);
+  }
 
   return 0;
 }
@@ -282,4 +326,7 @@ loomCoreCommandsInit (void)
   registerCommand ("memory", memoryTask);
   registerCommand ("boot", bootTask);
   registerCommand ("search", searchTask);
+  registerCommand ("partschemes", partschemesTask);
+  registerCommand ("fstypes", fstypesTask);
+  registerCommand ("help", helpTask);
 }
