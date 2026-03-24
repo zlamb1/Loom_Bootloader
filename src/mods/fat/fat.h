@@ -150,6 +150,7 @@ typedef struct
 typedef struct
 {
   u32 cluster;
+  u32 pos;
 } fat_file_ctx;
 
 static inline bool force_inline

@@ -305,6 +305,7 @@ fatOpen (loom_fs *super, loom_file *file, const char *path)
   file->data = file_ctx;
 
   file_ctx->cluster = fatDirEntryGetCluster (&entry);
+  file_ctx->pos = file_ctx->cluster;
 
   return LOOM_ERR_NONE;
 
@@ -321,6 +322,8 @@ fatClose (loom_file *file)
   loomAssert (file->data != null);
 
   loomFree (file->data);
+
+  file->data = null;
 
   return LOOM_ERR_NONE;
 }
@@ -344,27 +347,40 @@ fatRead (loom_file *file, usize nbytes, void *buf)
   auto file_size = file->size;
   auto position = file->position;
 
-  auto cluster = file_ctx->cluster;
   auto cluster_limit = fatGetClusterLimit (fs->type);
+  auto cluster_size = fatGetClusterSize (fs);
 
   isize nread = 0;
+
+  auto cluster_buf = loomAlloc (fs->bytes_per_sect * 2);
+  if (cluster_buf == null)
+    {
+      loomError (LOOM_ERR_ALLOC);
+      return -1;
+    }
 
   while (nbytes)
     {
       if (position >= file_size)
         break;
 
-      if (cluster >= cluster_limit)
+      if (file_ctx->pos >= cluster_limit)
         break;
 
       auto read = nbytes;
+      auto cluster_pos = position % cluster_size;
+
+      if (read > cluster_size - cluster_pos)
+        read = cluster_size - cluster_pos;
 
       if (read > file_size - position)
         read = file_size - position;
 
-      if ((error = loomBlockDevRead (
-               super->parent, fatGetClusterOffset (cluster, fs), read, buf)))
+      auto offset = fatGetClusterOffset (file_ctx->pos, fs) + cluster_pos;
+
+      if ((error = loomBlockDevRead (super->parent, offset, read, buf)))
         {
+          loomFree (cluster_buf);
           loomError (error);
           return -1;
         }
@@ -373,6 +389,15 @@ fatRead (loom_file *file, usize nbytes, void *buf)
       position += read;
       buf = (char *) buf + read;
       nread += (isize) read;
+
+      if (cluster_pos + read == cluster_size
+          && (error = fatNextCluster (file_ctx->pos, &file_ctx->pos,
+                                      cluster_buf, fs)))
+        {
+          loomFree (cluster_buf);
+          loomError (error);
+          return -1;
+        }
     }
 
   return nread;
