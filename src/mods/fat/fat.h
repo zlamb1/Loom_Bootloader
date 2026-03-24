@@ -196,11 +196,11 @@ fatGetClusterOffset (u32 cluster, fat_fs *fs)
   return fs->data_offset + (cluster - 2) * fatGetClusterSize (fs);
 }
 
-loom_error fatOpen (loom_fs *super, loom_file *file, const char *path);
+int fatOpen (loom_fs *super, loom_file *file, const char *path);
 
-loom_error fatClose (loom_file *file);
+int fatClose (loom_file *file);
 
-isize fatRead (loom_file *file, usize nbytes, void *buf);
+int fatRead (loom_file *file, usize nbytes, void *buf, usize *nread);
 
 loom_error fatReadCluster (u32 cluster, void *buf, fat_fs *fs);
 
@@ -208,16 +208,14 @@ loom_error fatNextCluster12 (u32 cluster, u32 *next, void *buf, fat_fs *fs);
 
 loom_error fatNextCluster (u32 cluster, u32 *next, void *buf, fat_fs *fs);
 
-loom_error fatIteratorInit (fat_iterator_ctx *ctx, fat_dir_entry *dir,
-                            fat_fs *fs);
+int fatIteratorInit (fat_iterator_ctx *ctx, fat_dir_entry *dir, fat_fs *fs);
 
-loom_error fatIteratorReset (fat_iterator_ctx *ctx, fat_dir_entry *dir);
+int fatIteratorReset (fat_iterator_ctx *ctx, fat_dir_entry *dir);
 
 void fatIteratorDeinit (fat_iterator_ctx *ctx);
 
-loom_error fatIterateDirEntries (fat_iterator_ctx *ctx);
+int fatIterateDirEntries (fat_iterator_ctx *ctx);
 
-loom_error fatFindDirEntry (usize size, const char *name,
-                            fat_iterator_ctx *ctx);
+int fatFindDirEntry (usize size, const char *name, fat_iterator_ctx *ctx);
 
 #endif

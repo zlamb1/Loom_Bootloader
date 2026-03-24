@@ -1,7 +1,12 @@
 #include "loom/assert.h"
 #include "loom/block_dev.h"
 #include "loom/command.h"
+#include "loom/compiler.h"
 #include "loom/console.h"
+#include "loom/crypto/crypto.h"
+#include "loom/crypto/sha1.h"
+#include "loom/error.h"
+#include "loom/file.h"
 #include "loom/fs.h"
 #include "loom/kernel_loader.h"
 #include "loom/list.h"
@@ -256,11 +261,19 @@ searchTask (ARGS)
       }
     }
 
+  if (loomListIsEmpty (&loom_fs_list))
+    {
+      loomErrorFmt (LOOM_ERR_NOENT, "no filesystem found");
+      return -1;
+    }
+
+  loom_prefix_fs = container_of (loom_fs_list.next, loom_fs, node);
+
   return 0;
 }
 
 static int
-partschemesTask (unused loom_command *cmd, unused usize argc,
+partSchemesTask (unused loom_command *cmd, unused usize argc,
                  unused char *argv[])
 {
   loom_partition_scheme *partition_scheme;
@@ -274,7 +287,7 @@ partschemesTask (unused loom_command *cmd, unused usize argc,
 }
 
 static int
-fstypesTask (ARGS)
+fsTypesTask (ARGS)
 {
   loom_fs_type *fs_type;
 
@@ -297,6 +310,50 @@ helpTask (ARGS)
   }
 
   return 0;
+}
+
+static int
+sha1SumTask (ARGS)
+{
+  loom_file file;
+  void *buf = null;
+
+  if (loom_prefix_fs == null)
+    {
+      loomErrorFmt (LOOM_ERR_BAD_ARG, "set prefix to a valid fs");
+      return -1;
+    }
+
+  if (argc < 2)
+    {
+      loomErrorFmt (LOOM_ERR_BAD_ARG, "provide a file path");
+      return -1;
+    }
+
+  if (loomFileOpen (loom_prefix_fs, &file, argv[1]))
+    return -1;
+
+  buf = loomAlloc (file.size);
+  if (buf == null)
+    goto out;
+
+  if (loomFileRead (&file, file.size, buf, null))
+    goto out;
+
+  loom_digest digest[LOOM_SHA1_DIGEST_SIZE];
+  loomSHA1Hash (file.size, buf, digest);
+  loomPrintHash (LOOM_SHA1_DIGEST_SIZE, digest);
+  loomLog ("\n");
+
+  loomFree (buf);
+  loomFileClose (&file);
+
+  return 0;
+
+out:
+  loomFileClose (&file);
+  loomFree (buf);
+  return -1;
 }
 
 static void
@@ -326,7 +383,8 @@ loomCoreCommandsInit (void)
   registerCommand ("memory", memoryTask);
   registerCommand ("boot", bootTask);
   registerCommand ("search", searchTask);
-  registerCommand ("partschemes", partschemesTask);
-  registerCommand ("fstypes", fstypesTask);
+  registerCommand ("partschemes", partSchemesTask);
+  registerCommand ("fstypes", fsTypesTask);
   registerCommand ("help", helpTask);
+  registerCommand ("sha1sum", sha1SumTask);
 }

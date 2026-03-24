@@ -1,4 +1,5 @@
 #include "loom/block_dev.h"
+#include "loom/error.h"
 #include "loom/mm.h"
 #include "loom/string.h"
 
@@ -63,10 +64,10 @@ fatFilenameCmp (usize size, const char *file_name, fat_dir_entry *dir_entry)
   return !size;
 }
 
-loom_error
+int
 fatIteratorInit (fat_iterator_ctx *ctx, fat_dir_entry *dir, fat_fs *fs)
 {
-  loom_error error;
+  int ret_val;
 
   ctx->size = fs->bytes_per_sect;
   ctx->buf = null;
@@ -82,23 +83,27 @@ fatIteratorInit (fat_iterator_ctx *ctx, fat_dir_entry *dir, fat_fs *fs)
   if (ctx->buf == null)
     return LOOM_ERR_ALLOC;
 
-  if ((error = fatIteratorReset (ctx, dir)))
+  if ((ret_val = fatIteratorReset (ctx, dir)))
     {
       loomFree (ctx->buf);
       ctx->buf = null;
+      return ret_val;
     }
 
-  return error;
+  return 0;
 }
 
-loom_error
+int
 fatIteratorReset (fat_iterator_ctx *ctx, fat_dir_entry *dir)
 {
   loom_error error;
   auto fs = ctx->fs;
 
   if (dir != null && !fatIsDirectory (dir))
-    return LOOM_ERR_NOTDIR;
+    {
+      loomError (LOOM_ERR_NOTDIR);
+      return -1;
+    }
 
   if (fs->type == FAT_TYPE_32 || dir != null)
     {
@@ -107,7 +112,10 @@ fatIteratorReset (fat_iterator_ctx *ctx, fat_dir_entry *dir)
       else
         ctx->cluster = fatDirEntryGetCluster (dir);
       if ((error = fatReadCluster (ctx->cluster, ctx->buf, fs)))
-        return error;
+        {
+          loomError (error);
+          return -1;
+        }
     }
   else
     {
@@ -122,13 +130,16 @@ fatIteratorReset (fat_iterator_ctx *ctx, fat_dir_entry *dir)
 
       if ((error
            = loomBlockDevRead (fs->super.parent, offset, size, ctx->buf)))
-        return error;
+        {
+          loomError (error);
+          return -1;
+        }
     }
 
   ctx->root16_12 = fs->type != FAT_TYPE_32 && dir == null;
   ctx->offset = 0;
 
-  return LOOM_ERR_NONE;
+  return 0;
 }
 
 void
@@ -161,7 +172,7 @@ fatHandleDirEntry (fat_iterator_ctx *ctx, void *buf)
   return false;
 }
 
-loom_error
+int
 fatIterateDirEntriesRoot16_12 (fat_iterator_ctx *ctx)
 {
   for (;;)
@@ -181,10 +192,10 @@ fatIterateDirEntriesRoot16_12 (fat_iterator_ctx *ctx)
         break;
     }
 
-  return LOOM_ERR_NONE;
+  return 0;
 }
 
-loom_error
+int
 fatIterateDirEntriesCluster (fat_iterator_ctx *ctx)
 {
   loom_error error;
@@ -202,16 +213,22 @@ fatIterateDirEntriesCluster (fat_iterator_ctx *ctx)
       if (ctx->offset >= bytes_per_cluster)
         {
           if ((error = fatNextCluster (ctx->cluster, &ctx->cluster, buf, fs)))
-            return error;
+            {
+              loomError (error);
+              return -1;
+            }
 
           if (ctx->cluster >= cluster_limit)
             {
               ctx->has_next = false;
-              return LOOM_ERR_NONE;
+              return 0;
             }
 
           if ((error = fatReadCluster (ctx->cluster, buf, fs)))
-            return error;
+            {
+              loomError (error);
+              return -1;
+            }
 
           ctx->offset = 0;
         }
@@ -220,10 +237,10 @@ fatIterateDirEntriesCluster (fat_iterator_ctx *ctx)
         break;
     }
 
-  return LOOM_ERR_NONE;
+  return 0;
 }
 
-loom_error
+int
 fatIterateDirEntries (fat_iterator_ctx *ctx)
 {
   if (ctx->root16_12)
@@ -232,18 +249,19 @@ fatIterateDirEntries (fat_iterator_ctx *ctx)
     return fatIterateDirEntriesCluster (ctx);
 }
 
-loom_error
+int
 fatFindDirEntry (usize size, const char *name, fat_iterator_ctx *ctx)
 {
-  loom_error error;
-
   for (;;)
     {
-      if ((error = fatIterateDirEntries (ctx)))
-        return error;
+      if (fatIterateDirEntries (ctx))
+        return -1;
 
       if (!ctx->has_next)
-        return LOOM_ERR_NOENT;
+        {
+          loomErrorFmt (LOOM_ERR_NOENT, "file not found");
+          return -1;
+        }
 
       if (ctx->entry.attribs & FAT_FILE_ATTR_VOLUME_ID)
         continue;
@@ -254,5 +272,5 @@ fatFindDirEntry (usize size, const char *name, fat_iterator_ctx *ctx)
       break;
     }
 
-  return LOOM_ERR_NONE;
+  return 0;
 }

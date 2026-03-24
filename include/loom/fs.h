@@ -10,13 +10,13 @@ struct loom_file;
 struct loom_fs;
 struct loom_fs_type;
 
-typedef loom_error (*loom_fs_open) (struct loom_fs *fs, struct loom_file *file,
-                                    const char *path);
+typedef int (*loom_fs_open) (struct loom_fs *fs, struct loom_file *file,
+                             const char *path);
 
-typedef loom_error (*loom_fs_close) (struct loom_file *file);
+typedef int (*loom_fs_close) (struct loom_file *file);
 
-typedef isize (*loom_fs_read) (struct loom_file *file, usize nbytes,
-                               void *buf);
+typedef int (*loom_fs_read) (struct loom_file *file, usize nbytes, void *buf,
+                             usize *nread);
 
 typedef loom_error (*loom_fs_get_uuid) (struct loom_fs *fs, char **uuid);
 
@@ -45,6 +45,8 @@ typedef struct loom_fs_type
 
 extern loom_list export_var (loom_fs_list);
 extern loom_list export_var (loom_fs_types);
+
+extern loom_fs *loom_prefix_fs;
 
 #define loomFsRegister(fs) loomListAddByField (&loom_fs_list, fs, node)
 #define loomFsTypeRegister(fs_type)                                           \
