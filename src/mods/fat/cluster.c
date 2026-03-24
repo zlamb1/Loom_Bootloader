@@ -1,3 +1,5 @@
+#include "loom/block_dev.h"
+
 #include "fat.h"
 
 loom_error

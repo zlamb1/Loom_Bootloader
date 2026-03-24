@@ -1,8 +1,8 @@
 #ifndef FAT_H
 #define FAT_H 1
 
-#include "loom/block_dev.h"
 #include "loom/endian.h"
+#include "loom/file.h"
 #include "loom/fs.h"
 
 typedef struct
@@ -128,6 +128,7 @@ typedef struct
   };
 
   u32 fat_sects;
+  u32 data_offset;
 } fat_fs;
 
 typedef struct
@@ -145,6 +146,11 @@ typedef struct
   fat_fs *fs;
   fat_dir_entry entry;
 } fat_iterator_ctx;
+
+typedef struct
+{
+  u32 cluster;
+} fat_file_ctx;
 
 static inline bool force_inline
 fatIsFile (fat_dir_entry *entry)
@@ -176,6 +182,24 @@ fatDirEntryGetCluster (fat_dir_entry *entry)
   return (u32) loomEndianLoad (entry->cluster_lo)
          | ((u32) loomEndianLoad (entry->cluster_hi) << 16);
 }
+
+static inline u32 force_inline
+fatGetClusterSize (fat_fs *fs)
+{
+  return (u32) fs->bytes_per_sect * (u32) fs->sects_per_cluster;
+}
+
+static inline usize force_inline
+fatGetClusterOffset (u32 cluster, fat_fs *fs)
+{
+  return fs->data_offset + (cluster - 2) * fatGetClusterSize (fs);
+}
+
+loom_error fatOpen (loom_fs *super, loom_file *file, const char *path);
+
+loom_error fatClose (loom_file *file);
+
+isize fatRead (loom_file *file, usize nbytes, void *buf);
 
 loom_error fatReadCluster (u32 cluster, void *buf, fat_fs *fs);
 

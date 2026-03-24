@@ -6,33 +6,32 @@
 #include "loom/types.h"
 
 struct loom_block_dev;
+struct loom_file;
 struct loom_fs;
 struct loom_fs_type;
 
-typedef struct
-{
-  usize size;
-  void *data;
-} loom_file;
+typedef loom_error (*loom_fs_open) (struct loom_fs *fs, struct loom_file *file,
+                                    const char *path);
 
-typedef struct
-{
-  usize size;
-  char *data;
-} loom_fs_uuid;
+typedef loom_error (*loom_fs_close) (struct loom_file *file);
 
-typedef int (*loom_fs_read) (struct loom_fs *fs, const char *path,
-                             loom_file *file);
+typedef isize (*loom_fs_read) (struct loom_file *file, usize nbytes,
+                               void *buf);
 
-typedef int (*loom_fs_get_uuid) (struct loom_fs *fs, loom_fs_uuid *uuid);
+typedef loom_error (*loom_fs_get_uuid) (struct loom_fs *fs, char **uuid);
 
 typedef struct loom_fs
 {
   struct loom_block_dev *parent;
   struct loom_fs_type *fs_type;
+
+  loom_fs_open open;
+  loom_fs_close close;
   loom_fs_read read;
   loom_fs_get_uuid get_uuid;
+
   void *data;
+
   loom_list node;
 } loom_fs;
 

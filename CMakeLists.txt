@@ -56,6 +56,7 @@ set(
     ${LOOM_CORE_HDR_DIR}/elf.h
     ${LOOM_CORE_HDR_DIR}/endian.h
     ${LOOM_CORE_HDR_DIR}/error.h
+    ${LOOM_CORE_HDR_DIR}/file.h
     ${LOOM_CORE_HDR_DIR}/fs.h
     ${LOOM_CORE_HDR_DIR}/input.h
     ${LOOM_CORE_HDR_DIR}/kernel_loader.h
@@ -88,6 +89,7 @@ set(
     ${LOOM_CORE_SRC_DIR}/console.c
     ${LOOM_CORE_SRC_DIR}/elf.c
     ${LOOM_CORE_SRC_DIR}/error.c
+    ${LOOM_CORE_SRC_DIR}/file.c
     ${LOOM_CORE_SRC_DIR}/fs.c
     ${LOOM_CORE_SRC_DIR}/input.c
     ${LOOM_CORE_SRC_DIR}/kernel_loader.c

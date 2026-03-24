@@ -1,3 +1,7 @@
+#include "loom/assert.h"
+#include "loom/block_dev.h"
+#include "loom/error.h"
+#include "loom/file.h"
 #include "loom/math.h"
 #include "loom/mm.h"
 #include "loom/module.h"
@@ -13,8 +17,6 @@ loom_fs_type fat_fs_type = {
 };
 
 LOOM_MOD (fat)
-
-static int fatRead (loom_fs *_fs, const char *path, loom_file *file);
 
 static inline loom_fs *
 fatFsProbe (loom_block_dev *block_dev)
@@ -194,6 +196,8 @@ fatFsProbe (loom_block_dev *block_dev)
       goto out;
     }
 
+  fs->super.open = fatOpen;
+  fs->super.close = fatClose;
   fs->super.read = fatRead;
   fs->super.data = fs;
 
@@ -209,6 +213,7 @@ fatFsProbe (loom_block_dev *block_dev)
     fs->root_entry_count = root_entry_count;
 
   fs->fat_sects = fat_sects;
+  fs->data_offset = meta_sects * bytes_per_sect;
 
   return &fs->super;
 
@@ -217,26 +222,23 @@ out:
   return null;
 }
 
-static int
-fatRead (loom_fs *_fs, const char *path, loom_file *file)
+loom_error
+fatOpen (loom_fs *super, loom_file *file, const char *path)
 {
   loom_error error;
   fat_iterator_ctx ctx;
   fat_fs *fs;
 
-  loomAssert (_fs != null);
+  loomAssert (super != null);
   loomAssert (path != null);
   loomAssert (file != null);
 
-  fs = (fat_fs *) _fs->data;
+  fs = (fat_fs *) super->data;
 
   file->data = null;
 
   if ((error = fatIteratorInit (&ctx, null, fs)))
-    {
-      loomError (error);
-      return -1;
-    }
+    return error;
 
   usize index = 0;
   bool found_one = false;
@@ -289,66 +291,91 @@ fatRead (loom_fs *_fs, const char *path, loom_file *file)
       goto out;
     }
 
-  usize file_offset = 0;
-  usize file_size = loomEndianLoad (entry.file_size);
+  fat_file_ctx *file_ctx = loomAlloc (sizeof (*file_ctx));
 
-  auto cluster = fatDirEntryGetCluster (&entry);
-  auto cluster_size
-      = (usize) fs->bytes_per_sect * (usize) fs->sects_per_cluster;
-  auto cluster_limit = fatGetClusterLimit (fs->type);
-
-  file->size = file_size;
-  file->data = loomAlloc (file_size);
-
-  if (file->data == null)
+  if (file_ctx == null)
     {
       error = LOOM_ERR_ALLOC;
       goto out;
     }
 
-  while (file_size)
+  file->size = loomEndianLoad (entry.file_size);
+  file->position = 0;
+  file->fs = super;
+  file->data = file_ctx;
+
+  file_ctx->cluster = fatDirEntryGetCluster (&entry);
+
+  return LOOM_ERR_NONE;
+
+out:
+  fatIteratorDeinit (&ctx);
+  loomError (error);
+  return error;
+}
+
+loom_error
+fatClose (loom_file *file)
+{
+  loomAssert (file != null);
+  loomAssert (file->data != null);
+
+  loomFree (file->data);
+
+  return LOOM_ERR_NONE;
+}
+
+isize
+fatRead (loom_file *file, usize nbytes, void *buf)
+{
+  loomAssert (file != null);
+  loomAssert (file->data != null);
+
+  auto super = file->fs;
+
+  loomAssert (super != null);
+  loomAssert (super->data != null);
+
+  loom_error error;
+
+  fat_fs *fs = super->data;
+
+  fat_file_ctx *file_ctx = file->data;
+  auto file_size = file->size;
+  auto position = file->position;
+
+  auto cluster = file_ctx->cluster;
+  auto cluster_limit = fatGetClusterLimit (fs->type);
+
+  isize nread = 0;
+
+  while (nbytes)
     {
-      auto read = file_size;
+      if (position >= file_size)
+        break;
 
       if (cluster >= cluster_limit)
         break;
 
-      if (read > cluster_size)
-        read = cluster_size;
+      auto read = nbytes;
 
-      if (read < cluster_size)
+      if (read > file_size - position)
+        read = file_size - position;
+
+      if ((error = loomBlockDevRead (
+               super->parent, fatGetClusterOffset (cluster, fs), read, buf)))
         {
-          if ((error = fatReadCluster (cluster, ctx.buf, fs)))
-            goto out;
-          loomMemCopy ((char *) file->data + file_offset, ctx.buf, read);
+          loomError (error);
+          return -1;
         }
-      else if ((error = fatReadCluster (
-                    cluster, (char *) file->data + file_offset, fs)))
-        goto out;
 
-      if (read == cluster_size
-          && (error = fatNextCluster (cluster, &cluster, ctx.buf, fs)))
-        goto out;
-
-      file_offset += read;
-      file_size -= read;
+      nbytes -= read;
+      position += read;
+      buf = (char *) buf + read;
+      nread += (isize) read;
     }
 
-  if (file_size)
-    {
-      error = LOOM_ERR_BAD_FS;
-      goto out;
-    }
-
-  return 0;
-
-out:
-  loomFree (file->data);
-  fatIteratorDeinit (&ctx);
-  file->size = 0;
-  file->data = null;
-  loomError (error);
-  return -1;
+  return nread;
 }
 
 LOOM_MOD_INIT () { loomFsTypeRegister (&fat_fs_type); }

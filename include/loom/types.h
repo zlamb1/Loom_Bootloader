@@ -37,7 +37,8 @@ typedef u16 b16;
 typedef u32 b32;
 typedef uint bool;
 
-typedef u32 usize;
+typedef long isize;
+typedef ulong usize;
 typedef uintptr_t uintptr;
 typedef uintptr address;
 
@@ -56,7 +57,9 @@ typedef uintptr address;
 #define I32_MAX INT32_MAX
 #define I64_MAX INT64_MAX
 
-#define USIZE_MAX   U32_MAX
+#define ISIZE_MIN   LONG_MIN
+#define ISIZE_MAX   LONG_MAX
+#define USIZE_MAX   ULONG_MAX
 #define ADDRESS_MAX UINTPTR_MAX
 
 #endif

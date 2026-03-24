@@ -47,8 +47,8 @@ typedef struct loom_module
   loom_list node;
 } loom_module;
 
-extern address export_var (loom_modbase);
-extern address export_var (loom_modend);
+extern usize export_var (loom_modbase);
+extern usize export_var (loom_modend);
 
 extern loom_list export_var (loom_modules);
 

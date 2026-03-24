@@ -199,7 +199,7 @@ main (int argc, char *argv[])
     error ();
 
   // Write load sectors.
-  u32 load_sectors = append_size / 512;
+  u32 load_sectors = (u32) append_size / 512;
   bin_data[416] = (byte) load_sectors;
   bin_data[417] = (byte) (load_sectors >> 8);
   bin_data[418] = (byte) (load_sectors >> 16);

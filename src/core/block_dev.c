@@ -1,6 +1,7 @@
 #include "loom/block_dev.h"
 #include "loom/assert.h"
 #include "loom/error.h"
+#include "loom/file.h"
 #include "loom/fs.h"
 #include "loom/list.h"
 #include "loom/math.h"
@@ -221,18 +222,9 @@ loomBlockDevProbe (loom_block_dev *block_dev, bool force, unused bool log)
         fs->parent = block_dev;
         fs->fs_type = fs_type;
         loomFsRegister (fs);
-        loom_file file;
-        if (fs->read (fs, "/foo", &file))
-          loomLogLn ("%s", loomErrorGet ());
-        else
-          {
-            loomLogLn ("%.*s", (int) file.size, (char *) file.data);
-            loomFree (file.data);
-          }
         return;
       }
 
-    loomLogLn ("%s", loomErrorGet ());
     loomErrorClear ();
   }
 
