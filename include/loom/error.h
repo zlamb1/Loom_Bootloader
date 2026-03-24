@@ -21,6 +21,9 @@
 #define LOOM_ERR_BAD_FS          14
 #define LOOM_ERR_HOOK            15
 #define LOOM_ERR_PLATFORM        16
+#define LOOM_ERR_NOTDIR          17
+#define LOOM_ERR_ISDIR           18
+#define LOOM_ERR_NOENT           19
 
 #define LOOM_ERROR(ERROR, ...)                                                \
   do                                                                          \
@@ -62,8 +65,18 @@ loomStringError (loom_error error)
       return "Bad block size";
     case LOOM_ERR_BAD_PART_SCHEME:
       return "Bad partition scheme";
+    case LOOM_ERR_BAD_FS:
+      return "Bad filesystem";
     case LOOM_ERR_HOOK:
       return "Bad hook";
+    case LOOM_ERR_PLATFORM:
+      return "Platform error";
+    case LOOM_ERR_NOTDIR:
+      return "Not a directory";
+    case LOOM_ERR_ISDIR:
+      return "Is directory";
+    case LOOM_ERR_NOENT:
+      return "No entry found";
     default:
       return "Unknown error";
     }

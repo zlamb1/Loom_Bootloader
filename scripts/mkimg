@@ -10,6 +10,11 @@ touch $TMP
 fallocate -zl 64MiB $TMP
 mkfs.fat -F 32 $TMP
 
+TMP2=$(mktemp)
+echo "Hello, world!" >$TMP2
+mcopy -i $TMP $TMP2 ::/foo
+rm $TMP2
+
 touch $IMG
 fallocate -zl 64MiB $IMG
 cat $TMP >> $IMG

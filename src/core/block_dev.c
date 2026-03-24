@@ -221,6 +221,14 @@ loomBlockDevProbe (loom_block_dev *block_dev, bool force, unused bool log)
         fs->parent = block_dev;
         fs->fs_type = fs_type;
         loomFsRegister (fs);
+        loom_file file;
+        if (fs->read (fs, "/foo", &file))
+          loomLogLn ("%s", loomErrorGet ());
+        else
+          {
+            loomLogLn ("%.*s", (int) file.size, (char *) file.data);
+            loomFree (file.data);
+          }
         return;
       }
 
