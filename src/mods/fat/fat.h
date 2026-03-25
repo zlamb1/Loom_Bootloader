@@ -88,6 +88,8 @@ typedef struct
 #define FAT_FILE_ATTR_LFN                                                     \
   (FAT_FILE_ATTR_READ_ONLY | FAT_FILE_ATTR_HIDDEN | FAT_FILE_ATTR_SYSTEM      \
    | FAT_FILE_ATTR_VOLUME_ID)
+#define FAT_FILE_ATTR_LFN_MASK                                                \
+  (FAT_FILE_ATTR_LFN | FAT_FILE_ATTR_DIR | FAT_FILE_ATTR_ARCHIVE)
   u8 attribs;
   char res1;
   u8 ctime_subsec;
@@ -120,6 +122,8 @@ typedef struct
   u16 bytes_per_sect;
   u16 sects_per_cluster;
   u16 fat_count;
+  u32 fat_sects;
+  u32 data_off;
 
   union
   {
@@ -127,8 +131,12 @@ typedef struct
     u32 root_entry_count;
   };
 
-  u32 fat_sects;
-  u32 data_offset;
+  struct
+  {
+    // Scratch buffer with size max(cluster_size, bytes_per_sect*2).
+    u32 sect;
+    void *buf;
+  } scratch;
 } fat_fs;
 
 typedef struct
@@ -136,13 +144,17 @@ typedef struct
   b16 has_next;
   b16 root16_12;
   u32 offset;
+
   union
   {
     u32 cluster;
-    u32 count;
+    struct
+    {
+      u32 r_entry;
+      u32 count;
+    };
   };
-  usize size;
-  void *buf;
+
   fat_fs *fs;
   fat_dir_entry entry;
 } fat_iterator_ctx;
@@ -193,7 +205,14 @@ fatGetClusterSize (fat_fs *fs)
 static inline usize force_inline
 fatGetClusterOffset (u32 cluster, fat_fs *fs)
 {
-  return fs->data_offset + (cluster - 2) * fatGetClusterSize (fs);
+  return fs->data_off + (cluster - 2) * fatGetClusterSize (fs);
+}
+
+static inline usize force_inline
+fatGetRootEntriesOffset (fat_fs *fs)
+{
+  return (fs->reserved_sects + (fs->fat_count * fs->fat_sects))
+         * fs->bytes_per_sect;
 }
 
 int fatOpen (loom_fs *super, loom_file *file, const char *path);
@@ -201,6 +220,8 @@ int fatOpen (loom_fs *super, loom_file *file, const char *path);
 int fatClose (loom_file *file);
 
 int fatRead (loom_file *file, usize nbytes, void *buf, usize *nread);
+
+void fatFree (loom_fs *super);
 
 loom_error fatReadCluster (u32 cluster, void *buf, fat_fs *fs);
 
@@ -211,8 +232,6 @@ loom_error fatNextCluster (u32 cluster, u32 *next, void *buf, fat_fs *fs);
 int fatIteratorInit (fat_iterator_ctx *ctx, fat_dir_entry *dir, fat_fs *fs);
 
 int fatIteratorReset (fat_iterator_ctx *ctx, fat_dir_entry *dir);
-
-void fatIteratorDeinit (fat_iterator_ctx *ctx);
 
 int fatIterateDirEntries (fat_iterator_ctx *ctx);
 

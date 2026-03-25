@@ -18,7 +18,9 @@ typedef int (*loom_fs_close) (struct loom_file *file);
 typedef int (*loom_fs_read) (struct loom_file *file, usize nbytes, void *buf,
                              usize *nread);
 
-typedef loom_error (*loom_fs_get_uuid) (struct loom_fs *fs, char **uuid);
+typedef int (*loom_fs_get_uuid) (struct loom_fs *fs, char **uuid);
+
+typedef void (*loom_fs_free) (struct loom_fs *fs);
 
 typedef struct loom_fs
 {
@@ -29,6 +31,7 @@ typedef struct loom_fs
   loom_fs_close close;
   loom_fs_read read;
   loom_fs_get_uuid get_uuid;
+  loom_fs_free free;
 
   void *data;
 
@@ -54,5 +57,7 @@ extern loom_fs *loom_prefix_fs;
 
 #define loomFsUnregister(fs)          loomListRemoveByField (fs, node)
 #define loomFsTypeUnregister(fs_type) loomListRemoveByField (fs_type, node)
+
+void loomFsFree (loom_fs *fs);
 
 #endif
