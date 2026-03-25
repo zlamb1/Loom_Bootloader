@@ -7,16 +7,25 @@
 
 struct loom_block_dev;
 struct loom_file;
+struct loom_dir;
+struct loom_dir_entry;
 struct loom_fs;
 struct loom_fs_type;
 
 typedef int (*loom_fs_open) (struct loom_fs *fs, struct loom_file *file,
                              const char *path);
 
+typedef int (*loom_fs_open_dir) (struct loom_fs *fs, struct loom_dir *dir,
+                                 const char *path);
+
 typedef int (*loom_fs_close) (struct loom_file *file);
+
+typedef int (*loom_fs_close_dir) (struct loom_dir *dir);
 
 typedef int (*loom_fs_read) (struct loom_file *file, usize nbytes, void *buf,
                              usize *nread);
+
+typedef struct loom_dir_entry *(*loom_fs_read_dir) (struct loom_dir *dir);
 
 typedef int (*loom_fs_get_uuid) (struct loom_fs *fs, char **uuid);
 
@@ -28,8 +37,11 @@ typedef struct loom_fs
   struct loom_fs_type *fs_type;
 
   loom_fs_open open;
+  loom_fs_open_dir open_dir;
   loom_fs_close close;
+  loom_fs_close_dir close_dir;
   loom_fs_read read;
+  loom_fs_read_dir read_dir;
   loom_fs_get_uuid get_uuid;
   loom_fs_free free;
 

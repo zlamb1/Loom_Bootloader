@@ -6,6 +6,7 @@
 #include "loom/crypto/crypto.h"
 #include "loom/crypto/md5.h"
 #include "loom/crypto/sha1.h"
+#include "loom/dir.h"
 #include "loom/error.h"
 #include "loom/file.h"
 #include "loom/fs.h"
@@ -414,6 +415,43 @@ readTask (ARGS)
   return 0;
 }
 
+static int
+lsTask (ARGS)
+{
+  loom_dir dir;
+  const char *path = "/";
+
+  if (loom_prefix_fs == null)
+    {
+      loomErrorFmt (LOOM_ERR_BAD_ARG, "set prefix to a valid fs");
+      return -1;
+    }
+
+  if (argc >= 2)
+    path = argv[1];
+
+  if (loomDirOpen (loom_prefix_fs, &dir, path))
+    return -1;
+
+  for (;;)
+    {
+      auto d_entry = loomDirRead (&dir);
+      if (d_entry == null)
+        {
+          if (loom_errno != LOOM_ERR_NONE)
+            return -1;
+          goto done;
+        }
+
+      loomLogLn ("%s", d_entry->name);
+    }
+
+done:
+  loomDirClose (&dir);
+
+  return 0;
+}
+
 static void
 registerCommand (const char *name, loom_task task)
 {
@@ -447,4 +485,5 @@ loomCoreCommandsInit (void)
   registerCommand ("md5sum", md5SumTask);
   registerCommand ("sha1sum", sha1SumTask);
   registerCommand ("read", readTask);
+  registerCommand ("ls", lsTask);
 }

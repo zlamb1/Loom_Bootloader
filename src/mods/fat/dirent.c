@@ -108,7 +108,7 @@ fatIteratorReset (fat_iterator_ctx *ctx, fat_dir_entry *dir)
         }
     }
 
-  ctx->root16_12 = fs->type != FAT_TYPE_32 && dir == null;
+  ctx->root16_12 = (fs->type != FAT_TYPE_32 && dir == null);
   ctx->offset = 0;
 
   return 0;

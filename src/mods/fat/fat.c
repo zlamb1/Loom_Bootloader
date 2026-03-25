@@ -1,10 +1,12 @@
 #include "loom/assert.h"
 #include "loom/block_dev.h"
+#include "loom/dir.h"
 #include "loom/error.h"
 #include "loom/file.h"
 #include "loom/math.h"
 #include "loom/mm.h"
 #include "loom/module.h"
+#include "loom/string.h"
 
 #include "fat.h"
 
@@ -196,8 +198,11 @@ fatFsProbe (loom_block_dev *block_dev)
     }
 
   fs->super.open = fatOpen;
+  fs->super.open_dir = fatOpenDir;
   fs->super.close = fatClose;
+  fs->super.close_dir = fatCloseDir;
   fs->super.read = fatRead;
+  fs->super.read_dir = fatReadDir;
   fs->super.free = fatFree;
   fs->super.data = fs;
 
@@ -230,25 +235,12 @@ out:
   return null;
 }
 
-int
-fatOpen (loom_fs *super, loom_file *file, const char *path)
+static int
+fatSearchPath (fat_iterator_ctx *ctx, bool *found, bool *oroot,
+               const char *path)
 {
-  fat_iterator_ctx ctx;
-  fat_fs *fs;
-
-  loomAssert (super != null);
-  loomAssert (path != null);
-  loomAssert (file != null);
-
-  fs = (fat_fs *) super->data;
-
-  file->data = null;
-
-  if (fatIteratorInit (&ctx, null, fs))
-    return -1;
-
   usize index = 0;
-  bool found_one = false;
+  bool root = true;
 
   for (;;)
     {
@@ -269,13 +261,15 @@ fatOpen (loom_fs *super, loom_file *file, const char *path)
 
       if (run)
         {
-          if (fatFindDirEntry (run, path + index, &ctx))
+          root = false;
+
+          if (fatFindDirEntry (run, path + index, ctx))
             return -1;
 
-          if (ch != '\0' && fatIteratorReset (&ctx, &ctx.entry))
+          if (ch != '\0' && fatIteratorReset (ctx, &ctx->entry))
             return -1;
 
-          found_one = true;
+          *found = true;
         }
 
       index += run;
@@ -284,7 +278,39 @@ fatOpen (loom_fs *super, loom_file *file, const char *path)
         break;
     }
 
-  if (!found_one || !fatIsFile (&ctx.entry))
+  if (oroot != null)
+    {
+      *oroot = root;
+      if (root)
+        *found = true;
+    }
+
+  return 0;
+}
+
+int
+fatOpen (loom_fs *super, loom_file *file, const char *path)
+{
+  fat_iterator_ctx ctx;
+  fat_fs *fs;
+
+  bool found = false;
+
+  loomAssert (super != null);
+  loomAssert (path != null);
+  loomAssert (file != null);
+
+  fs = (fat_fs *) super->data;
+
+  file->data = null;
+
+  if (fatIteratorInit (&ctx, null, fs))
+    return -1;
+
+  if (fatSearchPath (&ctx, &found, null, path))
+    return -1;
+
+  if (!found || !fatIsFile (&ctx.entry))
     {
       loomError (LOOM_ERR_ISDIR);
       return -1;
@@ -309,6 +335,89 @@ fatOpen (loom_fs *super, loom_file *file, const char *path)
 }
 
 int
+fatOpenDir (loom_fs *super, loom_dir *dir, const char *path)
+{
+  fat_iterator_ctx ctx;
+  fat_fs *fs;
+
+  bool found, root;
+
+  loomAssert (super != null);
+  loomAssert (path != null);
+  loomAssert (dir != null);
+
+  fs = (fat_fs *) super->data;
+
+  dir->name = null;
+  dir->fs = null;
+  dir->data = null;
+
+  if (fatIteratorInit (&ctx, null, fs))
+    return -1;
+
+  if (fatSearchPath (&ctx, &found, &root, path))
+    return -1;
+
+  if (!found || (!root && !fatIsDirectory (&ctx.entry)))
+    {
+      loomError (LOOM_ERR_NOTDIR);
+      return -1;
+    }
+
+  fat_dir_ctx *dir_ctx = loomAlloc (sizeof (*dir_ctx));
+
+  if (dir_ctx == null)
+    {
+      loomFree (dir->name);
+      dir->name = null;
+      return -1;
+    }
+
+  loomMemSet (dir_ctx, 0, sizeof (*dir_ctx));
+
+  if (!root)
+    {
+      auto entry = ctx.entry;
+
+      if (fatAllocSFN (&dir->name, &entry))
+        {
+          loomFree (dir_ctx);
+          return -1;
+        }
+
+      if (fatIteratorInit (&dir_ctx->iterator_ctx, &entry, fs))
+        {
+          loomFree (dir->name);
+          loomFree (dir_ctx);
+          dir->name = null;
+          return -1;
+        }
+    }
+  else
+    {
+      if (fatIteratorInit (&dir_ctx->iterator_ctx, null, fs))
+        {
+          loomFree (dir_ctx);
+          return -1;
+        }
+
+      if ((dir->name = loomAlloc (2)) == null)
+        {
+          loomFree (dir_ctx);
+          return -1;
+        }
+
+      dir->name[0] = '/';
+      dir->name[1] = '\0';
+    }
+
+  dir->fs = super;
+  dir->data = dir_ctx;
+
+  return 0;
+}
+
+int
 fatClose (loom_file *file)
 {
   loomAssert (file != null);
@@ -317,6 +426,23 @@ fatClose (loom_file *file)
   loomFree (file->data);
 
   file->data = null;
+
+  return 0;
+}
+
+int
+fatCloseDir (loom_dir *dir)
+{
+  loomAssert (dir != null);
+  loomAssert (dir->data != null);
+
+  auto ctx = (fat_dir_ctx *) dir->data;
+
+  loomFree (dir->name);
+  loomFree (ctx->d_entry.name);
+  loomFree (ctx);
+
+  dir->name = dir->data = null;
 
   return 0;
 }
@@ -372,11 +498,7 @@ fatRead (loom_file *file, usize nbytes, void *buf, usize *nread)
       auto offset = fatGetClusterOffset (file_ctx->pos, fs) + cluster_pos;
 
       if ((error = loomBlockDevRead (super->parent, offset, read, buf)))
-        {
-          loomFree (cluster_buf);
-          loomError (error);
-          return -1;
-        }
+        goto out;
 
       nbytes -= read;
       file->position += read;
@@ -388,15 +510,56 @@ fatRead (loom_file *file, usize nbytes, void *buf, usize *nread)
       if (cluster_pos + read == cluster_size
           && (error = fatNextCluster (file_ctx->pos, &file_ctx->pos,
                                       cluster_buf, fs)))
-        {
-          loomFree (cluster_buf);
-          loomError (error);
-          return -1;
-        }
+        goto out;
     }
 
   loomFree (cluster_buf);
   return 0;
+
+out:
+  loomFree (cluster_buf);
+  loomError (error);
+  return -1;
+}
+
+loom_dir_entry *
+fatReadDir (loom_dir *dir)
+{
+  fat_dir_ctx *ctx;
+
+  loomAssert (dir != null);
+  loomAssert (dir->data != null);
+
+  ctx = dir->data;
+
+  loomErrorClear ();
+
+  auto entry = &ctx->iterator_ctx.entry;
+  auto d_entry = &ctx->d_entry;
+
+  loomFree (d_entry->name);
+  d_entry->name = null;
+
+  for (;;)
+    {
+      if (fatIterateDirEntries (&ctx->iterator_ctx)
+          || !ctx->iterator_ctx.has_next)
+        return null;
+
+      if ((entry->attribs & FAT_FILE_ATTR_VOLUME_ID)
+          || (entry->attribs & FAT_FILE_ATTR_LFN_MASK) == FAT_FILE_ATTR_LFN)
+        continue;
+
+      if (fatAllocSFN (&d_entry->name, entry))
+        return null;
+
+      d_entry->is_dir = !!fatIsDirectory (entry);
+      d_entry->is_file = !!fatIsFile (entry);
+
+      break;
+    }
+
+  return d_entry;
 }
 
 void

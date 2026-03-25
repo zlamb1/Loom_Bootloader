@@ -1,6 +1,7 @@
 #ifndef FAT_H
 #define FAT_H 1
 
+#include "loom/dir.h"
 #include "loom/endian.h"
 #include "loom/file.h"
 #include "loom/fs.h"
@@ -165,6 +166,12 @@ typedef struct
   u32 pos;
 } fat_file_ctx;
 
+typedef struct
+{
+  fat_iterator_ctx iterator_ctx;
+  loom_dir_entry d_entry;
+} fat_dir_ctx;
+
 static inline bool force_inline
 fatIsFile (fat_dir_entry *entry)
 {
@@ -217,9 +224,15 @@ fatGetRootEntriesOffset (fat_fs *fs)
 
 int fatOpen (loom_fs *super, loom_file *file, const char *path);
 
+int fatOpenDir (loom_fs *super, loom_dir *dir, const char *path);
+
 int fatClose (loom_file *file);
 
+int fatCloseDir (loom_dir *dir);
+
 int fatRead (loom_file *file, usize nbytes, void *buf, usize *nread);
+
+loom_dir_entry *fatReadDir (loom_dir *dir);
 
 void fatFree (loom_fs *super);
 
@@ -236,5 +249,9 @@ int fatIteratorReset (fat_iterator_ctx *ctx, fat_dir_entry *dir);
 int fatIterateDirEntries (fat_iterator_ctx *ctx);
 
 int fatFindDirEntry (usize size, const char *name, fat_iterator_ctx *ctx);
+
+/* NAME UTILITIES */
+
+int fatAllocSFN (char **oname, fat_dir_entry *d_entry);
 
 #endif

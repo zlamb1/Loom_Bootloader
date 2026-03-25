@@ -54,6 +54,7 @@ set(
     ${LOOM_CORE_HDR_DIR}/command.h
     ${LOOM_CORE_HDR_DIR}/compiler.h
     ${LOOM_CORE_HDR_DIR}/console.h
+    ${LOOM_CORE_HDR_DIR}/dir.h
     ${LOOM_CORE_HDR_DIR}/elf.h
     ${LOOM_CORE_HDR_DIR}/endian.h
     ${LOOM_CORE_HDR_DIR}/error.h
@@ -89,6 +90,7 @@ set(
     ${LOOM_CORE_SRC_DIR}/block_dev.c
     ${LOOM_CORE_SRC_DIR}/command.c
     ${LOOM_CORE_SRC_DIR}/console.c
+    ${LOOM_CORE_SRC_DIR}/dir.c
     ${LOOM_CORE_SRC_DIR}/elf.c
     ${LOOM_CORE_SRC_DIR}/error.c
     ${LOOM_CORE_SRC_DIR}/file.c
