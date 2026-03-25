@@ -394,7 +394,7 @@ sha1SumTask (ARGS)
 }
 
 static int
-readTask (ARGS)
+catTask (ARGS)
 {
   usize size;
   void *buf = null;
@@ -484,6 +484,6 @@ loomCoreCommandsInit (void)
   registerCommand ("help", helpTask);
   registerCommand ("md5sum", md5SumTask);
   registerCommand ("sha1sum", sha1SumTask);
-  registerCommand ("read", readTask);
+  registerCommand ("cat", catTask);
   registerCommand ("ls", lsTask);
 }
