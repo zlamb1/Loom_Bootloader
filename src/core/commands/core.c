@@ -4,6 +4,7 @@
 #include "loom/compiler.h"
 #include "loom/console.h"
 #include "loom/crypto/crypto.h"
+#include "loom/crypto/md5.h"
 #include "loom/crypto/sha1.h"
 #include "loom/error.h"
 #include "loom/file.h"
@@ -354,6 +355,25 @@ out:
 }
 
 static int
+md5SumTask (ARGS)
+{
+  usize size;
+  void *buf = null;
+
+  if (readFile (&size, &buf, argc, argv))
+    return -1;
+
+  loom_digest digest[LOOM_MD5_DIGEST_SIZE];
+  loomMD5Hash (size, buf, digest);
+  loomPrintHash (LOOM_MD5_DIGEST_SIZE, digest);
+  loomLog ("\n");
+
+  loomFree (buf);
+
+  return 0;
+}
+
+static int
 sha1SumTask (ARGS)
 {
   usize size;
@@ -424,6 +444,7 @@ loomCoreCommandsInit (void)
   registerCommand ("partschemes", partSchemesTask);
   registerCommand ("fstypes", fsTypesTask);
   registerCommand ("help", helpTask);
+  registerCommand ("md5sum", md5SumTask);
   registerCommand ("sha1sum", sha1SumTask);
   registerCommand ("read", readTask);
 }

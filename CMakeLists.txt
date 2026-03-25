@@ -47,6 +47,7 @@ set(
     LOOM_HDRS
     ${LOOM_CORE_HDR_DIR}/commands/core.h
     ${LOOM_CORE_HDR_DIR}/crypto/crypto.h
+    ${LOOM_CORE_HDR_DIR}/crypto/md5.h
     ${LOOM_CORE_HDR_DIR}/crypto/sha1.h
     ${LOOM_CORE_HDR_DIR}/assert.h
     ${LOOM_CORE_HDR_DIR}/block_dev.h
@@ -81,6 +82,7 @@ set(
 set(
     LOOM_SRCS
     ${LOOM_CORE_SRC_DIR}/commands/core.c
+    ${LOOM_CORE_SRC_DIR}/crypto/md5.c
     ${LOOM_CORE_SRC_DIR}/crypto/sha1.c
     ${LOOM_CORE_SRC_DIR}/arith.c
     ${LOOM_CORE_SRC_DIR}/assert.c
