@@ -313,7 +313,7 @@ helpTask (ARGS)
 }
 
 static int
-sha1SumTask (ARGS)
+readFile (usize *osize, void **obuf, usize argc, char *argv[])
 {
   loom_file file;
   void *buf = null;
@@ -340,13 +340,10 @@ sha1SumTask (ARGS)
   if (loomFileRead (&file, file.size, buf, null))
     goto out;
 
-  loom_digest digest[LOOM_SHA1_DIGEST_SIZE];
-  loomSHA1Hash (file.size, buf, digest);
-  loomPrintHash (LOOM_SHA1_DIGEST_SIZE, digest);
-  loomLog ("\n");
-
-  loomFree (buf);
   loomFileClose (&file);
+
+  *osize = file.size;
+  *obuf = buf;
 
   return 0;
 
@@ -354,6 +351,47 @@ out:
   loomFileClose (&file);
   loomFree (buf);
   return -1;
+}
+
+static int
+sha1SumTask (ARGS)
+{
+  usize size;
+  void *buf = null;
+
+  if (readFile (&size, &buf, argc, argv))
+    return -1;
+
+  loom_digest digest[LOOM_SHA1_DIGEST_SIZE];
+  loomSHA1Hash (size, buf, digest);
+  loomPrintHash (LOOM_SHA1_DIGEST_SIZE, digest);
+  loomLog ("\n");
+
+  loomFree (buf);
+
+  return 0;
+}
+
+static int
+readTask (ARGS)
+{
+  usize size;
+  void *buf = null;
+
+  if (readFile (&size, &buf, argc, argv))
+    return -1;
+
+  if (size > INT_MAX)
+    {
+      loomErrorFmt (LOOM_ERR_OVERFLOW, "file too large to display");
+      return -1;
+    }
+
+  loomLogLn ("%.*s", (int) size, (const char *) buf);
+
+  loomFree (buf);
+
+  return 0;
 }
 
 static void
@@ -387,4 +425,5 @@ loomCoreCommandsInit (void)
   registerCommand ("fstypes", fsTypesTask);
   registerCommand ("help", helpTask);
   registerCommand ("sha1sum", sha1SumTask);
+  registerCommand ("read", readTask);
 }
