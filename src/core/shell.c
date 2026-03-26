@@ -1,5 +1,6 @@
 #include "loom/shell.h"
 #include "loom/command.h"
+#include "loom/commands/core.h"
 #include "loom/console.h"
 #include "loom/error.h"
 #include "loom/input.h"
@@ -96,6 +97,8 @@ shellExecCommand (struct shell *shell)
 
   if (command)
     {
+      loomGetOptsReset ();
+
       if (command->task (command, argc, argv))
         {
           loomLog ("%s: ", argv[0]);

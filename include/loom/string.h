@@ -17,7 +17,7 @@ void weak export (loomMemSet) (void *dst, int v, usize n);
 usize export (loomStrLength) (const char *s);
 int export (loomStrCmp) (const char *s1, const char *s2);
 void export (loomStrLower) (char *s);
-loom_error export (loomParseInt) (char *s, int *out);
+loom_error export (loomParseInt) (const char *s, int *out);
 
 char *export (loomStrDup) (const char *s);
 

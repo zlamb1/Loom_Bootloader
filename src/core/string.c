@@ -128,7 +128,7 @@ chartoi (int base, char ch)
 }
 
 loom_error
-loomParseInt (char *s, int *out)
+loomParseInt (const char *s, int *out)
 {
   int base = 10, z = 0, n = 0, neg = 0;
   char ch;

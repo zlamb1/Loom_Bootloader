@@ -1,3 +1,4 @@
+#include "loom/commands/core.h"
 #include "loom/assert.h"
 #include "loom/block_dev.h"
 #include "loom/command.h"
@@ -452,6 +453,89 @@ done:
   return 0;
 }
 
+static int
+headTask (ARGS)
+{
+  int lines = 10;
+  int flag;
+
+  usize file_count;
+  bool print_file_name;
+
+  while ((flag = loomGetOpts ("n:", argc, argv)) != -1)
+    switch (flag)
+      {
+      case 'n':
+        {
+          loom_error error;
+          if ((error = loomParseInt (optarg, &lines)))
+            {
+              loomErrorFmt (error, "bad line count: '%s'", optarg);
+              return -1;
+            }
+        }
+      }
+
+  if (loom_prefix_fs == null)
+    {
+      loomErrorFmt (LOOM_ERR_BAD_ARG, "set prefix to a valid fs");
+      return -1;
+    }
+
+  file_count = argc - optind;
+  print_file_name = file_count > 1;
+
+  if (!file_count)
+    {
+      loomErrorFmt (LOOM_ERR_BAD_ARG, "provide a file path");
+      return -1;
+    }
+
+  while (optind < argc)
+    {
+      const char *path = argv[optind++];
+      loom_file file;
+      char *buf = null;
+      int line_count = 0, offset = 0;
+
+      if (loomFileOpen (loom_prefix_fs, &file, path))
+        return -1;
+
+      buf = loomAlloc (file.size);
+
+      if (buf == null)
+        {
+          loomFileClose (&file);
+          return -1;
+        }
+
+      if (loomFileRead (&file, file.size, buf, null))
+        {
+          loomFree (buf);
+          loomFileClose (&file);
+          return -1;
+        }
+
+      if (print_file_name)
+        loomLogLn ("==> %s <==", file.name);
+
+      int dir = lines >= 0 ? 1 : -1;
+      int start = lines >= 0 ? 0 : (int) file.size - 1;
+
+      if (lines)
+        for (offset = start; buf[offset] != '\0'; offset += dir)
+          if (buf[offset] == '\n' && ++line_count >= lines)
+            break;
+
+      loomLogLn ("%.*s", offset, buf);
+
+      loomFree (buf);
+      loomFileClose (&file);
+    }
+
+  return 0;
+}
+
 static void
 registerCommand (const char *name, loom_task task)
 {
@@ -486,4 +570,5 @@ loomCoreCommandsInit (void)
   registerCommand ("sha1sum", sha1SumTask);
   registerCommand ("cat", catTask);
   registerCommand ("ls", lsTask);
+  registerCommand ("head", headTask);
 }
