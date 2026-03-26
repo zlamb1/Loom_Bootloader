@@ -468,11 +468,14 @@ headTask (ARGS)
       case 'n':
         {
           loom_error error;
-          if ((error = loomParseInt (optarg, &lines)))
+
+          if ((error = loomParseInt (optarg, &lines)) || lines == INT_MIN)
             {
               loomErrorFmt (error, "bad line count: '%s'", optarg);
               return -1;
             }
+
+          break;
         }
       }
 
@@ -499,36 +502,73 @@ headTask (ARGS)
       int line_count = 0, offset = 0;
 
       if (loomFileOpen (loom_prefix_fs, &file, path))
-        return -1;
+        {
+          loomLogLn ("error: %s", loomErrorGet ());
+          continue;
+        }
+
+      if (file.size - 1 > INT_MAX)
+        {
+          loomLogLn ("error: %s too large", file.name);
+          goto next;
+        }
 
       buf = loomAlloc (file.size);
 
       if (buf == null)
         {
-          loomFileClose (&file);
-          return -1;
+          loomLogLn ("error: %s", loomErrorGet ());
+          goto next;
         }
 
       if (loomFileRead (&file, file.size, buf, null))
         {
-          loomFree (buf);
-          loomFileClose (&file);
-          return -1;
+          loomLogLn ("error: %s", loomErrorGet ());
+          goto next;
         }
 
       if (print_file_name)
         loomLogLn ("==> %s <==", file.name);
 
-      int dir = lines >= 0 ? 1 : -1;
-      int start = lines >= 0 ? 0 : (int) file.size - 1;
+      if (!lines || !file.size)
+        goto next;
 
-      if (lines)
-        for (offset = start; buf[offset] != '\0'; offset += dir)
-          if (buf[offset] == '\n' && ++line_count >= lines)
-            break;
+      if (lines > 0)
+        {
+          while ((usize) offset < file.size && line_count < lines)
+            {
+              char ch = buf[offset++];
+
+              if (ch == '\n')
+                line_count++;
+            }
+        }
+      else
+        {
+          auto r_lines = -lines;
+
+          offset = (int) (file.size - 1);
+
+          if (buf[offset] != '\n')
+            line_count += 1;
+
+          while (offset > 0)
+            {
+              char ch = buf[offset];
+
+              if (ch == '\n' && ++line_count > r_lines)
+                {
+                  offset += 1;
+                  break;
+                }
+
+              offset -= 1;
+            }
+        }
 
       loomLogLn ("%.*s", offset, buf);
 
+    next:
       loomFree (buf);
       loomFileClose (&file);
     }
