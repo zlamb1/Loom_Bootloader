@@ -1,6 +1,7 @@
 #ifndef LOOM_DIR_H
 #define LOOM_DIR_H 1
 
+#include "loom/compiler.h"
 #include "loom/types.h"
 
 struct loom_fs;
@@ -22,10 +23,10 @@ typedef struct loom_dir_entry
   bool is_dir : 1;
 } loom_dir_entry;
 
-int loomDirOpen (struct loom_fs *fs, loom_dir *dir, const char *path);
+int export (loomDirOpen) (struct loom_fs *fs, loom_dir *dir, const char *path);
 
-int loomDirClose (loom_dir *dir);
+int export (loomDirClose) (loom_dir *dir);
 
-loom_dir_entry *loomDirRead (loom_dir *dir);
+loom_dir_entry *export (loomDirRead) (loom_dir *dir);
 
 #endif

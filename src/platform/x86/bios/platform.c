@@ -27,7 +27,7 @@ mmapMMHook (u64 addr, u64 length, loom_memory_type type, unused void *data)
       addr = 0x100000;
     }
 
-  loomMMAddRegion ((usize) addr, (usize) length);
+  loomHeapAddRegion ((usize) addr, (usize) length);
 }
 
 void

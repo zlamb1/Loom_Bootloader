@@ -71,7 +71,7 @@ compile_assert (MIN_ALLOC >= sizeof (free_chunk_t),
 static arena_t *arenas = NULL;
 
 void
-loomMMAddRegion (usize addr, usize length)
+loomHeapAddRegion (usize addr, usize length)
 {
   usize tmp;
   address modend;
@@ -97,13 +97,13 @@ loomMMAddRegion (usize addr, usize length)
   if (addr < loom_modbase && addr + length > loom_modbase)
     {
       exit = 1;
-      loomMMAddRegion (addr, loom_modbase - addr);
+      loomHeapAddRegion (addr, loom_modbase - addr);
     }
 
   if (addr < modend && addr + length > modend)
     {
       exit = 1;
-      loomMMAddRegion (modend, (addr + length) - modend);
+      loomHeapAddRegion (modend, (addr + length) - modend);
     }
 
   if (exit || length < CHUNK_SIZE * 2 + MIN_ALLOC)
@@ -208,20 +208,20 @@ freeChunkSplit (arena_t *arena, free_chunk_t *fchunk, usize offset, usize size)
   usize chunk_size, flags;
 
   if (offset & CHUNK_SIZE_MINUS_1 || (offset && offset < MIN_ALLOC))
-    loomPanic ("free_chunk_split: invalid offset %lu", (unsigned long) offset);
+    loomPanic ("freeChunkSplit: invalid offset %lu", (unsigned long) offset);
 
   if (!size || size & CHUNK_SIZE_MINUS_1)
-    loomPanic ("free_chunk_split: invalid size %lu", (unsigned long) size);
+    loomPanic ("freeChunkSplit: invalid size %lu", (unsigned long) size);
 
   flags = fchunk->base.size & CHUNK_FLAG_MASK;
 
   if (flags & CHUNK_FLAG_INUSE)
-    loomPanic ("free_chunk_split: invalid chunk with in use flag");
+    loomPanic ("freeChunkSplit: invalid chunk with in use flag");
 
   chunk_size = fchunk->base.size & CHUNK_SIZE_MASK;
 
   if (offset >= chunk_size)
-    loomPanic ("free_chunk_split: offset %lu >= chunk size %lu",
+    loomPanic ("freeChunkSplit: offset %lu >= chunk size %lu",
                (unsigned long) offset, (unsigned long) chunk_size);
 
   if (offset)
@@ -242,7 +242,7 @@ freeChunkSplit (arena_t *arena, free_chunk_t *fchunk, usize offset, usize size)
     }
 
   if (chunk_size < size)
-    loomPanic ("free_chunk_split: chunk size too small");
+    loomPanic ("freeChunkSplit: chunk size too small");
 
   if (chunk_size - size >= MIN_ALLOC)
     {
@@ -451,6 +451,110 @@ loomMemAlignRange (usize size, usize align, address min_addr, address max_addr)
   return NULL;
 }
 
+void *
+loomMemAlignRangeHigh (usize size, usize align, address min_addr,
+                       address max_addr)
+{
+  usize payload_size = size;
+
+  if (loomAdd (payload_size, CHUNK_SIZE_MINUS_1, &payload_size)
+      || payload_size > USIZE_MAX - CHUNK_SIZE)
+    {
+      loomErrorFmt (LOOM_ERR_OVERFLOW, "requested allocation size is too big");
+      return null;
+    }
+
+  if (min_addr > max_addr || payload_size > max_addr - min_addr)
+    {
+      loomErrorFmt (LOOM_ERR_BAD_ARG,
+                    "memalign range cannot fit allocation of size %lu",
+                    (unsigned long) size);
+      return NULL;
+    }
+
+  if (align & (align - 1))
+    {
+      loomErrorFmt (LOOM_ERR_BAD_ARG, "invalid requested alignment %lu",
+                    (unsigned long) align);
+      return NULL;
+    }
+
+  if (align < CHUNK_SIZE)
+    align = CHUNK_SIZE;
+
+  payload_size &= ~CHUNK_SIZE_MINUS_1;
+
+  struct
+  {
+    address addr;
+    usize offset;
+    arena_t *arena;
+    free_chunk_t *fchunk;
+  } best_fit = { 0 };
+
+  LOOM_LIST_ITERATE (arenas, arena)
+  {
+    free_chunk_t *fchunk;
+
+    if (ARENA_MAGIC_OF (arena) != arena->magic)
+      heapPanic ();
+
+    fchunk = arena->freelist;
+
+    while (fchunk != null)
+      {
+        address chunk_start = (address) fchunk, chunk_end, min_start,
+                alloc_start;
+        usize chunk_size = fchunk->base.size & CHUNK_SIZE_MASK;
+
+        if (loomAdd (chunk_start, chunk_size, &chunk_end)
+            || fchunk->base.size & CHUNK_FLAG_INUSE)
+          heapPanic ();
+
+        if ((min_start = chunk_start) < min_addr)
+          min_start = min_addr;
+
+        alloc_start = chunk_end;
+        if (alloc_start > max_addr)
+          alloc_start = max_addr;
+
+        if (loomSub (alloc_start, payload_size, &alloc_start))
+          goto next;
+
+        alloc_start &= ~(align - 1);
+        if (loomSub (alloc_start, CHUNK_SIZE, &alloc_start))
+          goto next;
+
+        if (min_start > alloc_start
+            || (best_fit.arena != null && best_fit.addr > alloc_start))
+          goto next;
+
+        auto offset = alloc_start - chunk_start;
+
+        if (offset == CHUNK_SIZE)
+          // not enough space for a prev free chunk
+          goto next;
+
+        best_fit.addr = alloc_start;
+        best_fit.offset = offset;
+        best_fit.arena = arena;
+        best_fit.fchunk = fchunk;
+
+      next:
+        fchunk = fchunk->next;
+      }
+  }
+
+  if (best_fit.arena == null)
+    {
+      loomError (LOOM_ERR_ALLOC);
+      return null;
+    }
+
+  return freeChunkSplit (best_fit.arena, best_fit.fchunk, best_fit.offset,
+                         payload_size + CHUNK_SIZE);
+}
+
 void
 loomFree (void *p)
 {
@@ -569,8 +673,8 @@ loomFree (void *p)
 }
 
 int
-loomMMIterate (int (*hook) (address p, usize n, bool is_free, void *data),
-               void *data)
+loomHeapIterate (int (*hook) (address p, usize n, bool is_free, void *data),
+                 void *data)
 {
   if (!hook)
     {

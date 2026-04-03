@@ -1,53 +1,63 @@
 #include "loom/kernel_loader.h"
 #include "loom/mm.h"
 
-static loom_kernel_loader *kernel_loader;
+loom_kernel_loader *kernel_loader = null;
 
 void
 loomKernelLoaderSet (loom_kernel_loader *new_kernel_loader)
 {
-  loomKernelLoaderRemove (1);
+  loomKernelLoaderRemove ();
   kernel_loader = new_kernel_loader;
 }
 
 int
-loomKernelLoaderRemove (bool free)
+loomKernelLoaderRemove (void)
 {
-  if (!kernel_loader)
+  if (kernel_loader == null)
     return -1;
 
-  if (free)
+  auto kernel = &kernel_loader->kernel;
+  auto initrd = &kernel_loader->initrd;
+  auto cmdline = &kernel_loader->cmdline;
+
+  if (kernel->data != null)
     {
-      if (kernel_loader->kernel)
-        {
-          loomFree (kernel_loader->kernel);
-          kernel_loader->kernel = NULL;
-        }
-
-      if (kernel_loader->flags & LOOM_KERNEL_LOADER_FLAG_INITRD
-          && kernel_loader->initrd)
-        {
-          loomFree (kernel_loader->initrd);
-          kernel_loader->initrd = NULL;
-        }
-
-      if (kernel_loader->flags & LOOM_KERNEL_LOADER_FLAG_MODULES)
-        {
-          loom_kernel_module *kernel_module = kernel_loader->modules;
-
-          while (kernel_module)
-            {
-              loom_kernel_module *tmp = kernel_module->next;
-              loomFree (kernel_module->data);
-              loomFree (kernel_module);
-              kernel_module = tmp;
-            }
-
-          kernel_loader->modules = NULL;
-        }
+      loomFree (kernel->data);
+      kernel->size = 0;
+      kernel->data = NULL;
     }
 
-  kernel_loader = NULL;
+  if (kernel_loader->flags & LOOM_KERNEL_LOADER_FLAG_INITRD
+      && initrd->data != null)
+    {
+      loomFree (initrd->data);
+      initrd->size = 0;
+      initrd->data = null;
+    }
+
+  if (cmdline->data != null)
+    {
+      loomFree (cmdline->data);
+      cmdline->size = 0;
+      cmdline->data = null;
+    }
+
+  if (kernel_loader->flags & LOOM_KERNEL_LOADER_FLAG_MODULES)
+    {
+      loom_kernel_module *module = kernel_loader->modules;
+
+      while (module != null)
+        {
+          loom_kernel_module *tmp = module->next;
+          loomFree (module->data);
+          loomFree (module);
+          module = tmp;
+        }
+
+      kernel_loader->modules = null;
+    }
+
+  kernel_loader = null;
 
   return 0;
 }

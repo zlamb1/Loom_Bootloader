@@ -38,7 +38,9 @@ biosDiskRead (loom_block_dev *block_dev, usize block, usize count, char *buf)
   loomAssert (block_dev != NULL);
   loomAssert (block_dev->data != NULL);
 
-  u8 drive = ((bios_disk *) block_dev->data)->drive;
+  auto disk = (bios_disk *) block_dev->data;
+  auto drive = disk->drive;
+
   usize length = 0x10000, block_size;
   char *bounce = (char *) 0x60000;
   int retries = 0;
@@ -72,7 +74,7 @@ biosDiskRead (loom_block_dev *block_dev, usize block, usize count, char *buf)
       args.ds = 0;
 
       compile_assert (sizeof (bios_disk_read_packet) >= 0x10,
-                      "bios_disk_read_t must be at least 16 bytes.");
+                      "bios_disk_read_packet must be at least 16 bytes.");
       read_packet.size = 0x10;
 
       read_packet.blocks = (u16) read;
@@ -111,6 +113,9 @@ biosDiskRead (loom_block_dev *block_dev, usize block, usize count, char *buf)
           return LOOM_ERR_IO;
         }
 
+#ifdef LOOM_DEBUG
+      block_dev->read_count += 1;
+#endif
       retries = 0;
       bytes = read * block_size;
 

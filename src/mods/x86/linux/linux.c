@@ -1,9 +1,9 @@
-#include "loom/block_dev.h"
 #include "loom/command.h"
-#include "loom/endian.h"
 #include "loom/error.h"
+#include "loom/file.h"
+#include "loom/fs.h"
 #include "loom/kernel_loader.h"
-#include "loom/list.h"
+#include "loom/math.h"
 #include "loom/mm.h"
 #include "loom/module.h"
 #include "loom/string.h"
@@ -60,77 +60,81 @@ typedef struct setup_header
 static loom_kernel_loader linux_loader = { 0 };
 
 static void
-linuxBoot (loom_kernel_loader *kernel_loader)
+linuxBoot (loom_kernel_loader *loader)
 {
-  extern char linux_relocator;
-  extern char linux_relocator_end;
+  extern char linuxRelocator;
+  extern char linuxRelocatorEnd;
 
-  (void) linux_loader;
-
-#define SCRATCH 0x60000
+#define SCRATCH 0x500
 #define SEG     0x8000
 
-  char *kernel = kernel_loader->kernel;
+  auto kernel = loader->kernel;
+  auto initrd = loader->initrd;
+  auto cmdline = loader->cmdline;
+
   usize off, setup_sects;
 
-  setup_header *header = (setup_header *) ((char *) kernel_loader->kernel
-                                           + SETUP_HEADER_OFFSET);
+  setup_header *header
+      = (setup_header *) ((char *) kernel.data + SETUP_HEADER_OFFSET);
 
   setup_sects = header->setup_sects;
   if (!setup_sects)
     setup_sects = 4;
 
-  off = (setup_sects + 1) * 512;
-  loomMemCopy ((void *) (SEG * 0x10), kernel, off);
+  if (initrd.data != null)
+    {
+      header->ramdisk_image = (u32) initrd.data;
+      header->ramdisk_size = (u32) initrd.size;
+    }
 
-  loomMemCopy ((void *) SCRATCH, &linux_relocator,
-               (usize) (&linux_relocator_end - &linux_relocator));
+  if (cmdline.data != null)
+    {
+      header->cmdline_size = cmdline.size;
+      header->cmd_line_ptr = (u32) cmdline.data;
+    }
+
+  off = (setup_sects + 1) * 512;
+  loomMemCopy ((void *) (SEG * 0x10), kernel.data, off);
+
+  loomMemCopy ((void *) SCRATCH, &linuxRelocator,
+               (usize) (&linuxRelocatorEnd - &linuxRelocator));
 
   ((void (*) (u32 dst, u32 src, u32 size, u16 seg)) SCRATCH) (
-      header->code32_start, (u32) kernel_loader->kernel + off,
-      kernel_loader->kernel_size - off, SEG);
+      header->code32_start, (u32) kernel.data + off, kernel.size - off, SEG);
 }
 
 static int
 linuxTask (unused loom_command *cmd, unused usize argc, unused char *argv[])
 {
-  loom_module_header hdr;
-  loom_block_dev *block_dev;
-  usize offset, kernel_size;
+  loom_file kfile;
+
   u32 setup_sects;
 
   setup_header *header;
-  char *kbuf = NULL, *cmdline = NULL;
+  char *kbuf = NULL;
 
-  loomKernelLoaderRemove (true);
+  loomKernelLoaderRemove ();
 
-  loomMemCopy (&hdr, (void *) loom_modbase, sizeof (hdr));
-
-  offset = (usize) &stage3e - (usize) &stage1s;
-  offset += hdr.size;
-
-  kernel_size = loom_le32toh (hdr.kernel_size);
-
-  if (!kernel_size)
+  if (loom_prefix_fs == null)
     {
-      loomErrorFmt (LOOM_ERR_BAD_ARG, "no kernel appended");
+      loomErrorFmt (LOOM_ERR_BAD_ARG, "set prefix to a valid fs");
       return -1;
     }
 
-  kbuf = loomAlloc (kernel_size);
-
-  if (!kbuf)
-    return -1;
-
-  if (loomListIsEmpty (&loom_block_devs))
+  if (argc < 2)
     {
-      loomErrorFmt (LOOM_ERR_IO, "no disks found");
-      goto out;
+      loomErrorFmt (LOOM_ERR_BAD_ARG, "provide a file path");
+      return -1;
     }
 
-  block_dev = container_of (loom_block_devs.next, loom_block_dev, node);
+  if (loomFileOpen (loom_prefix_fs, &kfile, argv[1]))
+    return -1;
 
-  if (loomBlockDevRead (block_dev, offset, kernel_size, kbuf))
+  kbuf = loomAlloc (kfile.size);
+  if (kbuf == null)
+    goto out;
+
+  if (loomFileRead (&kfile, kfile.size, kbuf, null))
     goto out;
 
   header = (setup_header *) (kbuf + SETUP_HEADER_OFFSET);
@@ -145,28 +149,94 @@ linuxTask (unused loom_command *cmd, unused usize argc, unused char *argv[])
   if (!setup_sects)
     setup_sects = 4;
 
-  offset = (setup_sects + 1) * 512;
-
   header->vid_mode = 0xFFFF;
   header->type_of_loader = 0xFF;
   header->loadflags |= 0x80;
-  header->ramdisk_image = 0;
   header->ramdisk_size = 0;
+  header->ramdisk_image = 0;
+  header->cmdline_size = 0;
+  header->cmd_line_ptr = 0;
   header->heap_end_ptr = 0;
   header->setup_data = 0;
 
   linux_loader.boot = linuxBoot;
-  linux_loader.flags = 0;
-  linux_loader.kernel_size = kernel_size;
-  linux_loader.kernel = kbuf;
+  linux_loader.flags = LOOM_KERNEL_LOADER_FLAG_INITRD;
+
+  if (header->pref_address < U32_MAX)
+    {
+      auto pref_address = (u32) header->pref_address;
+      if (loomAdd (pref_address, header->init_size,
+                   &linux_loader.initrd_min_addr))
+        linux_loader.initrd_min_addr = 0;
+    }
+  else
+    linux_loader.initrd_min_addr = 0x100000 + kfile.size;
+
+  linux_loader.initrd_max_addr = header->initrd_addr_max;
+
+  linux_loader.initrd_max_addr = header->initrd_addr_max;
+  linux_loader.kernel.size = kfile.size;
+  linux_loader.kernel.data = kbuf;
+
+  if (argc > 2)
+    {
+      // FIXME: This leaks if loader is removed.
+      auto cmdline = &linux_loader.cmdline;
+
+      for (usize i = 2; i < argc; ++i)
+        {
+          auto length = loomStrLength (argv[i]);
+          if (length == 0)
+            continue;
+
+          if (length == USIZE_MAX
+              || loomAdd (cmdline->size, length + 1, &cmdline->size))
+            {
+              cmdline->size = 0;
+              loomErrorFmt (LOOM_ERR_OVERFLOW,
+                            "too many command line arguments");
+              goto out;
+            }
+        }
+
+      if (cmdline->size > 0)
+        {
+          usize offset = 0;
+
+          cmdline->data
+              = loomMemAlignRangeHigh (cmdline->size, 0x8, 0, USIZE_MAX);
+          auto data = (char *) cmdline->data;
+
+          if (data == null)
+            goto out;
+
+          for (usize i = 2; i < argc; ++i)
+            {
+              auto length = loomStrLength (argv[i]);
+              if (length == 0)
+                continue;
+              loomMemCopy (data + offset, argv[i], length);
+              offset += length;
+              data[offset++] = (i == argc - 1 ? '\0' : ' ');
+            }
+
+          // Final size does not include NUL terminator.
+          cmdline->size -= 1;
+        }
+    }
+  else
+    {
+      header->cmd_line_ptr = 0;
+      header->cmdline_size = 0;
+    }
 
   loomKernelLoaderSet (&linux_loader);
 
   return 0;
 
 out:
+  loomFileClose (&kfile);
   loomFree (kbuf);
-  loomFree (cmdline);
   return -1;
 }
 

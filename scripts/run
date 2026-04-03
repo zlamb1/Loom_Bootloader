@@ -20,7 +20,7 @@ while getopts "opi:a:q:" opt; do
     esac
 done
 
-DEFAULT_ARGS="-drive format=raw,file=$IMG -nic none -m 512M"
+DEFAULT_ARGS="-drive format=raw,file=$IMG -nic none -m 512M -vga virtio -display sdl"
 FINAL_ARGS="$DEFAULT_ARGS $ARGS"
 
 if [ "$ARGS_OVERRIDE" -eq 1 ]; then

@@ -61,7 +61,7 @@ typedef struct loom_fs_type
 extern loom_list export_var (loom_fs_list);
 extern loom_list export_var (loom_fs_types);
 
-extern loom_fs *loom_prefix_fs;
+extern loom_fs *export_var (loom_prefix_fs);
 
 #define loomFsRegister(fs) loomListAddByField (&loom_fs_list, fs, node)
 #define loomFsTypeRegister(fs_type)                                           \

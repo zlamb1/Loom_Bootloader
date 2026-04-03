@@ -1,6 +1,7 @@
 #include "loom/commands/core.h"
 #include "loom/assert.h"
 #include "loom/block_dev.h"
+#include "loom/buffer.h"
 #include "loom/command.h"
 #include "loom/compiler.h"
 #include "loom/console.h"
@@ -230,7 +231,7 @@ memoryTask (ARGS)
           || !loomStrCmp (argv[1], "allocated")))
     ctx.is_free = 0;
 
-  loomMMIterate (mmIterateHook, &ctx);
+  loomHeapIterate (mmIterateHook, &ctx);
   loomLogLn ("%lu bytes %s", (unsigned long) ctx.c,
              ctx.is_free ? "free" : "allocated");
 
@@ -576,6 +577,90 @@ headTask (ARGS)
   return 0;
 }
 
+static int
+initrdTask (ARGS)
+{
+  loom_file initrd_file;
+  loom_buffer initrd = {
+    .data = null,
+  };
+
+  if (argc < 2)
+    {
+      loomErrorFmt (LOOM_ERR_BAD_ARG, "provide a file path");
+      return -1;
+    }
+
+  if (loom_prefix_fs == null)
+    {
+      loomErrorFmt (LOOM_ERR_BAD_ARG, "set prefix to a valid fs");
+      return -1;
+    }
+
+  if (kernel_loader == null)
+    {
+      loomErrorFmt (LOOM_ERR_BAD_ARG, "no kernel loader active");
+      return -1;
+    }
+
+  if (!(kernel_loader->flags & LOOM_KERNEL_LOADER_FLAG_INITRD))
+    {
+      loomErrorFmt (LOOM_ERR_BAD_ARG,
+                    "active kernel loader does not support an initrd");
+      return -1;
+    }
+
+  if (loomFileOpen (loom_prefix_fs, &initrd_file, argv[1]))
+    return -1;
+
+  initrd.size = initrd_file.size;
+
+  const usize align_table[5] = { 0x100000, 0x10000, 0x1000, 0x100, 0x10 };
+
+  for (uint i = 0; i < 5; ++i)
+    {
+      auto align = align_table[i];
+      initrd.data = loomMemAlignRangeHigh (initrd.size, align,
+                                           kernel_loader->initrd_min_addr,
+                                           kernel_loader->initrd_max_addr);
+      if (initrd.data != null)
+        break;
+    }
+
+  if (initrd.data == null)
+    goto out;
+
+  if (loomFileRead (&initrd_file, initrd.size, initrd.data, null))
+    goto out;
+
+  kernel_loader->initrd = initrd;
+
+  loomFileClose (&initrd_file);
+
+  return 0;
+
+out:
+  loomFree (initrd.data);
+  loomFileClose (&initrd_file);
+  return -1;
+}
+
+#ifdef LOOM_DEBUG
+static int
+debugTask (ARGS)
+{
+  loom_block_dev *block_dev;
+
+  loom_list_for_each_entry (&loom_block_devs, block_dev, node)
+  {
+    loomLogLn ("%lu blocks: %lu reads", (ulong) block_dev->blocks,
+               (ulong) block_dev->read_count);
+  }
+
+  return 0;
+}
+#endif
+
 static void
 registerCommand (const char *name, loom_task task)
 {
@@ -611,4 +696,8 @@ loomCoreCommandsInit (void)
   registerCommand ("cat", catTask);
   registerCommand ("ls", lsTask);
   registerCommand ("head", headTask);
+  registerCommand ("initrd", initrdTask);
+#ifdef LOOM_DEBUG
+  registerCommand ("debug", debugTask);
+#endif
 }

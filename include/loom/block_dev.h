@@ -15,6 +15,9 @@ typedef struct loom_block_dev
   block_dev_read read;
   usize block_size;
   usize blocks;
+#ifdef LOOM_DEBUG
+  usize read_count;
+#endif
 #define LOOM_BLOCK_DEVICE_FLAG_PROBED (1 << 0)
   byte flags;
   void *data;
@@ -44,6 +47,9 @@ loomBlockDevInit (loom_block_dev *block_dev, loom_block_dev_init_t *init)
   block_dev->read = init->read;
   block_dev->block_size = init->block_size;
   block_dev->blocks = init->blocks;
+#ifdef LOOM_DEBUG
+  block_dev->read_count = 0;
+#endif
   block_dev->flags = 0;
   block_dev->data = init->data;
   block_dev->children = LOOM_LIST_HEAD (block_dev->children);
