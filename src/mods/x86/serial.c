@@ -33,6 +33,7 @@ typedef struct serial_console
   u16 port;
   usize x, y;
   u8 attribs;
+  char last;
   loom_console super;
   struct serial_console *next;
 } serial_console;
@@ -175,19 +176,23 @@ serialClear (loom_console *super)
   serialFormat (console, "\033[2J\033[1;1H");
 }
 
-static void
-serialPutChar (u16 port, char ch)
+static inline void
+serialPutChar (serial_console *console, char ch)
 {
-  while (!(loomInByte (port + SERIAL_LINE_STATUS_PORT) & 0x20))
+  if (ch == '\n' && console->last != '\r')
+    serialPutChar (console, '\r');
+
+  while (!(loomInByte (console->port + SERIAL_LINE_STATUS_PORT) & 0x20))
     ;
-  loomOutByte (port + SERIAL_WRITE_PORT, (u8) ch);
+  loomOutByte (console->port + SERIAL_WRITE_PORT, (u8) ch);
+
+  console->last = ch;
 }
 
 static void
 serialWriteAll (loom_console *super, loom_write_buffer wbufs[])
 {
   serial_console *console = super->data;
-  u16 port = console->port;
   loom_write_buffer wbuf;
 
   for (usize i = 0; wbufs[i].s != NULL; ++i)
@@ -195,7 +200,7 @@ serialWriteAll (loom_console *super, loom_write_buffer wbufs[])
       wbuf = wbufs[i];
       for (usize j = 0; j < wbuf.splats; ++j)
         for (usize k = 0; k < wbuf.len; ++k)
-          serialPutChar (port, wbuf.s[k]);
+          serialPutChar (console, wbuf.s[k]);
     }
 }
 
@@ -405,17 +410,19 @@ LOOM_MOD_INIT ()
       loomOutByte (port + SERIAL_MODEM_CTRL_PORT, 0b1011);
 
       console->port = port;
-      console->super = (loom_console) { .get_x = serialGetX,
-                                        .get_y = serialGetY,
-                                        .get_fg = serialGetFg,
-                                        .get_bg = serialGetBg,
-                                        .set_x = serialSetX,
-                                        .set_y = serialSetY,
-                                        .set_fg = serialSetFg,
-                                        .set_bg = serialSetBg,
-                                        .clear = serialClear,
-                                        .write_all = serialWriteAll,
-                                        .data = console };
+      console->super = (loom_console) {
+        .get_x = serialGetX,
+        .get_y = serialGetY,
+        .get_fg = serialGetFg,
+        .get_bg = serialGetBg,
+        .set_x = serialSetX,
+        .set_y = serialSetY,
+        .set_fg = serialSetFg,
+        .set_bg = serialSetBg,
+        .clear = serialClear,
+        .write_all = serialWriteAll,
+        .data = console,
+      };
       console->next = serial_consoles;
 
       serial_consoles = console;
