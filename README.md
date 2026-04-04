@@ -8,7 +8,6 @@ Loom Bootloader is a modular bootloader, written in assembly and C, designed pri
 ## Build Dependencies
 - cmake
 - cc
-- nasm
 - i686-elf-gcc
 - i686-elf-objcopy
 
