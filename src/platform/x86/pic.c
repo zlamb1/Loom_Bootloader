@@ -1,6 +1,7 @@
 #include "loom/platform/x86/pic.h"
 #include "loom/error.h"
 #include "loom/platform.h"
+#include "loom/platform/x86/bios/bios.h"
 #include "loom/platform/x86/idt.h"
 #include "loom/platform/x86/io.h"
 
@@ -166,3 +167,19 @@ loomPICRestoreMasks (void)
   loomOutByte (PIC2_DATA, masks[1]);
   loomIrqRestore (flags);
 }
+
+static void
+loomPICBiosHookFn (uint type, unused void *ctx)
+{
+  if (type == LOOM_BIOS_HOOK_TYPE_ENTER)
+    loomPICResetBiosDefaults ();
+  else
+    {
+      loomPICSaveBiosDefaults ();
+      loomPICRestoreMasks ();
+    }
+}
+
+loom_bios_hook loomPICBiosHook = {
+  .fn = loomPICBiosHookFn,
+};

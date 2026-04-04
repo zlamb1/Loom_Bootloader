@@ -4,6 +4,8 @@
 #include "loom/keycode.h"
 #include "loom/mm.h"
 #include "loom/module.h"
+#include "loom/platform.h"
+#include "loom/platform/x86/bios/bios.h"
 #include "loom/platform/x86/io.h"
 #include "loom/platform/x86/pic.h"
 #include "loom/print.h"
@@ -28,12 +30,24 @@
 #define SERIAL_MODEM_STATUS_PORT    6
 #define SERIAL_SCRATCH_PORT         7
 
+typedef struct
+{
+  u16 baud_divisor;
+  u8 irq_enable;
+  u8 line_ctrl;
+  u8 modem_ctrl;
+  u8 scratch;
+} serial_state;
+
 typedef struct serial_console
 {
   u16 port;
   usize x, y;
   u8 attribs;
   char last;
+  serial_state state;
+  serial_state bios_state;
+  loom_bios_hook bios_hook;
   loom_console super;
   struct serial_console *next;
 } serial_console;
@@ -62,6 +76,67 @@ setBaudRate (u16 port, u16 baud_rate)
   loomOutByte (port + SERIAL_BAUD_DIVISOR_HI_PORT, (u8) (baud_rate >> 8));
 
   loomOutByte (port + SERIAL_LINE_CTRL_PORT, (u8) (line_ctrl & ~0x80));
+}
+
+static inline void
+serialStateSave (u16 port, serial_state *state)
+{
+  auto line_ctrl = loomInByte (port + SERIAL_LINE_CTRL_PORT);
+
+  state->line_ctrl = line_ctrl;
+  state->modem_ctrl = loomInByte (port + SERIAL_MODEM_CTRL_PORT);
+
+  auto dlab = line_ctrl & 0x80;
+
+  if (!dlab)
+    loomOutByte (port + SERIAL_LINE_CTRL_PORT, line_ctrl | 0x80);
+
+  state->baud_divisor = loomInByte (port + SERIAL_BAUD_DIVISOR_LO_PORT);
+  state->baud_divisor |= (u16) loomInByte (port + SERIAL_BAUD_DIVISOR_HI_PORT)
+                         << 8;
+
+  loomOutByte (port + SERIAL_LINE_CTRL_PORT, (u8) (line_ctrl & ~0x80));
+  state->irq_enable = loomInByte (port + SERIAL_IRQ_ENABLE_PORT);
+
+  if (dlab)
+    loomOutByte (port + SERIAL_LINE_CTRL_PORT, line_ctrl);
+
+  state->scratch = loomInByte (port + SERIAL_SCRATCH_PORT);
+}
+
+static inline void
+serialStateRestore (u16 port, serial_state *state)
+{
+  auto dlab = state->line_ctrl & 0x80;
+
+  loomOutByte (port + SERIAL_LINE_CTRL_PORT, state->line_ctrl | 0x80);
+  loomOutByte (port + SERIAL_BAUD_DIVISOR_LO_PORT, (u8) state->baud_divisor);
+  loomOutByte (port + SERIAL_BAUD_DIVISOR_HI_PORT,
+               (u8) (state->baud_divisor >> 8));
+
+  loomOutByte (port + SERIAL_MODEM_CTRL_PORT, state->modem_ctrl);
+
+  loomOutByte (port + SERIAL_LINE_CTRL_PORT, (u8) (state->line_ctrl & ~0x80));
+  loomOutByte (port + SERIAL_IRQ_ENABLE_PORT, state->irq_enable);
+
+  if (dlab)
+    loomOutByte (port + SERIAL_LINE_CTRL_PORT, state->line_ctrl);
+
+  loomOutByte (port + SERIAL_SCRATCH_PORT, state->scratch);
+}
+
+static void
+serialBiosHook (uint type, void *p)
+{
+  serial_console *console = p;
+
+  if (type == LOOM_BIOS_HOOK_TYPE_ENTER)
+    serialStateRestore (console->port, &console->bios_state);
+  else
+    {
+      serialStateSave (console->port, &console->bios_state);
+      serialStateRestore (console->port, &console->state);
+    }
 }
 
 static used void
@@ -354,6 +429,8 @@ LOOM_MOD_INIT ()
       serial_console *console;
       serial_input_source *input_src;
 
+      auto scratch = loomInByte (port + SERIAL_SCRATCH_PORT);
+
       loomOutByte (port + SERIAL_SCRATCH_PORT, 0xAA);
       if (loomInByte (port + SERIAL_SCRATCH_PORT) != 0xAA)
         continue;
@@ -385,7 +462,6 @@ LOOM_MOD_INIT ()
         continue;
 
       // This port is usable.
-
       console = loomZeroAlloc (sizeof (*console));
       input_src = loomZeroAlloc (sizeof (*input_src));
 
@@ -396,6 +472,12 @@ LOOM_MOD_INIT ()
           loomFree (input_src);
           break;
         }
+
+      // Save state for BIOS transitions.
+      serialStateSave (port, &console->bios_state);
+
+      // Clobbered it earlier so restore now.
+      console->bios_state.scratch = scratch;
 
       // For now we disable IRQs. We only use polling writes/read.
       loomOutByte (port + SERIAL_IRQ_ENABLE_PORT, 0);
@@ -409,7 +491,12 @@ LOOM_MOD_INIT ()
       // Enable OUT2/IRQ and disable loopback mode.
       loomOutByte (port + SERIAL_MODEM_CTRL_PORT, 0b1011);
 
+      // Save our own state.
+      serialStateSave (port, &console->state);
+
       console->port = port;
+      console->bios_hook.fn = serialBiosHook;
+      console->bios_hook.ctx = console;
       console->super = (loom_console) {
         .get_x = serialGetX,
         .get_y = serialGetY,
@@ -425,11 +512,15 @@ LOOM_MOD_INIT ()
       };
       console->next = serial_consoles;
 
+      loomBiosHookRegister (&console->bios_hook);
+
       serial_consoles = console;
 
       input_src->port = port;
-      input_src->super
-          = (loom_input_source) { .poll = serialPoll, .data = input_src };
+      input_src->super = (loom_input_source) {
+        .poll = serialPoll,
+        .data = input_src,
+      };
       input_src->next = serial_input_srcs;
 
       serial_input_srcs = input_src;
@@ -447,6 +538,7 @@ LOOM_MOD_DEINIT ()
   while (console != NULL)
     {
       next_console = console->next;
+      loomBiosHookUnregister (&console->bios_hook);
       loomConsoleUnregister (&console->super);
       loomFree (console);
       console = next_console;

@@ -17,8 +17,20 @@ typedef struct
   u16 es;
 } packed loom_bios_args;
 
+typedef struct loom_bios_hook
+{
+#define LOOM_BIOS_HOOK_TYPE_ENTER 0
+#define LOOM_BIOS_HOOK_TYPE_LEAVE 1
+  void (*fn) (uint type, void *ctx);
+  void *ctx;
+  struct loom_bios_hook *next;
+} loom_bios_hook;
+
 void export (loomEnterRealMode) (void);
 void export (loomEnterProtectedMode) (void);
+
+void export (loomBiosHookRegister) (loom_bios_hook *hook);
+void export (loomBiosHookUnregister) (loom_bios_hook *hook);
 
 void export (loomBiosInt) (u8 intno, loom_bios_args *args);
 

@@ -4,7 +4,7 @@
 
 SECTION(.stage1_5)
 
-.global loomBiosInt
+.global loomBiosIntImpl
 
 _stack:
     .long 0
@@ -22,7 +22,7 @@ _stack:
 #     --- Registers         [28]
 #
 
-loomBiosInt:
+loomBiosIntImpl:
     push %ebp
 
     pushfl
@@ -31,8 +31,6 @@ loomBiosInt:
     push %edi
 
     cli
-
-    call loomPICResetBiosDefaults
 
     movl %esp, _stack
 
@@ -122,8 +120,6 @@ loomBiosInt:
 
     movw _es, %bx
     movw %bx, 28(%eax)
-
-    call loomPICRestoreMasks
 
     pop %edi
     pop %esi

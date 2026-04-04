@@ -13,8 +13,8 @@ typedef struct
 
 void loomRegisterEarlyVgaConsole (void);
 
-void
-mmapMMHook (u64 addr, u64 length, loom_memory_type type, unused void *data)
+static void
+mmapHeapHook (u64 addr, u64 length, loom_memory_type type, unused void *data)
 {
   if (addr >= 0xffffffff || addr >= USIZE_MAX || type != LOOM_MEMORY_TYPE_FREE)
     return;
@@ -34,9 +34,12 @@ void
 loomPlatformInit (void)
 {
   // Note: Save BIOS PIC mask state before any BIOS interrupt calls.
+  // We also insert a hook to save and restore BIOS defaults.
   loomPICSaveBiosDefaults ();
+  loomBiosHookRegister (&loomPICBiosHook);
+
   loomRegisterEarlyVgaConsole ();
-  loomPlatformMmapIterate (mmapMMHook, NULL);
+  loomPlatformMmapIterate (mmapHeapHook, NULL);
   loomBiosDisksProbe ();
   loomPICRemap (0x20, 0x28);
   loomPICDisable ();
