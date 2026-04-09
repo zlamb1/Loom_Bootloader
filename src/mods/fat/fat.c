@@ -476,26 +476,51 @@ fatRead (loom_file *file, usize nbytes, void *buf, usize *nread)
       return -1;
     }
 
-  while (nbytes)
+  for (;;)
     {
       auto position = file->position;
+      auto cluster = file_ctx->pos;
+      auto cluster_off = position % cluster_size;
 
-      if (position >= file_size)
+      usize read = 0;
+
+      if (!nbytes || position >= file_size || cluster >= cluster_limit)
         break;
 
-      if (file_ctx->pos >= cluster_limit)
-        break;
+      auto max_read = file_size - position;
+      if (max_read > nbytes)
+        max_read = nbytes;
 
-      auto read = nbytes;
-      auto cluster_pos = position % cluster_size;
+      auto offset = fatGetClusterOffset (cluster, fs) + cluster_off;
 
-      if (read > cluster_size - cluster_pos)
-        read = cluster_size - cluster_pos;
+      while (read < max_read)
+        {
+          u32 old_cluster = cluster;
+          bool advance = false;
 
-      if (read > file_size - position)
-        read = file_size - position;
+          auto to_read = max_read - read;
 
-      auto offset = fatGetClusterOffset (file_ctx->pos, fs) + cluster_pos;
+          if (to_read >= cluster_size - cluster_off)
+            {
+              advance = true;
+              to_read = cluster_size - cluster_off;
+
+              error = fatNextCluster (cluster, &cluster, cluster_buf, fs);
+              if (error != LOOM_ERR_NONE)
+                goto out;
+            }
+
+          read += to_read;
+          cluster_off = 0;
+
+          // Note: Overflow is guarded here by the cluster limit
+          // precondition.
+          if (advance && old_cluster + 1 != cluster)
+            break;
+        }
+
+      if (read > max_read)
+        read = max_read;
 
       if ((error = loomBlockDevRead (super->parent, offset, read, buf)))
         goto out;
@@ -507,10 +532,7 @@ fatRead (loom_file *file, usize nbytes, void *buf, usize *nread)
       if (nread != null)
         *nread += read;
 
-      if (cluster_pos + read == cluster_size
-          && (error = fatNextCluster (file_ctx->pos, &file_ctx->pos,
-                                      cluster_buf, fs)))
-        goto out;
+      file_ctx->pos = cluster;
     }
 
   loomFree (cluster_buf);
