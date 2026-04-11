@@ -17,6 +17,7 @@ list(
     "${LOOM_PLATFORM_SRC_DIR}/a20.S"
     "${LOOM_PLATFORM_SRC_DIR}/bios.c"
     "${LOOM_PLATFORM_SRC_DIR}/boot.S"
+    "${LOOM_PLATFORM_SRC_DIR}/disk.S"
     "${LOOM_PLATFORM_SRC_DIR}/exception.c"
     "${LOOM_PLATFORM_SRC_DIR}/int.c"
     "${LOOM_PLATFORM_SRC_DIR}/int.S"

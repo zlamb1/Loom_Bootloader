@@ -3,7 +3,8 @@
 #include "loom/math.h"
 
 loom_error
-loomPartitionRead (loom_block_dev *block_dev, usize block, usize n, char *buf)
+loomPartitionRead (loom_block_dev *block_dev, usize count,
+                   loom_io_req io_reqs[])
 {
   loom_block_dev *parent;
   loom_partition *partition;
@@ -11,28 +12,36 @@ loomPartitionRead (loom_block_dev *block_dev, usize block, usize n, char *buf)
 
   loomAssert (block_dev != NULL);
   loomAssert (block_dev->parent != NULL);
-  loomAssert (block_dev->parent->read != NULL);
+  loomAssert (block_dev->parent->readv != NULL);
   loomAssert (block_dev->data != NULL);
 
   parent = block_dev->parent;
   partition = block_dev->data;
 
-  if (!n)
+  if (!count)
     return LOOM_ERR_NONE;
 
-  if (loomAdd (block, n - 1, &end))
-    return LOOM_ERR_OVERFLOW;
+  for (usize i = 0; i < count; i++)
+    {
+      auto io_req = &io_reqs[i];
 
-  if (end >= block_dev->blocks)
-    return LOOM_ERR_RANGE;
+      if (!io_req->count)
+        continue;
 
-  if (loomAdd (end, partition->offset, &end))
-    return LOOM_ERR_OVERFLOW;
+      if (loomAdd (io_req->block, io_req->count - 1, &end))
+        return LOOM_ERR_OVERFLOW;
 
-  if (end >= parent->blocks)
-    return LOOM_ERR_RANGE;
+      if (end >= block_dev->blocks)
+        return LOOM_ERR_RANGE;
 
-  block += partition->offset;
+      if (loomAdd (end, partition->offset, &end))
+        return LOOM_ERR_OVERFLOW;
 
-  return parent->read (parent, block, n, buf);
+      if (end >= parent->blocks)
+        return LOOM_ERR_RANGE;
+
+      io_req->block += partition->offset;
+    }
+
+  return parent->readv (parent, count, io_reqs);
 }

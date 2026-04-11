@@ -5,6 +5,7 @@
 SECTION(.stage1_5)
 
 .global loomBiosIntImpl
+.global _stack
 
 _stack:
     .long 0

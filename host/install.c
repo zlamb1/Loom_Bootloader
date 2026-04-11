@@ -5,6 +5,7 @@
 #include "osdep.h"
 
 #include "loom/block_dev.h"
+#include "loom/error.h"
 #include "loom/partition.h"
 #include "loom/partition_scheme.h"
 
@@ -33,15 +34,27 @@ validateImage (loom_slice_t img_slice)
 }
 
 static loom_error
-fileBlockDevRead (loom_block_dev *block_dev, usize block, usize count,
-                  char *buf)
+fileBlockDevRead (loom_block_dev *block_dev, usize count,
+                  loom_io_req io_reqs[])
 {
   loom_file file = *(loom_file *) block_dev->data;
-  usize offset = block * block_dev->block_size;
-  usize nbytes = count * block_dev->block_size;
+  // usize offset = block * block_dev->block_size;
+  // usize nbytes = count * block_dev->block_size;
 
-  if (loomFileReadAt (file, buf, offset, nbytes))
-    return loomErrorFmt (LOOM_ERR_PLATFORM, "%s", loomOsError ());
+  auto block_size = block_dev->block_size;
+
+  for (usize i = 0; i < count; i++)
+    {
+      auto io_req = io_reqs[i];
+      auto offset = io_req.block * block_size;
+      auto nbytes = io_req.count * block_size;
+
+      if (offset > USIZE_MAX || nbytes > USIZE_MAX)
+        return loomError (LOOM_ERR_OVERFLOW);
+
+      if (loomFileReadAt (file, io_req.buf, (usize) offset, (usize) nbytes))
+        return loomErrorFmt (LOOM_ERR_PLATFORM, "%s", loomOsError ());
+    }
 
   return LOOM_ERR_NONE;
 }
@@ -84,7 +97,7 @@ embedImage (loom_slice_t slice, const char *out_path, loom_file out_img)
   init.block_size = 512;
   init.blocks = file_meta.size / 512;
   init.data = &out_img;
-  init.read = fileBlockDevRead;
+  init.readv = fileBlockDevRead;
 
   if (file_meta.size % 512)
     init.blocks += 1;

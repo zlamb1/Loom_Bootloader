@@ -1,6 +1,10 @@
 #ifndef LOOM_I686_BIOS_H
 #define LOOM_I686_BIOS_H 1
 
+#define BIOS_IO_REQS_LIMIT 64
+
+#ifndef __ASM__
+
 #include "loom/compiler.h"
 #include "loom/types.h"
 
@@ -32,8 +36,13 @@ void export (loomEnterProtectedMode) (void);
 void export (loomBiosHookRegister) (loom_bios_hook *hook);
 void export (loomBiosHookUnregister) (loom_bios_hook *hook);
 
+void export (loomRunBiosEnterHooks) (void);
+void export (loomRunBiosLeaveHooks) (void);
+
 void export (loomBiosInt) (u8 intno, loom_bios_args *args);
 
 void loomBiosDisksProbe (void);
+
+#endif
 
 #endif

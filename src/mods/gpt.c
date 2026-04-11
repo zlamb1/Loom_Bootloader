@@ -157,7 +157,9 @@ gptPartionSchemeIterate (loom_partition_scheme *partition_scheme,
         // FIXME: Emit warning for out of range partition.
         continue;
 
-      loomPartitionInit (&partition, parent, offset, blocks);
+      if (loomPartitionInit (&partition, parent, offset, blocks))
+        // FIXME: Emit warning.
+        continue;
 
       if ((ret_val = hook (parent, &partition, ctx)))
         {

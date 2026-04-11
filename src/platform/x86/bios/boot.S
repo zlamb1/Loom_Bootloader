@@ -10,6 +10,13 @@ SECTION(.stage1)
 .global _load
 .global _puts
 
+.global _dap
+.global _dap_size
+.global _dap_count
+.global _dap_off
+.global _dap_seg
+.global _dap_block
+
 _start:
     # Avoid FAT BPB in case we are installed in VBR.
     jmp _setup

@@ -90,8 +90,9 @@ mbrPartitionSchemeIterate (loom_partition_scheme *partition_scheme,
           goto out;
         }
 
-      loomPartitionInit (&partition, parent, loomEndianLoad (entry->start),
-                         loomEndianLoad (entry->sectors));
+      if (loomPartitionInit (&partition, parent, loomEndianLoad (entry->start),
+                             loomEndianLoad (entry->sectors)))
+        goto out;
 
       if ((ret_val = hook (parent, &partition, ctx)))
         {

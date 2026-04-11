@@ -13,10 +13,10 @@ typedef struct loom_partition
 
 extern loom_list loom_partition_schemes;
 
-loom_error export (loomPartitionRead) (loom_block_dev *block_dev, usize block,
-                                       usize n, char *buf);
+loom_error export (loomPartitionRead) (loom_block_dev *block_dev, usize count,
+                                       loom_io_req io_reqs[]);
 
-static inline void
+static inline int
 loomPartitionInit (loom_partition *partition, loom_block_dev *parent,
                    usize offset, usize blocks)
 {
@@ -25,15 +25,19 @@ loomPartitionInit (loom_partition *partition, loom_block_dev *parent,
 
   loom_block_dev_init_t init = {
     .parent = parent,
-    .read = loomPartitionRead,
+    .readv = loomPartitionRead,
     .block_size = parent->block_size,
     .blocks = blocks,
     .data = partition,
   };
 
-  loomBlockDevInit (&partition->base, &init);
+  if (loomBlockDevInit (&partition->base, &init))
+    return -1;
+
   loomListAdd (&parent->children, &partition->base.child_node);
   partition->offset = offset;
+
+  return 0;
 }
 
 static inline void

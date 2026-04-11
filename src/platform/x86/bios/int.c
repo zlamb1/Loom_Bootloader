@@ -42,26 +42,35 @@ loomBiosHookUnregister (loom_bios_hook *hook)
 }
 
 void
-loomBiosInt (u8 intno, loom_bios_args *args)
+loomRunBiosEnterHooks (void)
 {
   loom_bios_hook *hook = hooks;
-  int flags = loomIrqSave ();
 
   while (hook != null)
     {
       hook->fn (LOOM_BIOS_HOOK_TYPE_ENTER, hook->ctx);
       hook = hook->next;
     }
+}
 
-  loomBiosIntImpl (intno, args);
-
-  hook = hooks;
+void
+loomRunBiosLeaveHooks (void)
+{
+  loom_bios_hook *hook = hooks;
 
   while (hook != null)
     {
       hook->fn (LOOM_BIOS_HOOK_TYPE_LEAVE, hook->ctx);
       hook = hook->next;
     }
+}
 
+void
+loomBiosInt (u8 intno, loom_bios_args *args)
+{
+  int flags = loomIrqSave ();
+  loomRunBiosEnterHooks ();
+  loomBiosIntImpl (intno, args);
+  loomRunBiosLeaveHooks ();
   loomIrqRestore (flags);
 }
