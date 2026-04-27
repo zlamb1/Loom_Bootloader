@@ -15,19 +15,19 @@ fatReadCluster (u32 cluster, void *buf, fat_fs *fs)
 }
 
 loom_error
-fatNextCluster12 (u32 cluster, u32 *next, void *buf, fat_fs *fs)
+fatNextCluster12 (u32 cluster, u32 *next, fat_fs *fs)
 {
   loom_error error;
 
   auto offset = (cluster * 12) / 8;
   auto sect = fs->reserved_sects + offset / fs->bytes_per_sect;
   auto sect_offset = offset % fs->bytes_per_sect;
+  char p[2];
 
-  if ((error = loomBlockDevRead (fs->super.parent, sect * fs->bytes_per_sect,
-                                 fs->bytes_per_sect * 2, buf)))
+  if ((error = loomBlockDevRead (
+           fs->super.parent, sect * fs->bytes_per_sect + sect_offset, 2, p)))
     return error;
 
-  auto p = (uchar *) buf + sect_offset;
   auto bit_offset = (cluster & 1) ? 4u : 0u;
   u16 v = (u16) p[0] | (u16) (p[1] << 8);
 
@@ -37,26 +37,35 @@ fatNextCluster12 (u32 cluster, u32 *next, void *buf, fat_fs *fs)
 }
 
 loom_error
-fatNextCluster (u32 cluster, u32 *next, void *buf, fat_fs *fs)
+fatNextCluster (u32 cluster, u32 *next, fat_fs *fs)
 {
   loom_error error;
 
   if (fs->type == FAT_TYPE_12)
-    return fatNextCluster12 (cluster, next, buf, fs);
+    return fatNextCluster12 (cluster, next, fs);
 
   auto entsz = fs->type == FAT_TYPE_32 ? 4u : 2u;
   auto ents_per_sect = fs->bytes_per_sect / entsz;
   auto entry = cluster % ents_per_sect;
   auto sect = fs->reserved_sects + (entsz * cluster) / fs->bytes_per_sect;
 
-  if ((error = loomBlockDevRead (fs->super.parent, sect * fs->bytes_per_sect,
-                                 fs->bytes_per_sect, buf)))
-    return error;
-
   if (fs->type == FAT_TYPE_32)
-    *next = ((u32 *) buf)[entry] & 0x0FFFFFFF;
-  else if (fs->type == FAT_TYPE_16)
-    *next = ((u16 *) buf)[entry];
+    {
+      if ((error = loomBlockDevCachedRead (
+               fs->super.parent, sect * fs->bytes_per_sect + entry * 4,
+               sizeof (*next), (char *) next)))
+        return error;
+      *next = *next & 0x0FFFFFFF;
+    }
+  else
+    {
+      u16 next16;
+      if ((error = loomBlockDevCachedRead (
+               fs->super.parent, sect * fs->bytes_per_sect + entry * 2,
+               sizeof (next16), (char *) &next16)))
+        return error;
+      *next = next16;
+    }
 
   return LOOM_ERR_NONE;
 }

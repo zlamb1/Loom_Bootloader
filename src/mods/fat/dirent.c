@@ -73,7 +73,6 @@ fatIteratorInit (fat_iterator_ctx *ctx, fat_dir_entry *dir, fat_fs *fs)
 int
 fatIteratorReset (fat_iterator_ctx *ctx, fat_dir_entry *dir)
 {
-  loom_error error;
   auto fs = ctx->fs;
 
   if (dir != null && !fatIsDirectory (dir))
@@ -88,24 +87,11 @@ fatIteratorReset (fat_iterator_ctx *ctx, fat_dir_entry *dir)
         ctx->cluster = fs->root_cluster;
       else
         ctx->cluster = fatDirEntryGetCluster (dir);
-      if ((error = fatReadCluster (ctx->cluster, fs->scratch.buf, fs)))
-        {
-          loomError (error);
-          return -1;
-        }
     }
   else
     {
       ctx->r_entry = 0;
       ctx->count = fs->root_entry_count;
-
-      if ((error
-           = loomBlockDevRead (fs->super.parent, fatGetRootEntriesOffset (fs),
-                               fs->bytes_per_sect * 2, fs->scratch.buf)))
-        {
-          loomError (error);
-          return -1;
-        }
     }
 
   ctx->root16_12 = (fs->type != FAT_TYPE_32 && dir == null);
@@ -115,11 +101,8 @@ fatIteratorReset (fat_iterator_ctx *ctx, fat_dir_entry *dir)
 }
 
 static inline bool
-fatHandleDirEntry (fat_iterator_ctx *ctx, void *buf)
+fatHandleDirEntry (fat_iterator_ctx *ctx)
 {
-  loomMemCopy (&ctx->entry, (char *) buf + ctx->offset,
-               sizeof (fat_dir_entry));
-
   auto file_name = (uchar *) ctx->entry.file_name;
 
   if (file_name[0] == FAT_DIR_ENTRY_END)
@@ -143,6 +126,7 @@ fatIterateDirEntriesRoot16_12 (fat_iterator_ctx *ctx)
 {
   loom_error error;
   auto fs = ctx->fs;
+  auto entry_size = sizeof (fat_dir_entry);
 
   for (;;)
     {
@@ -152,23 +136,16 @@ fatIterateDirEntriesRoot16_12 (fat_iterator_ctx *ctx)
           return LOOM_ERR_NONE;
         }
 
-      if (ctx->offset >= fs->bytes_per_sect * 2)
+      auto offset = fatGetRootEntriesOffset (fs) + ctx->offset;
+
+      if ((error = loomBlockDevCachedRead (fs->super.parent, offset,
+                                           entry_size, (char *) &ctx->entry)))
         {
-          auto read = (usize) fs->bytes_per_sect * 2;
-          auto offset = fatGetRootEntriesOffset (fs)
-                        + (ctx->r_entry * 32 / read) * read;
-
-          if ((error = loomBlockDevRead (fs->super.parent, offset, read,
-                                         fs->scratch.buf)))
-            {
-              loomError (error);
-              return -1;
-            }
-
-          ctx->offset = 0;
+          loomError (error);
+          return -1;
         }
 
-      bool cont = fatHandleDirEntry (ctx, fs->scratch.buf);
+      bool cont = fatHandleDirEntry (ctx);
 
       if (ctx->has_next)
         ctx->r_entry += 1;
@@ -187,7 +164,6 @@ fatIterateDirEntriesCluster (fat_iterator_ctx *ctx)
   u32 cluster_limit;
 
   auto fs = ctx->fs;
-  auto buf = fs->scratch.buf;
   auto bytes_per_cluster
       = (usize) fs->bytes_per_sect * (usize) fs->sects_per_cluster;
 
@@ -197,7 +173,7 @@ fatIterateDirEntriesCluster (fat_iterator_ctx *ctx)
     {
       if (ctx->offset >= bytes_per_cluster)
         {
-          if ((error = fatNextCluster (ctx->cluster, &ctx->cluster, buf, fs)))
+          if ((error = fatNextCluster (ctx->cluster, &ctx->cluster, fs)))
             {
               loomError (error);
               return -1;
@@ -209,16 +185,20 @@ fatIterateDirEntriesCluster (fat_iterator_ctx *ctx)
               return 0;
             }
 
-          if ((error = fatReadCluster (ctx->cluster, buf, fs)))
-            {
-              loomError (error);
-              return -1;
-            }
-
           ctx->offset = 0;
         }
 
-      if (!fatHandleDirEntry (ctx, buf))
+      auto offset = fatGetClusterOffset (ctx->cluster, fs) + ctx->offset;
+
+      if ((error = loomBlockDevCachedRead (fs->super.parent, offset,
+                                           sizeof (fat_dir_entry),
+                                           (char *) &ctx->entry)))
+        {
+          loomError (error);
+          return -1;
+        }
+
+      if (!fatHandleDirEntry (ctx))
         break;
     }
 

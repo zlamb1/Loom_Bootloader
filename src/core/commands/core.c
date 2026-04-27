@@ -578,6 +578,105 @@ headTask (ARGS)
 }
 
 static int
+hexdumpTask (ARGS)
+{
+  int flag;
+  usize length = 0;
+  bool length_set = false;
+
+  usize file_count;
+  bool print_file_name;
+
+  while ((flag = loomGetOpts ("n:", argc, argv)) != -1)
+    switch (flag)
+      {
+      case 'n':
+        {
+          loom_error error;
+          int i_length;
+
+          if ((error = loomParseInt (optarg, &i_length)) || i_length < 0)
+            {
+              loomErrorFmt (error, "bad length: '%s'", optarg);
+              return -1;
+            }
+
+          length_set = true;
+          length = (usize) i_length;
+
+          break;
+        }
+      }
+
+  file_count = argc - optind;
+  print_file_name = file_count > 1;
+
+  if (!file_count)
+    {
+      loomErrorFmt (LOOM_ERR_BAD_ARG, "provide a file path");
+      return -1;
+    }
+
+  while (optind < argc)
+    {
+      const char *path = argv[optind++];
+      loom_file file;
+      char *buf = null;
+
+      if (loomFileOpen (loom_prefix_fs, &file, path))
+        {
+          loomLogLn ("error: %s", loomErrorGet ());
+          continue;
+        }
+
+      if (file.size - 1 > INT_MAX)
+        {
+          loomLogLn ("error: %s too large", file.name);
+          goto next;
+        }
+
+      buf = loomAlloc (file.size);
+
+      if (buf == null)
+        {
+          loomLogLn ("error: %s", loomErrorGet ());
+          goto next;
+        }
+
+      if (loomFileRead (&file, file.size, buf, null))
+        {
+          loomLogLn ("error: %s", loomErrorGet ());
+          goto next;
+        }
+
+      if (print_file_name)
+        loomLogLn ("==> %s <==", file.name);
+
+      if (!length_set)
+        length = file.size;
+
+      if (!length || !file.size)
+        goto next;
+
+      for (usize i = 0; i < length; i++)
+        {
+          if (i && !(i & 7))
+            loomLog ("\n");
+          loomLog ("%.2x", (unsigned char) buf[i]);
+          loomLog ("  ");
+        }
+
+      loomLog ("\n");
+
+    next:
+      loomFree (buf);
+      loomFileClose (&file);
+    }
+
+  return 0;
+}
+
+static int
 initrdTask (ARGS)
 {
   loom_file initrd_file;
@@ -696,6 +795,7 @@ loomCoreCommandsInit (void)
   registerCommand ("cat", catTask);
   registerCommand ("ls", lsTask);
   registerCommand ("head", headTask);
+  registerCommand ("hexdump", hexdumpTask);
   registerCommand ("initrd", initrdTask);
 #ifdef LOOM_DEBUG
   registerCommand ("debug", debugTask);

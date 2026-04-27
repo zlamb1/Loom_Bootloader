@@ -131,13 +131,6 @@ typedef struct
     u32 root_cluster;
     u32 root_entry_count;
   };
-
-  struct
-  {
-    // Scratch buffer with size max(cluster_size, bytes_per_sect*2).
-    u32 sect;
-    void *buf;
-  } scratch;
 } fat_fs;
 
 typedef struct
@@ -238,9 +231,9 @@ void fatFree (loom_fs *super);
 
 loom_error fatReadCluster (u32 cluster, void *buf, fat_fs *fs);
 
-loom_error fatNextCluster12 (u32 cluster, u32 *next, void *buf, fat_fs *fs);
+loom_error fatNextCluster12 (u32 cluster, u32 *next, fat_fs *fs);
 
-loom_error fatNextCluster (u32 cluster, u32 *next, void *buf, fat_fs *fs);
+loom_error fatNextCluster (u32 cluster, u32 *next, fat_fs *fs);
 
 int fatIteratorInit (fat_iterator_ctx *ctx, fat_dir_entry *dir, fat_fs *fs);
 

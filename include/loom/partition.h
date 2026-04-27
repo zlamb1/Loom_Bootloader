@@ -13,8 +13,8 @@ typedef struct loom_partition
 
 extern loom_list loom_partition_schemes;
 
-loom_error export (loomPartitionRead) (loom_block_dev *block_dev, usize count,
-                                       loom_io_req io_reqs[]);
+loom_error export (loomPartitionRead) (loom_block_dev *block_dev,
+                                       loom_io_req *io_reqs);
 
 static inline int
 loomPartitionInit (loom_partition *partition, loom_block_dev *parent,

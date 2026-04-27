@@ -3,8 +3,7 @@
 #include "loom/math.h"
 
 loom_error
-loomPartitionRead (loom_block_dev *block_dev, usize count,
-                   loom_io_req io_reqs[])
+loomPartitionRead (loom_block_dev *block_dev, loom_io_req *io_reqs)
 {
   loom_block_dev *parent;
   loom_partition *partition;
@@ -18,17 +17,20 @@ loomPartitionRead (loom_block_dev *block_dev, usize count,
   parent = block_dev->parent;
   partition = block_dev->data;
 
-  if (!count)
+  if (io_reqs == null)
     return LOOM_ERR_NONE;
 
-  for (usize i = 0; i < count; i++)
-    {
-      auto io_req = &io_reqs[i];
+  auto current = io_reqs;
 
-      if (!io_req->count)
+  while (current != null)
+    {
+      auto block = current->block;
+      auto count = current->count;
+
+      if (!count)
         continue;
 
-      if (loomAdd (io_req->block, io_req->count - 1, &end))
+      if (loomAdd (block, count - 1, &end))
         return LOOM_ERR_OVERFLOW;
 
       if (end >= block_dev->blocks)
@@ -40,8 +42,13 @@ loomPartitionRead (loom_block_dev *block_dev, usize count,
       if (end >= parent->blocks)
         return LOOM_ERR_RANGE;
 
-      io_req->block += partition->offset;
+      /* Move requests into the linear address space of the parent block
+       * device. */
+      current->block += partition->offset;
+
+      current = current->next;
     }
 
-  return parent->readv (parent, count, io_reqs);
+  /* Forward to parent device. */
+  return parent->readv (parent, io_reqs);
 }

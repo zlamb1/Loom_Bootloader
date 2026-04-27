@@ -16,9 +16,9 @@ loom_list loom_block_devs = LOOM_LIST_HEAD (loom_block_devs);
 #define BLOCK_UNSET U64_MAX
 
 static void
-linkMruHead (block_dev_cache *bd_cache, block_dev_cache_entry *entry)
+linkMruHead (loom_block_dev_cache *cache, block_dev_cache_entry *entry)
 {
-  auto mru = bd_cache->mru;
+  auto mru = cache->mru;
 
   if (mru == null)
     entry->prev = entry->next = entry;
@@ -31,65 +31,72 @@ linkMruHead (block_dev_cache *bd_cache, block_dev_cache_entry *entry)
       mru->prev = entry;
     }
 
-  bd_cache->mru = entry;
+  cache->mru = entry;
 }
 
 int
-loomBlockDevCacheInit (block_dev_cache *bd_cache, usize count,
+loomBlockDevCacheInit (loom_block_dev_cache *cache, usize count,
                        usize block_size)
 {
-  loomAssert (bd_cache != null);
+  loomAssert (cache != null);
   loomAssert (count > 0);
   loomAssert (block_size > 0);
 
-  bd_cache->count = 0;
-  bd_cache->mru = null;
+  cache->count = 0;
+  cache->mru = null;
 
   usize table_size, data_size;
 
   if (loomMul (sizeof (block_dev_cache_entry), count, &table_size))
     goto out1;
 
-  bd_cache->table = loomAlloc (table_size);
-  if (bd_cache->table == null)
+  cache->table = loomAlloc (table_size);
+  if (cache->table == null)
     goto out1;
+
+  cache->io_reqs = cache->data = null;
 
   if (loomMul (block_size, count, &data_size))
     goto out2;
 
-  bd_cache->data = loomAlloc (data_size);
-  if (bd_cache->data == null)
+  cache->data = loomAlloc (data_size);
+  if (cache->data == null)
+    goto out2;
+
+  cache->io_reqs = loomAlloc (sizeof (loom_io_req) * count);
+  if (cache->io_reqs == null)
     goto out2;
 
   for (usize i = 0; i < count; ++i)
     {
-      auto entry = bd_cache->table + i;
+      auto entry = cache->table + i;
       entry->block = BLOCK_UNSET;
 
-      linkMruHead (bd_cache, entry);
+      linkMruHead (cache, entry);
     }
 
-  bd_cache->count = count;
-  bd_cache->block_size = block_size;
+  cache->count = count;
+  cache->block_size = block_size;
 
   return 0;
 
 out2:
-  loomFree (bd_cache->table);
+  loomFree (cache->table);
+  loomFree (cache->io_reqs);
 out1:
-  bd_cache->table = bd_cache->data = null;
+  cache->table = cache->data = null;
   return -1;
 }
 
 void
-loomBlockDevCacheInvalidate (block_dev_cache *bd_cache)
+loomBlockDevCacheInvalidate (loom_block_dev_cache *cache)
 {
-  loomAssert (bd_cache != null);
-  loomAssert (bd_cache->table != null);
-  loomAssert (bd_cache->mru != null);
-  loomAssert (bd_cache->data != null);
+  loomAssert (cache != null);
+  loomAssert (cache->table != null);
+  loomAssert (cache->mru != null);
+  loomAssert (cache->data != null);
 
-  auto mru = bd_cache->mru;
+  auto mru = cache->mru;
   auto entry = mru;
 
   do
@@ -101,27 +108,27 @@ loomBlockDevCacheInvalidate (block_dev_cache *bd_cache)
 }
 
 void *
-loomBlockDevCacheLookup (block_dev_cache *bd_cache, u64 block)
+loomBlockDevCacheLookup (loom_block_dev_cache *cache, u64 block)
 {
-  loomAssert (bd_cache != null);
-  loomAssert (bd_cache->table != null);
-  loomAssert (bd_cache->mru != null);
-  loomAssert (bd_cache->data != null);
+  loomAssert (cache != null);
+  loomAssert (cache->table != null);
+  loomAssert (cache->mru != null);
+  loomAssert (cache->data != null);
 
   if (block == BLOCK_UNSET)
     return null;
 
-  auto mru = bd_cache->mru;
+  auto mru = cache->mru;
   auto entry = mru;
 
   do
     {
       if (entry->block == block)
         {
-          auto entry_nr = entry - bd_cache->table;
+          auto entry_nr = entry - cache->table;
 
-          char *ptr = bd_cache->data;
-          ptr += bd_cache->block_size * (usize) entry_nr;
+          char *ptr = cache->data;
+          ptr += cache->block_size * (usize) entry_nr;
 
           if (entry != mru)
             {
@@ -130,7 +137,7 @@ loomBlockDevCacheLookup (block_dev_cache *bd_cache, u64 block)
               entry->next->prev = entry->prev;
 
               // Mark this entry most recently used.
-              linkMruHead (bd_cache, entry);
+              linkMruHead (cache, entry);
             }
 
           return ptr;
@@ -138,13 +145,14 @@ loomBlockDevCacheLookup (block_dev_cache *bd_cache, u64 block)
 
       entry = entry->next;
     }
-  while (entry != bd_cache->mru);
+  while (entry != cache->mru);
 
   return null;
 }
 
 static inline void *
-getCacheEntryData (block_dev_cache *bd_cache, block_dev_cache_entry *entry)
+getCacheEntryData (loom_block_dev_cache *bd_cache,
+                   block_dev_cache_entry *entry)
 {
   auto entry_nr = entry - bd_cache->table;
   char *ptr = bd_cache->data;
@@ -153,42 +161,44 @@ getCacheEntryData (block_dev_cache *bd_cache, block_dev_cache_entry *entry)
 }
 
 static inline void
-cacheCopyToEntry (block_dev_cache *bd_cache, block_dev_cache_entry *entry,
+cacheCopyToEntry (loom_block_dev_cache *cache, block_dev_cache_entry *entry,
                   void *data)
 {
-  loomMemCopy (getCacheEntryData (bd_cache, entry), data,
-               bd_cache->block_size);
+  loomMemCopy (getCacheEntryData (cache, entry), data, cache->block_size);
 }
 
 void
-loomBlockDevCacheStore (block_dev_cache *bd_cache, u64 block, void *data)
+loomBlockDevCacheStore (loom_block_dev_cache *cache, u64 block, void *data)
 {
-  loomAssert (bd_cache != null);
-  loomAssert (bd_cache->table != null);
-  loomAssert (bd_cache->mru != null);
-  loomAssert (bd_cache->data != null);
+  loomAssert (cache != null);
+  loomAssert (cache->table != null);
+  loomAssert (cache->mru != null);
+  loomAssert (cache->data != null);
+  loomAssert (cache->io_reqs != null);
 
-  auto mru = bd_cache->mru;
+  auto mru = cache->mru;
 
   auto to_evict = mru->prev;
   to_evict->block = block;
 
-  cacheCopyToEntry (bd_cache, to_evict, data);
+  cacheCopyToEntry (cache, to_evict, data);
 
   // Move to the front. This is equivalent to shifting
   // the circular list to the right one by one.
-  bd_cache->mru = to_evict;
+  cache->mru = to_evict;
 }
 
 void
-loomBlockDevCacheFree (block_dev_cache *bd_cache)
+loomBlockDevCacheFree (loom_block_dev_cache *cache)
 {
-  loomAssert (bd_cache != null);
-  loomAssert (bd_cache->table != null);
-  loomAssert (bd_cache->data != null);
+  loomAssert (cache != null);
+  loomAssert (cache->table != null);
+  loomAssert (cache->data != null);
+  loomAssert (cache->io_reqs != null);
 
-  loomFree (bd_cache->table);
-  loomFree (bd_cache->data);
+  loomFree (cache->table);
+  loomFree (cache->data);
+  loomFree (cache->io_reqs);
 }
 
 void
@@ -210,20 +220,73 @@ loomBlockDevUnregister (loom_block_dev *block_dev)
 }
 
 loom_error
-loomBlockDevRead (loom_block_dev *block_dev, usize offset, usize size,
-                  char *buf)
+loomBlockDevCachedRead (loom_block_dev *block_dev, usize offset, usize size,
+                        char *buf)
 {
-  return loomBlockDevUncachedRead (block_dev, offset, size, buf);
+  loomAssert (block_dev != null);
+  loomAssert (block_dev->scratch != null);
+  loomAssert (block_dev->readv != null);
+  loomAssert (block_dev->block_size > 0);
+
+  if (block_dev->cache == null || !size)
+    return loomBlockDevRead (block_dev, offset, size, buf);
+
+  loom_error error = LOOM_ERR_NONE;
+
+  loom_io_req io_req;
+
+  auto block_size = block_dev->block_size;
+  auto cache = block_dev->cache;
+
+  loomAssert (cache->count > 0);
+
+  auto block = offset / block_size;
+  auto block_offset = offset % block_size;
+  auto block_end = (offset + size - 1) / block_size;
+  auto to_read = loomMin (block_size - block_offset, size);
+
+  if (block != block_end)
+    return loomBlockDevRead (block_dev, offset, size, buf);
+
+  auto p = loomBlockDevCacheLookup (cache, block);
+
+  if (p != null)
+    goto do_copy;
+
+  auto lru = cache->mru->prev;
+
+  io_req.block = block;
+  io_req.count = 1;
+  io_req.buf = getCacheEntryData (cache, lru);
+  io_req.next = null;
+
+  error = block_dev->readv (block_dev, &io_req);
+
+  if (error)
+    {
+      // Invalidate the entry.
+      lru->block = BLOCK_UNSET;
+      return error;
+    }
+
+  lru->block = block;
+  p = io_req.buf;
+
+  cache->mru = lru;
+
+do_copy:
+  loomMemCopy (buf, (char *) p + block_offset, to_read);
+  return error;
 }
 
 loom_error
-loomBlockDevUncachedRead (loom_block_dev *block_dev, usize offset, usize size,
-                          char *buf)
+loomBlockDevRead (loom_block_dev *block_dev, usize offset, usize size,
+                  char *buf)
 {
   loom_error error = LOOM_ERR_NONE;
   loom_io_req io_reqs[3];
 
-  usize count = 0;
+  loom_io_req *head = null, *tail = null;
 
   loomAssert (block_dev != null);
   loomAssert (block_dev->scratch != null);
@@ -246,11 +309,14 @@ loomBlockDevUncachedRead (loom_block_dev *block_dev, usize offset, usize size,
     {
       copy_first = loomMin (block_size - block_offset, size);
 
-      io_reqs[count++] = (loom_io_req) {
+      auto io_req = &io_reqs[0];
+      *io_req = (loom_io_req) {
         .block = block,
         .count = 1,
         .buf = scratch,
+        .next = null,
       };
+      head = tail = io_req;
 
       size -= copy_first;
       block += 1;
@@ -263,11 +329,18 @@ loomBlockDevUncachedRead (loom_block_dev *block_dev, usize offset, usize size,
       auto blocks = size / block_size;
       auto nbytes = blocks * block_size;
 
-      io_reqs[count++] = (loom_io_req) {
+      auto io_req = &io_reqs[1];
+      *io_req = (loom_io_req) {
         .block = block,
         .count = blocks,
         .buf = mbuf,
+        .next = null,
       };
+      if (head)
+        tail->next = io_req;
+      else
+        head = io_req;
+      tail = io_req;
 
       size -= nbytes;
       block += blocks;
@@ -279,18 +352,24 @@ loomBlockDevUncachedRead (loom_block_dev *block_dev, usize offset, usize size,
     {
       loomAssert (size < block_size);
 
-      io_reqs[count++] = (loom_io_req) {
+      auto io_req = &io_reqs[2];
+      *io_req = (loom_io_req) {
         .block = block,
         .count = 1,
         .buf = scratch + block_size,
+        .next = null,
       };
+      if (head)
+        tail->next = io_req;
+      else
+        head = tail = io_req;
 
       copy_last = size;
     }
 
-  if (count)
+  if (head != null)
     {
-      error = block_dev->readv (block_dev, count, io_reqs);
+      error = block_dev->readv (block_dev, head);
       if (error)
         return error;
     }
@@ -385,6 +464,22 @@ loomBlockDevProbe (loom_block_dev *block_dev, bool force, unused bool log)
         fs->parent = block_dev;
         fs->fs_type = fs_type;
         loomFsRegister (fs);
+
+        if (block_dev->cache == null)
+          {
+            block_dev->cache = loomAlloc (sizeof (loom_block_dev_cache));
+
+            // Initialize a cache for the parent.
+            if (block_dev->cache != null
+                && loomBlockDevCacheInit (block_dev->cache, 8,
+                                          block_dev->block_size))
+              {
+                // Failed. Out of memory?
+                loomFree (block_dev->cache);
+                block_dev->cache = null;
+              }
+          }
+
         return;
       }
 

@@ -34,26 +34,25 @@ validateImage (loom_slice_t img_slice)
 }
 
 static loom_error
-fileBlockDevRead (loom_block_dev *block_dev, usize count,
-                  loom_io_req io_reqs[])
+fileBlockDevRead (loom_block_dev *block_dev, loom_io_req *io_reqs)
 {
   loom_file file = *(loom_file *) block_dev->data;
-  // usize offset = block * block_dev->block_size;
-  // usize nbytes = count * block_dev->block_size;
 
   auto block_size = block_dev->block_size;
+  auto io_req = io_reqs;
 
-  for (usize i = 0; i < count; i++)
+  while (io_req != null)
     {
-      auto io_req = io_reqs[i];
-      auto offset = io_req.block * block_size;
-      auto nbytes = io_req.count * block_size;
+      auto offset = io_req->block * block_size;
+      auto nbytes = io_req->count * block_size;
 
       if (offset > USIZE_MAX || nbytes > USIZE_MAX)
         return loomError (LOOM_ERR_OVERFLOW);
 
-      if (loomFileReadAt (file, io_req.buf, (usize) offset, (usize) nbytes))
+      if (loomFileReadAt (file, io_req->buf, (usize) offset, (usize) nbytes))
         return loomErrorFmt (LOOM_ERR_PLATFORM, "%s", loomOsError ());
+
+      io_req = io_req->next;
     }
 
   return LOOM_ERR_NONE;

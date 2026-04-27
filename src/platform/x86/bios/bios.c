@@ -7,10 +7,11 @@
 #include "loom/mm.h"
 #include "loom/platform.h"
 #include "loom/string.h"
+#include "loom/types.h"
 
 typedef struct
 {
-  loom_block_dev bd;
+  loom_block_dev super;
   u8 drive;
 } bios_disk;
 
@@ -53,10 +54,10 @@ biosDiskReadImplWrapper (u16 count)
 }
 
 static loom_error
-biosDiskRead (loom_block_dev *block_dev, usize count, loom_io_req io_reqs[])
+biosDiskRead (loom_block_dev *block_dev, loom_io_req *io_reqs)
 {
-  loomAssert (block_dev != NULL);
-  loomAssert (block_dev->data != NULL);
+  loomAssert (block_dev != null);
+  loomAssert (block_dev->data != null);
   loomAssert (block_dev->block_size > 0);
   loomAssert (!(block_dev->block_size % 16));
 
@@ -74,21 +75,24 @@ biosDiskRead (loom_block_dev *block_dev, usize count, loom_io_req io_reqs[])
   const usize max_allotment = loomMin (0x7F, length / block_size);
   loomAssert (max_allotment > 0);
 
-  while (count)
-    {
-      const auto iters = loomMin (count, BIOS_IO_REQS_LIMIT);
+  loom_io_req partial;
 
+  while (io_reqs != null)
+    {
       char *bounce_next = bounce;
       usize request_count = 0;
 
-      /* First scan to create BIOS I/O requests. */
-      for (usize i = 0, allotment = max_allotment; i < iters && allotment; i++)
+      auto iter = io_reqs;
+
+      for (usize i = 0, allotment = max_allotment;
+           iter != null && i < BIOS_IO_REQS_LIMIT && allotment; i++)
         {
-          auto io_req = io_reqs[i];
-          auto blocks = loomMin (io_req.count, allotment);
+          auto blocks = loomMin (iter->count, allotment);
+
+          loomAssert ((address) bounce_next / 0x10 <= U16_MAX);
 
           bios_io_reqs[request_count++] = (bios_io_req) {
-            .start_block = io_req.block,
+            .start_block = iter->block,
             .blocks = (u16) blocks,
             .off = 0,
             .seg = (u16) (((address) bounce_next) / 0x10),
@@ -97,6 +101,8 @@ biosDiskRead (loom_block_dev *block_dev, usize count, loom_io_req io_reqs[])
 
           allotment -= (usize) blocks;
           bounce_next += blocks * block_size;
+
+          iter = iter->next;
         }
 
       loomAssert (request_count <= U16_MAX);
@@ -108,35 +114,39 @@ biosDiskRead (loom_block_dev *block_dev, usize count, loom_io_req io_reqs[])
 #endif
 
       bounce_next = bounce;
-
-      /* Repurposed into a count for full requests. */
-      request_count = 0;
+      iter = io_reqs;
 
       /* Consume requests and copy from the bounce buffer. */
-      for (usize i = 0, allotment = max_allotment; i < iters && allotment; i++)
+      for (usize i = 0, allotment = max_allotment;
+           iter != null && i < BIOS_IO_REQS_LIMIT && allotment; i++)
         {
-          auto io_req = &io_reqs[i];
-          auto blocks = loomMin (io_req->count, allotment);
+          auto blocks = loomMin (iter->count, allotment);
 
           /* Do the copy. */
-          loomMemCopy (io_req->buf, bounce_next, (usize) blocks * block_size);
+          loomMemCopy (iter->buf, bounce_next, (usize) blocks * block_size);
 
           allotment -= (usize) blocks;
           bounce_next += blocks * block_size;
 
           /* Consume the I/O requests. */
-          if (io_req->count > blocks)
+          if (iter->count > blocks)
             {
-              io_req->block += blocks;
-              io_req->count -= blocks;
-              io_req->buf = (char *) io_req->buf + blocks * block_size;
+              /* This is necessary to prevent modifying user IO requests
+               * in-place. */
+              if (iter != &partial)
+                partial = *iter;
+
+              partial.block += blocks;
+              partial.count -= blocks;
+              partial.buf = (char *) iter->buf + blocks * block_size;
+
+              iter = &partial;
             }
           else
-            request_count++;
+            iter = iter->next;
         }
 
-      io_reqs += request_count;
-      count -= request_count;
+      io_reqs = iter;
     }
 
   return LOOM_ERR_NONE;
@@ -167,7 +177,7 @@ loomBiosDisksProbe (void)
       args.ds = 0;
 
       compile_assert (sizeof (bios_disk_params) >= 0x1A,
-                      "bios_disk_params_t must be at least 26 bytes.");
+                      "bios_disk_params must be at least 26 bytes.");
       params.size = 0x1A;
 
       loomBiosInt (0x13, &args);
@@ -182,7 +192,7 @@ loomBiosDisksProbe (void)
       if (!disk)
         continue;
 
-      disk->bd = (loom_block_dev) {
+      disk->super = (loom_block_dev) {
         .readv = biosDiskRead,
         .block_size = params.bps,
         .blocks = (usize) params.sectors,
@@ -196,10 +206,10 @@ loomBiosDisksProbe (void)
         .data = disk,
       };
 
-      if (loomBlockDevInit (&disk->bd, &init))
+      if (loomBlockDevInit (&disk->super, &init))
         loomPanic ("Failed to initialize bios disk.");
       disk->drive = drive;
 
-      loomBlockDevRegister (&disk->bd);
+      loomBlockDevRegister (&disk->super);
     }
 }

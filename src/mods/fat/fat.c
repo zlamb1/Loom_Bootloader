@@ -219,15 +219,6 @@ fatFsProbe (loom_block_dev *block_dev)
   else
     fs->root_entry_count = root_entry_count;
 
-  fs->scratch.sect = 0;
-  auto size = bytes_per_cluster;
-
-  if (sects_per_cluster == 1)
-    size *= 2;
-
-  if ((fs->scratch.buf = loomAlloc (size)) == null)
-    goto out;
-
   return &fs->super;
 
 out:
@@ -468,14 +459,6 @@ fatRead (loom_file *file, usize nbytes, void *buf, usize *nread)
   auto cluster_limit = fatGetClusterLimit (fs->type);
   auto cluster_size = fatGetClusterSize (fs);
 
-  auto cluster_buf = loomAlloc (fs->bytes_per_sect * 2);
-
-  if (cluster_buf == null)
-    {
-      loomError (LOOM_ERR_ALLOC);
-      return -1;
-    }
-
   for (;;)
     {
       auto position = file->position;
@@ -505,7 +488,7 @@ fatRead (loom_file *file, usize nbytes, void *buf, usize *nread)
               advance = true;
               to_read = cluster_size - cluster_off;
 
-              error = fatNextCluster (cluster, &cluster, cluster_buf, fs);
+              error = fatNextCluster (cluster, &cluster, fs);
               if (error != LOOM_ERR_NONE)
                 goto out;
             }
@@ -535,11 +518,9 @@ fatRead (loom_file *file, usize nbytes, void *buf, usize *nread)
       file_ctx->pos = cluster;
     }
 
-  loomFree (cluster_buf);
   return 0;
 
 out:
-  loomFree (cluster_buf);
   loomError (error);
   return -1;
 }
@@ -589,9 +570,6 @@ fatFree (loom_fs *super)
 {
   loomAssert (super != null);
   loomAssert (super->data != null);
-
-  fat_fs *fs = super->data;
-  loomFree (fs->scratch.buf);
 }
 
 LOOM_MOD_INIT () { loomFsTypeRegister (&fat_fs_type); }
